@@ -1,47 +1,33 @@
-"""Apply the retention table of spec 9 to every job."""
+"""Apply the retention table of spec 9 in short, bounded transactions."""
 
 import sqlite3
 
 from worker.config.worker_config import WorkerConfig
-from worker.jobs.add_control_result import add_control_result
-from worker.jobs.delete_payloads import delete_payloads
-from worker.jobs.states import SENSITIVE
+from worker.jobs.delete_payloads_batch import delete_payloads_batch
+from worker.jobs.expire_unacked_batch import expire_unacked_batch
+from worker.jobs.release_jobs_batch import release_jobs_batch
+from worker.jobs.retention_policies import retention_policies
 from worker.store.transaction import transaction
 
-_INSPECTION_S = 24 * 3600.0
+_BATCH = 500
 
 
 def sweep_retention(conn: sqlite3.Connection, config: WorkerConfig, now: float) -> int:
-    """Return how many jobs had their payloads deleted."""
+    """Return how many jobs had their payloads deleted.
+
+    Each step selects only rows it still has to change, so a pass over jobs
+    already swept writes nothing, and no transaction holds more than one batch.
+    """
     swept = 0
-    marks = ",".join("?" * len(SENSITIVE))
-    with transaction(conn):
-        for job in conn.execute(
-            f"SELECT * FROM jobs WHERE state='succeeded' AND acked IS NULL AND privacy IN ({marks})",  # noqa: S608
-            SENSITIVE,
-        ).fetchall():
-            if now - job["finished"] >= config.queues[job["queue"]].unacked_ttl_hours * 3600:
-                conn.execute(
-                    "UPDATE jobs SET state='unacked_expired', updated=? WHERE id=?",
-                    (now, job["id"]),
-                )
-                conn.execute(
-                    "UPDATE results SET acked=? WHERE job_id=? AND acked IS NULL", (now, job["id"])
-                )
-                add_control_result(conn, job, "unacked_expired", {}, now)
-                delete_payloads(conn, job["id"])
-                swept += 1
-        for job in conn.execute(
-            "SELECT id, queue, privacy, state, finished, acked FROM jobs WHERE finished IS NOT NULL"
-        ).fetchall():
-            ended = job["acked"] or job["finished"]
-            sensitive_done = (
-                job["privacy"] in SENSITIVE
-                and job["state"] != "succeeded"
-                and now - job["finished"] >= _INSPECTION_S
-            )
-            retained_out = now - ended >= config.queues[job["queue"]].retention_days * 86400
-            if sensitive_done or retained_out:
-                delete_payloads(conn, job["id"])
-                swept += 1
+    for policy in retention_policies(conn, config):
+        for step in (expire_unacked_batch, delete_payloads_batch, release_jobs_batch):
+            while True:
+                with transaction(conn):
+                    done = step(conn, policy, now, _BATCH)
+                if step is not release_jobs_batch:
+                    swept += done
+                if done < _BATCH:
+                    break
+    if swept:
+        conn.execute("PRAGMA p.wal_checkpoint(TRUNCATE)")
     return swept

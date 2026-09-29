@@ -17,8 +17,8 @@ from worker.jobs.sweep_retention import sweep_retention
 DAY = 86400.0
 
 
-def succeed(conn, config, key="k1", privacy="mail", now=0.0):
-    job_id, _ = submit_job(conn, config, "pa", body(key=key, privacy=privacy), now)
+def succeed(conn, config, key="k1", privacy="mail", now=0.0, *, queue="pa.bulk"):
+    job_id, _ = submit_job(conn, config, "pa", body(key=key, privacy=privacy, queue=queue), now)
     lease = lease_job(conn, config, LeaseRequest("node-a", None, False, 44.0, 9999.0), now + 1)
     report = CompletionReport(
         "succeeded", {"text": "ok", "json": None}, {}, {"node": "node-a"}, None, 1.0
