@@ -106,15 +106,17 @@ def test_fenced_attempt_stops_without_completing(fake):
 
 def test_drain_escalates_to_unload_then_restart():
     calls = []
-    probes = iter([False] * 6 + [True])
+    listings = iter([["model-a"]] * 9 + [[]])
     assert drain_backend(
         "u",
         PIN,
         "label",
         lambda: True,
-        probe=lambda *a, **k: next(probes),
+        probe=lambda *a, **k: False,
         unload=lambda *a: calls.append("unload") or True,
         restart=lambda *a: calls.append("restart") or True,
+        resident=lambda _u: next(listings),
+        pause=lambda _s: None,
     )
     assert calls == ["unload", "restart"]
 
@@ -128,6 +130,8 @@ def test_drain_failure_is_reported_when_nothing_answers():
         probe=lambda *a, **k: False,
         unload=lambda *a: True,
         restart=lambda *a: True,
+        resident=lambda _u: None,
+        pause=lambda _s: None,
     )
 
 
