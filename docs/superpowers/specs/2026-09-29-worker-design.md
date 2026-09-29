@@ -549,3 +549,28 @@ Each phase is independently useful. Details are in the implementation plan.
   rather than a raw sysctl value.
 - Specify the host-level test for HID idle under fast user switching and screen
   lock before any guest node is enrolled.
+
+## Amendments
+
+### 2026-09-29 - phase 1a plan
+
+1. Terminal `failed` and deadline `expired` are also delivered as control
+   results (`control: "failed"` / `"expired"`), so a waiting producer always
+   learns the outcome through the results feed.
+2. "Backend quiet" is detected with a one-token probe request using the model's
+   pinned options: with `OLLAMA_NUM_PARALLEL=1` the probe cannot start until the
+   previous request has stopped, so its latency measures the drain. Ollama
+   exposes no in-flight request API. Escalation after failed probes: unload
+   (`keep_alive: 0`), then restart the model server's LaunchAgent
+   (`launchctl kickstart -k gui/<uid>/<label>`).
+3. Instance layout: `<instance>/worker/config.json` is tracked in the private
+   instance; `<instance>/worker/state/` is ignored there and holds
+   `meta.sqlite3`, `payloads.sqlite3`, `principals.json` (token SHA-256 only)
+   and `tokens/<name>.token` (0600). The directory is `worker.path` from
+   `syntopica.local.json`, then `syntopica.config.json`, default `worker`.
+4. Producer grants (which queues a producer may use) live in the tracked
+   instance config; nothing grants a queue implicitly.
+5. Open item on the memory-pressure source: phase 1a reads
+   `kern.memorystatus_vm_pressure_level` (1 normal, 2 warn, 4 critical;
+   measured on the reference workstation) and treats any other value or a
+   failed read as busy. The dispatch-source reader stays open for plan 1c.
