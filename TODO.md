@@ -23,6 +23,9 @@ Active backlog. Closed items move to `TODO_LOG.md` with date and evidence.
 
 - [ ] Cancel-to-quiet latency on Ollama 0.34.4 (probe method, amendment 2).
 - [ ] Zero model reloads across the three producers.
+      Risk seen 2026-09-29: at warn the node unloads the 22 GB model, pressure
+      clears, the next lease reloads it (cold 30 GB) and warn returns - a
+      reload loop. Count unloads per hour in 1c before accepting.
 - [ ] Useful work under repeated interruptions; 1000 translated texts;
       `worker status` shows progress.
 - [ ] Memory-pressure source: dispatch source vs sysctl (amendment 5).
