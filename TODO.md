@@ -39,3 +39,12 @@ Active backlog. Closed items move to `TODO_LOG.md` with date and evidence.
 
 - [ ] Atrium lane acks before its own registry write; a crash between them
       leaves a resubmit waiting until timeout. Record in 1c if observed.
+
+## Found during phase 1a execution
+
+- [ ] `load_worker_config` accepts any `listen_host`, but spec says phase 1
+      binds loopback only; a non-loopback value would expose the API and send
+      bearer tokens in plaintext. Next step: reject non-loopback hosts in
+      `load_worker_config` until phase 4's Tailscale binding.
+- [ ] Client `results()` uses a fixed 40 s timeout against the server's 30 s
+      `wait` cap; derive it from `wait` so a cap change cannot break it.
