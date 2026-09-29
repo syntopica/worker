@@ -26,6 +26,10 @@ Active backlog. Closed items move to `TODO_LOG.md` with date and evidence.
 - [ ] Useful work under repeated interruptions; 1000 translated texts;
       `worker status` shows progress.
 - [ ] Memory-pressure source: dispatch source vs sysctl (amendment 5).
+      Observed 2026-09-29 on the workstation: `kern.memorystatus_vm_pressure_level`
+      read 2 (warn) with `memory_pressure` reporting 72% free, and the node
+      unloaded the resident qwen3.6:35b at that moment. Measure how often warn
+      fires at rest before trusting it as an unload trigger.
 
 ## Later phases (see roadmap)
 
