@@ -1,0 +1,23 @@
+# codeality-py configuration - https://github.com/syntopica/codeality
+schema-version = 1
+source-roots = ["worker"]
+test-roots = ["tests"]
+respect-gitignore = true
+# Ratchet: raise, never lower.
+coverage-threshold = 80
+
+[limits]
+max-file-lines = 150
+test-max-file-lines = 300
+
+[roles]
+data = ["worker/contract_version.py"]
+registry = []
+entrypoint = []
+generated = []
+namespace-init = []
+
+[[overrides]]
+paths = ["worker/**", "tests/**"]
+disable = ["BPY006"]
+reason = "SQLite queue engine: inline SQL in the jobs layer and its tests is the deliberate style"

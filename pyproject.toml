@@ -1,0 +1,61 @@
+[project]
+name = "worker"
+version = "0.1.0"
+description = "Background AI job processor for idle local machines"
+requires-python = ">=3.11"
+dependencies = ["jsonschema>=4.25,<5"]
+
+[project.scripts]
+worker = "worker.cli.main:main"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["A", "ARG", "B", "C4", "D", "DTZ", "E", "ERA", "F", "I", "N", "PL", "PTH", "RET", "RUF", "S", "SIM", "T20", "UP", "W"]
+ignore = ["COM812", "D203", "D213", "D107", "E501", "ISC001", "T201", "S603", "S607", "S310"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "S101", "S105", "S106", "ARG", "PLR2004", "PLR0913"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["manual: needs real hardware and a local Ollama; never run in CI"]
+addopts = "-m 'not manual'"
+
+[tool.deptry]
+known_first_party = ["worker"]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["jsonschema"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["worker*"]
+
+[dependency-groups]
+quality = [
+  "syntopica-codeality-py>=0.1,<1",
+  "deptry>=0.20,<1",
+  "mypy>=1.11,<2",
+  "pip-audit>=2.7,<3",
+  "pytest>=8,<10",
+  "pytest-cov>=5,<8",
+  "ruff>=0.15,<1",
+  "types-jsonschema>=4.25,<5",
+]
