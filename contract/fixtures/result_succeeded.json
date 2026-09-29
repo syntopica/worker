@@ -1,0 +1,1 @@
+{"seq": 12, "result_id": "r-0001", "job_id": "j-0001", "control": null, "detail": null, "output": {"text": "{\"items\": []}", "json": {"items": []}}, "executor": {"node": "node-a", "provider": "ollama", "model": "model-a"}, "usage": {"tokens_in": 812, "tokens_out": 240}}

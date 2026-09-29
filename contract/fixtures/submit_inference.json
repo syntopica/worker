@@ -1,0 +1,12 @@
+{
+  "contract": 1,
+  "kind": "inference",
+  "queue": "producer-a.translate",
+  "idempotency_key": "tr:batch-0001",
+  "priority": 50,
+  "privacy": "mail",
+  "deadline": null,
+  "max_attempts": 3,
+  "requirements": {"capability": "chat.json", "models": ["model-a"], "min_context": 32000},
+  "input": {"messages": [{"role": "user", "content": "Translate: ..."}], "format": "json", "options": {"temperature": 0}}
+}
