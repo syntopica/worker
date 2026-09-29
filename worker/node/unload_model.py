@@ -1,5 +1,6 @@
 """Ask Ollama to drop a model from memory now."""
 
+import http.client
 import json
 import urllib.error
 import urllib.request
@@ -15,6 +16,6 @@ def unload_model(url: str, model: str) -> bool:
     try:
         with urllib.request.urlopen(request, timeout=60) as response:
             response.read()
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (http.client.HTTPException, urllib.error.URLError, TimeoutError, OSError):
         return False
     return True

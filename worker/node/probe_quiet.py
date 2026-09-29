@@ -1,5 +1,6 @@
 """Confirm the backend has stopped the previous request (spec 7, amendment 2)."""
 
+import http.client
 import json
 import urllib.error
 import urllib.request
@@ -23,6 +24,6 @@ def probe_quiet(url: str, pin: ModelPin, timeout: float) -> bool:
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             response.read()
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (http.client.HTTPException, urllib.error.URLError, TimeoutError, OSError):
         return False
     return True

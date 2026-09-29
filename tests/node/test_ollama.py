@@ -86,3 +86,36 @@ def test_restart_uses_the_users_gui_domain(monkeypatch):
     )
     monkeypatch.setattr("worker.node.restart_ollama.run_command", lambda args, timeout=5.0: None)
     assert restart_ollama("svc.label") is False
+
+
+def _chat_error(fake, status, raw):
+    fake.status, fake.raw_body = status, raw
+    call = OllamaCall.start(fake.url, ollama_request_body(PIN, {"messages": []}), timeout=10)
+    deadline = time.time() + 5
+    while not call.done() and time.time() < deadline:
+        time.sleep(0.01)
+    return call.outcome()
+
+
+def test_error_codes_are_allowlisted(fake):
+    assert _chat_error(fake, 500, b"boom secret text") == (None, "http_500")
+    assert _chat_error(fake, 200, b'{"error": "x"}') == (None, "bad_response")
+    assert _chat_error(fake, 200, b"not json") == (None, "bad_response")
+    assert _chat_error(fake, 200, b"[1]") == (None, "bad_response")
+
+
+def test_cancel_right_after_start_sends_nothing(fake):
+    call = OllamaCall.start(fake.url, ollama_request_body(PIN, {"messages": []}), timeout=10)
+    call.cancel()
+    deadline = time.time() + 2
+    while not call.done() and time.time() < deadline:
+        time.sleep(0.01)
+    assert call.done()
+    assert call.outcome() == (None, "cancelled")
+    assert fake.bodies == []
+
+
+def test_resident_models_tolerates_odd_payloads(fake):
+    for raw in (b'{"models": [{}]}', b'{"models": 5}', b"[1]"):
+        fake.ps_raw = raw
+        assert resident_models(fake.url) is None

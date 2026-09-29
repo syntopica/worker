@@ -1,7 +1,9 @@
 """One /api/chat request on a thread, cancellable by closing its socket."""
 
+import contextlib
 import http.client
 import json
+import socket
 import threading
 import urllib.parse
 from typing import Any
@@ -34,15 +36,31 @@ class OllamaCall:
 
     def _run(self, data: bytes) -> None:
         try:
+            if self._was_cancelled():
+                return
+            self._conn.connect()
+            if self._was_cancelled():
+                return
             self._conn.request("POST", "/api/chat", data, {"Content-Type": "application/json"})
             response = self._conn.getresponse()
-            payload = json.loads(response.read())
-            if response.status != http.HTTPStatus.OK or "error" in payload:
-                self._error = f"http_{response.status}"
-            else:
-                self._answer = payload
-        except (OSError, http.client.HTTPException, ValueError):
+            body = response.read()
+        except (OSError, http.client.HTTPException, AttributeError):
             self._error = "cancelled" if self._cancelled else "transport_error"
+            return
+        if response.status != http.HTTPStatus.OK:
+            self._error = f"http_{response.status}"
+            return
+        try:
+            payload = json.loads(body)
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict) and "error" not in payload:
+            self._answer = payload
+        else:
+            self._error = "bad_response"
+
+    def _was_cancelled(self) -> bool:
+        return self._cancelled
 
     def done(self) -> bool:
         """True once the thread has finished, for any reason."""
@@ -51,9 +69,12 @@ class OllamaCall:
     def cancel(self) -> None:
         """Close the socket so the blocked read fails."""
         self._cancelled = True
-        if self._conn.sock is not None:
-            self._conn.sock.close()
-        self._conn.close()
+        sock = self._conn.sock
+        if sock is not None:
+            with contextlib.suppress(OSError):
+                sock.shutdown(socket.SHUT_RDWR)
+        with contextlib.suppress(OSError):
+            self._conn.close()
 
     def outcome(self) -> tuple[dict[str, Any] | None, str | None]:
         """(answer, None) on success, (None, code) otherwise."""

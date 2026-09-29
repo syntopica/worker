@@ -13,10 +13,16 @@ class FakeOllama:
         self.delay = 0.0
         self.busy_until = 0.0
         self.loaded = ["model-a"]
+        self.status = 200
+        self.raw_body = None
+        self.ps_raw = None
         fake = self
 
         class Handler(BaseHTTPRequestHandler):
             def do_GET(self):
+                if fake.ps_raw is not None:
+                    self._reply_raw(200, fake.ps_raw)
+                    return
                 self._reply({"models": [{"name": m} for m in fake.loaded]})
 
             def do_POST(self):
@@ -30,6 +36,9 @@ class FakeOllama:
                 probe = body.get("options", {}).get("num_predict") == 1
                 wait = max(0.0, fake.busy_until - time.time()) if probe else fake.delay
                 time.sleep(wait)
+                if fake.raw_body is not None:
+                    self._reply_raw(fake.status, fake.raw_body)
+                    return
                 self._reply(
                     {
                         "message": {"content": '{"label": "x"}'},
@@ -37,11 +46,12 @@ class FakeOllama:
                         "eval_count": 3,
                     }
                 )
-                return
 
             def _reply(self, payload):
-                data = json.dumps(payload).encode()
-                self.send_response(200)
+                self._reply_raw(200, json.dumps(payload).encode())
+
+            def _reply_raw(self, status, data):
+                self.send_response(status)
                 self.send_header("Content-Length", str(len(data)))
                 self.end_headers()
                 with contextlib.suppress(BrokenPipeError, ConnectionResetError):
