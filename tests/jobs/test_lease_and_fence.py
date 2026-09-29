@@ -47,6 +47,8 @@ def test_lost_leases_count_as_attempts_and_end_in_a_failed_control_result(conn, 
     expire_leases(conn, 100.0)
     row = conn.execute("SELECT state, error FROM jobs").fetchone()
     assert (row["state"], row["error"]) == ("failed", "lease_lost")
+    assert conn.execute("SELECT attempts FROM jobs").fetchone()[0] == 1
+    assert conn.execute("SELECT outcome FROM attempts").fetchone()[0] == "lost"
     assert conn.execute("SELECT control FROM results").fetchone()[0] == "failed"
 
 
@@ -55,3 +57,34 @@ def test_deadline_expires_a_queued_job(conn, config):
     expire_leases(conn, 60.0)
     assert conn.execute("SELECT state FROM jobs").fetchone()[0] == "expired"
     assert conn.execute("SELECT control FROM results").fetchone()[0] == "expired"
+
+
+def test_sensitive_backlog_does_not_hide_public_jobs_from_a_guest(conn, config):
+    submit_job(conn, config, "pa", body(key="seed", queue="pa.live"), 0.0)
+    columns = [
+        r[1]
+        for r in conn.execute("PRAGMA table_info(jobs)")
+        if r[1] not in ("id", "idempotency_key")
+    ]
+    names = ", ".join(columns)
+    for i in range(500):
+        conn.execute(
+            f"INSERT INTO jobs (id, idempotency_key, {names}) SELECT ?, ?, {names} FROM jobs WHERE idempotency_key='seed'",  # noqa: S608
+            (f"copy{i}", f"copy{i}"),
+        )
+    conn.execute("UPDATE jobs SET priority=90")
+    job_id, _ = submit_job(
+        conn,
+        config,
+        "pa",
+        body(
+            key="pub",
+            queue="pa.bulk",
+            privacy="public",
+            priority=1,
+            requirements={"capability": "chat.json", "models": ["model-b"]},
+        ),
+        0.0,
+    )
+    lease = lease_job(conn, config, ask(node="node-g"), 1.0)
+    assert lease is not None and lease.job_id == job_id

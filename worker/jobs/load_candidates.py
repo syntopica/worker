@@ -11,11 +11,15 @@ def load_candidates(
     conn: sqlite3.Connection, config: WorkerConfig, trust: str, now: float
 ) -> list[Candidate]:
     """Queued, due and not past deadline; at most 500, best priority first."""
+    allowed = [c for c in config.privacy if privacy_allows(config, c, "ollama", trust)]
+    if not allowed:
+        return []
+    marks = ",".join("?" * len(allowed))
     rows = conn.execute(
-        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s FROM jobs"
-        " WHERE state='queued' AND not_before<=? AND (deadline IS NULL OR deadline>?)"
+        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s FROM jobs"  # noqa: S608
+        f" WHERE state='queued' AND not_before<=? AND (deadline IS NULL OR deadline>?) AND privacy IN ({marks})"
         " ORDER BY priority DESC, created LIMIT 500",
-        (now, now),
+        (now, now, *allowed),
     ).fetchall()
     return [
         Candidate(
