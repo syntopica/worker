@@ -12,8 +12,10 @@ from worker.jobs.lease_request import LeaseRequest
 
 def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
     """200 with a lease, or 204 when nothing is eligible."""
+    if ctx.principal.kind != "node":
+        raise ApiError(403, "forbidden")
     body = json.loads(ctx.body or b"{}")
-    if ctx.principal.kind != "node" or body.get("node") != ctx.principal.name:
+    if body.get("node") != ctx.principal.name:
         raise ApiError(403, "forbidden")
     expire_leases(ctx.conn, ctx.now)
     req = LeaseRequest(

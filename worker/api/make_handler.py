@@ -19,6 +19,8 @@ def make_handler(config: WorkerConfig, state_dir: Path) -> type[BaseHTTPRequestH
     """Each request opens its own connection; errors carry only their code."""
 
     class Handler(BaseHTTPRequestHandler):
+        timeout = 30  # a client that stalls mid-request cannot hold a thread forever
+
         def _dispatch(self) -> tuple[int, dict[str, object]]:
             length = int(self.headers.get("Content-Length") or 0)
             if length > config.max_payload_bytes:
