@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   updated REAL NOT NULL,
   finished REAL,
   acked REAL,
+  payloads_deleted INTEGER NOT NULL DEFAULT 0,
   UNIQUE (producer, queue, idempotency_key)
 );
 CREATE INDEX IF NOT EXISTS jobs_ready ON jobs (state, not_before);
