@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from tests.conftest import body
+from tests.conftest import body, fresh_store
 from tests.node.fake_ollama import FakeOllama
 from worker.api.build_server import build_server
 from worker.auth.add_principal import add_principal
@@ -13,7 +13,7 @@ from worker.jobs.submit_job import submit_job
 from worker.node.coordinator_link import CoordinatorLink
 from worker.node.host_state import HostState
 from worker.node.run_node import run_node
-from worker.store.open_store import open_store
+from worker.store.migrate_state import migrate_state
 
 
 class StopLoopError(Exception):
@@ -33,10 +33,11 @@ def test_node_runs_a_submitted_job_to_a_listable_result(config, tmp_path, fake):
     add_principal(state, "producer", "pa")
     local = dataclasses.replace(config.nodes["node-a"], ollama_url=fake.url)
     config = dataclasses.replace(config, nodes={**config.nodes, "node-a": local})
+    migrate_state(state)
     server = build_server(config, state)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     try:
-        conn = open_store(state)
+        conn = fresh_store(state)
         submit_job(conn, config, "pa", body(privacy="public"), time.time())
         conn.close()
         link = CoordinatorLink(f"http://127.0.0.1:{server.server_address[1]}", node_token, "node-a")
@@ -60,7 +61,7 @@ def test_node_runs_a_submitted_job_to_a_listable_result(config, tmp_path, fake):
                 sleep=sleep,
                 clock=lambda: time.time() + offset[0],
             )
-        conn = open_store(state)
+        conn = fresh_store(state)
         results = list_results(conn, "pa", "pa.bulk", 0, 10)
         conn.close()
         assert [(r["output"]["json"], r["executor"]["node"]) for r in results] == [

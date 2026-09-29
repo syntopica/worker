@@ -9,6 +9,7 @@ import pytest
 from worker.api.build_server import build_server
 from worker.auth.add_principal import add_principal
 from worker.jobs.parse_submit_request import parse_submit_request
+from worker.store.migrate_state import migrate_state
 
 FIXTURES = Path(__file__).parents[2] / "contract" / "fixtures"
 LEASE_REQUEST = {
@@ -42,6 +43,7 @@ def api(config, tmp_path):
         name: add_principal(state, kind, name)
         for kind, name in (("producer", "pa"), ("node", "node-a"))
     }
+    migrate_state(state)
     server = build_server(config, state)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield f"http://127.0.0.1:{server.server_address[1]}", tokens

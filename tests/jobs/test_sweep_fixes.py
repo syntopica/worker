@@ -1,14 +1,13 @@
 import json
 import time
 
-from tests.conftest import body
+from tests.conftest import body, fresh_store
 from tests.jobs.test_results_and_retention import succeed
 from worker.jobs.ack_result import ack_result
 from worker.jobs.check_outstanding import check_outstanding
 from worker.jobs.list_results import list_results
 from worker.jobs.submit_job import submit_job
 from worker.jobs.sweep_retention import sweep_retention
-from worker.store.open_store import open_store
 
 DAY = 86400.0
 _WRITES = ("UPDATE", "DELETE", "INSERT")
@@ -36,7 +35,7 @@ def test_a_sweep_over_already_swept_jobs_touches_no_rows(conn, config):
 
 def seed(state, count):
     """``count`` public jobs, succeeded and acked at t=0, each with input and output."""
-    conn = open_store(state)
+    conn = fresh_store(state)
     conn.execute("BEGIN")
     for i in range(count):
         job, result = f"j{i}", f"r{i}"
@@ -147,7 +146,7 @@ def test_an_unknown_queue_gets_default_retention_and_one_log_line(conn, config, 
 
 def test_the_payload_wal_is_checkpointed_after_a_deleting_pass(tmp_path, config):
     state = tmp_path / "state"
-    conn = open_store(state)
+    conn = fresh_store(state)
     succeed(conn, config, privacy="public", queue="pa.live")
     sweep_retention(conn, config, 8 * DAY)
     assert (state / "payloads.sqlite3-wal").stat().st_size == 0

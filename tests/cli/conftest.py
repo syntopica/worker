@@ -6,11 +6,13 @@ import pytest
 from tests.conftest import CONFIG
 from worker.api.build_server import build_server
 from worker.cli.main import main
+from worker.store.migrate_state import migrate_state
 
 
 @pytest.fixture
 def served(config, tmp_path, monkeypatch):
     state = tmp_path / "worker" / "state"
+    migrate_state(state)
     server = build_server(config, state)  # port 0: the OS picks a free one
     threading.Thread(target=server.serve_forever, daemon=True).start()
     (tmp_path / "worker").mkdir(exist_ok=True)

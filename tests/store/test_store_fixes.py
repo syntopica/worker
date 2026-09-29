@@ -5,9 +5,9 @@ import sys
 
 import pytest
 
+from tests.conftest import fresh_store
 from worker.store import exclude_payloads_from_backup as exclude_module
 from worker.store import mark_backup_excluded as mark_module
-from worker.store.open_store import open_store
 from worker.store.schema_sql import SCHEMA
 
 LEGACY = SCHEMA.replace("  payloads_deleted INTEGER NOT NULL DEFAULT 0,\n", "")
@@ -38,11 +38,11 @@ def legacy_store(state):
 def test_the_legacy_store_gains_the_column_and_keeps_its_rows(tmp_path):
     assert "payloads_deleted" not in LEGACY
     legacy_store(tmp_path / "state")
-    conn = open_store(tmp_path / "state")
+    conn = fresh_store(tmp_path / "state")
     rows = dict(conn.execute("SELECT id, payloads_deleted FROM jobs").fetchall())
     assert rows == {"old": 1, "live": 0}
     conn.close()
-    conn = open_store(tmp_path / "state")  # idempotent on the second open
+    conn = fresh_store(tmp_path / "state")  # idempotent on the second open
     assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 2
 
 
@@ -53,10 +53,10 @@ def test_the_hot_path_indexes_exist(conn):
 
 def test_state_files_are_private(tmp_path):
     state = tmp_path / "state"
-    conn = open_store(state)
+    conn = fresh_store(state)
     conn.execute("INSERT INTO nodes (name, report, updated) VALUES ('n', '{}', 0)")
     conn.close()
-    conn = open_store(state)
+    conn = fresh_store(state)
     assert stat.S_IMODE(state.stat().st_mode) == 0o700
     for path in state.iterdir():
         assert stat.S_IMODE(path.stat().st_mode) == 0o600, path.name
@@ -69,7 +69,7 @@ def test_the_payload_wal_is_truncated_after_checkpoints(conn):
 @pytest.mark.skipif(sys.platform != "darwin", reason="Time Machine exists on macOS only")
 def test_payload_files_are_excluded_from_time_machine(tmp_path):
     state = tmp_path / "state"
-    open_store(state)
+    fresh_store(state)
     value = subprocess.run(
         [
             "/usr/bin/xattr",

@@ -1,48 +1,27 @@
-"""Open the coordinator's two SQLite files as one connection."""
+"""Open an already migrated store for one request or one sweep pass."""
 
-import os
 import sqlite3
-import threading
 from pathlib import Path
 
+from worker.store.connect_store import connect_store
 from worker.store.exclude_payloads_from_backup import exclude_payloads_from_backup
-from worker.store.migrate_store import migrate_store
 from worker.store.protect_state_files import protect_state_files
-from worker.store.schema_sql import SCHEMA
-
-_UMASK_LOCK = threading.Lock()
+from worker.store.store_not_migrated_error import StoreNotMigratedError
+from worker.store.store_version import STORE_VERSION
 
 
 def open_store(state_dir: Path) -> sqlite3.Connection:
-    """Metadata in ``meta.sqlite3``; content in ``payloads.sqlite3``, attached as ``p``.
+    """Never migrates and never begins a transaction; only reads ``user_version``.
 
     Only the metadata file is ever backed up (spec 9), which is why content
-    lives in a file of its own rather than in tables a backup cannot exclude.
-    Files are created under umask 077 and then forced to 0600; sqlite gives
-    later ``-wal``/``-shm`` files the mode of their database file.
+    lives in a file of its own. Raise StoreNotMigratedError on an older store:
+    the entry points run ``migrate_state`` first.
     """
-    with _UMASK_LOCK:
-        previous = os.umask(0o077)
-        try:
-            state_dir.mkdir(parents=True, exist_ok=True)
-            conn = sqlite3.connect(
-                state_dir / "meta.sqlite3",
-                timeout=10,
-                isolation_level=None,
-                check_same_thread=False,
-            )
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA synchronous=FULL")
-            conn.execute("ATTACH DATABASE ? AS p", (str(state_dir / "payloads.sqlite3"),))
-            conn.execute("PRAGMA p.journal_mode=WAL")
-            conn.execute("PRAGMA p.synchronous=FULL")
-            conn.execute("PRAGMA p.secure_delete=ON")
-            conn.execute("PRAGMA p.journal_size_limit=0")
-            conn.executescript(SCHEMA)
-            migrate_store(conn)
-        finally:
-            os.umask(previous)
+    conn = connect_store(state_dir)
+    found = conn.execute("PRAGMA user_version").fetchone()[0]
+    if found < STORE_VERSION:
+        conn.close()
+        raise StoreNotMigratedError(found, STORE_VERSION)
     protect_state_files(state_dir)
     exclude_payloads_from_backup(state_dir)
     return conn

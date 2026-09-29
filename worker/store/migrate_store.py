@@ -1,8 +1,10 @@
-"""Bring an existing store forward to the current schema, in place."""
+"""Bring a store forward to the current schema, in place."""
 
 import sqlite3
 
 from worker.store.index_sql import INDEXES
+from worker.store.schema_sql import SCHEMA
+from worker.store.store_version import STORE_VERSION
 from worker.store.transaction import transaction
 
 
@@ -11,9 +13,12 @@ def migrate_store(conn: sqlite3.Connection) -> None:
 
     A store from before ``payloads_deleted`` gains the column; finished jobs
     whose input is already gone are marked, so the first sweep after the
-    upgrade does not revisit them.
+    upgrade does not revisit them. ``user_version`` is set last, in the same
+    transaction.
     """
     with transaction(conn):
+        for statement in filter(str.strip, SCHEMA.split(";")):
+            conn.execute(statement)
         columns = {r[1] for r in conn.execute("PRAGMA main.table_info(jobs)")}
         if "payloads_deleted" not in columns:
             conn.execute("ALTER TABLE jobs ADD COLUMN payloads_deleted INTEGER NOT NULL DEFAULT 0")
@@ -23,3 +28,4 @@ def migrate_store(conn: sqlite3.Connection) -> None:
             )
         for statement in INDEXES:
             conn.execute(statement)
+        conn.execute(f"PRAGMA user_version={STORE_VERSION}")

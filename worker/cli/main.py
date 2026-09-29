@@ -6,6 +6,7 @@ import urllib.error
 from worker.cli.build_parser import build_parser
 from worker.cli.missing_token_error import MissingTokenError
 from worker.client.api_failure import ApiFailure
+from worker.store.store_not_migrated_error import StoreNotMigratedError
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -16,7 +17,7 @@ def main(argv: list[str] | None = None) -> int:
     except ApiFailure as failure:
         print(f"worker: {failure.status} {failure.code}", file=sys.stderr)
         return 1
-    except MissingTokenError as missing:
+    except (MissingTokenError, StoreNotMigratedError) as missing:
         print(f"worker: {missing}", file=sys.stderr)
         return 2
     except urllib.error.URLError as error:

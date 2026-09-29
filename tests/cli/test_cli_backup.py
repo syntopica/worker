@@ -4,10 +4,9 @@ import stat
 import pytest
 
 from tests.cli.test_cli import instance
-from tests.conftest import body
+from tests.conftest import body, fresh_store
 from worker.cli.main import main
 from worker.jobs.submit_job import submit_job
-from worker.store.open_store import open_store
 
 
 def rows(path):
@@ -17,7 +16,7 @@ def rows(path):
 
 def test_a_row_written_before_the_backup_survives(tmp_path, monkeypatch, config):
     state = instance(tmp_path, monkeypatch)
-    conn = open_store(state)
+    conn = fresh_store(state)
     submit_job(conn, config, "pa", body(), 1.0)
     conn.close()
     dest = tmp_path / "b.sqlite3"
@@ -27,7 +26,7 @@ def test_a_row_written_before_the_backup_survives(tmp_path, monkeypatch, config)
 
 def test_uncheckpointed_wal_rows_are_backed_up_with_the_source_open(tmp_path, monkeypatch, config):
     state = instance(tmp_path, monkeypatch)
-    conn = open_store(state)
+    conn = fresh_store(state)
     conn.execute("PRAGMA wal_autocheckpoint=0")
     for n in range(3):
         submit_job(conn, config, "pa", body(key=f"k{n}"), 1.0)
@@ -49,7 +48,7 @@ def test_absent_store_is_exit_2_and_creates_nothing(tmp_path, monkeypatch, capsy
 
 def test_backup_file_mode_is_0600(tmp_path, monkeypatch):
     state = instance(tmp_path, monkeypatch)
-    open_store(state).close()
+    fresh_store(state).close()
     dest = tmp_path / "b.sqlite3"
     assert main(["backup", str(dest)]) == 0
     assert stat.S_IMODE(dest.stat().st_mode) == 0o600
@@ -57,7 +56,7 @@ def test_backup_file_mode_is_0600(tmp_path, monkeypatch):
 
 def test_existing_dest_is_refused_and_untouched(tmp_path, monkeypatch, capsys):
     state = instance(tmp_path, monkeypatch)
-    open_store(state).close()
+    fresh_store(state).close()
     dest = tmp_path / "b.sqlite3"
     dest.write_text("keep me")
     assert main(["backup", str(dest)]) == 2
@@ -77,7 +76,7 @@ def failing_backup(monkeypatch, action):
 
 def test_a_sqlite_failure_is_one_line_exit_1_and_removes_dest(tmp_path, monkeypatch, capsys):
     state = instance(tmp_path, monkeypatch)
-    open_store(state).close()
+    fresh_store(state).close()
 
     def fail(*_args, **_kwargs):
         raise sqlite3.OperationalError("secret-detail")
@@ -91,7 +90,7 @@ def test_a_sqlite_failure_is_one_line_exit_1_and_removes_dest(tmp_path, monkeypa
 
 def test_an_interrupt_removes_dest_and_propagates(tmp_path, monkeypatch):
     state = instance(tmp_path, monkeypatch)
-    open_store(state).close()
+    fresh_store(state).close()
 
     def interrupt(*_args, **_kwargs):
         raise KeyboardInterrupt

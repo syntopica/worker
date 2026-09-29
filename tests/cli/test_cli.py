@@ -1,9 +1,8 @@
 import json
 import sqlite3
 
-from tests.conftest import CONFIG
+from tests.conftest import CONFIG, fresh_store
 from worker.cli.main import main
-from worker.store.open_store import open_store
 
 
 def instance(tmp_path, monkeypatch):
@@ -23,7 +22,7 @@ def test_token_add_prints_once_and_stores_only_a_hash(tmp_path, monkeypatch, cap
 
 def test_backup_copies_metadata_only(tmp_path, monkeypatch):
     state = instance(tmp_path, monkeypatch)
-    open_store(state).close()
+    fresh_store(state).close()
     dest = tmp_path / "backup.sqlite3"
     assert main(["backup", str(dest)]) == 0
     tables = {

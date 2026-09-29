@@ -9,12 +9,14 @@ from worker.api.build_server import build_server
 from worker.auth.add_principal import add_principal
 from worker.client.api_failure import ApiFailure
 from worker.client.worker_client import WorkerClient
+from worker.store.migrate_state import migrate_state
 
 
 @pytest.fixture
 def client(config, tmp_path):
     state = tmp_path / "state"
     token = add_principal(state, "producer", "pa")
+    migrate_state(state)
     server = build_server(config, state)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield WorkerClient(f"http://127.0.0.1:{server.server_address[1]}", token)

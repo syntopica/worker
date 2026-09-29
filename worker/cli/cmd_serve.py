@@ -11,13 +11,15 @@ from worker.cli.resolve_paths import resolve_paths
 from worker.cli.run_sweeper import run_sweeper
 from worker.config.load_worker_config import load_worker_config
 from worker.jobs.reconcile_lost_payloads import reconcile_lost_payloads
+from worker.store.migrate_state import migrate_state
 from worker.store.open_store import open_store
 
 
 def cmd_serve(args: argparse.Namespace) -> int:  # noqa: ARG001
-    """Fail jobs whose payload is gone, then serve; reclaim and retention run every minute."""
+    """Migrate the store, fail jobs whose payload is gone, then serve; reclaim and retention run every minute."""
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
+    migrate_state(state)
     conn = open_store(state)
     try:
         reconcile_lost_payloads(conn, time.time())

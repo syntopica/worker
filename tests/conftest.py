@@ -3,6 +3,7 @@ import json
 import pytest
 
 from worker.config.load_worker_config import load_worker_config
+from worker.store.migrate_state import migrate_state
 from worker.store.open_store import open_store
 
 CONFIG = {
@@ -40,9 +41,15 @@ def config(tmp_path):
     return load_worker_config(path)
 
 
+def fresh_store(state):
+    """Migrate, as the entry points do, then open."""
+    migrate_state(state)
+    return open_store(state)
+
+
 @pytest.fixture
 def conn(tmp_path):
-    return open_store(tmp_path / "state")
+    return fresh_store(tmp_path / "state")
 
 
 def body(key="k1", queue="pa.bulk", privacy="mail", **extra):

@@ -28,9 +28,15 @@ def test_interrupt_closes_the_server_and_returns_0(served, monkeypatch):
             events.append("sweeper")
 
     monkeypatch.setattr(cmd_serve_module, "build_server", fake_build)
+    real_migrate = cmd_serve_module.migrate_state
+    monkeypatch.setattr(
+        cmd_serve_module,
+        "migrate_state",
+        lambda state: events.append("migrate") or real_migrate(state),
+    )
     monkeypatch.setattr(
         cmd_serve_module, "reconcile_lost_payloads", lambda _c, _now: events.append("reconcile")
     )
     monkeypatch.setattr(threading, "Thread", FakeThread)
     assert cmd_serve(argparse.Namespace()) == 0
-    assert events == ["reconcile", "build", "sweeper", "serve", "close"]
+    assert events == ["migrate", "reconcile", "build", "sweeper", "serve", "close"]

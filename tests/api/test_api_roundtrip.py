@@ -8,6 +8,7 @@ import pytest
 from tests.conftest import body
 from worker.api.build_server import build_server
 from worker.auth.add_principal import add_principal
+from worker.store.migrate_state import migrate_state
 
 
 @pytest.fixture
@@ -17,6 +18,7 @@ def api(config, tmp_path):
         name: add_principal(state, kind, name)
         for kind, name in (("producer", "pa"), ("node", "node-a"), ("admin", "admin"))
     }
+    migrate_state(state)
     server = build_server(config, state)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_address[1]}"

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from worker.cli.resolve_paths import resolve_paths
+from worker.store.migrate_state import migrate_state
 
 
 def cmd_backup(args: argparse.Namespace) -> int:
@@ -17,6 +18,7 @@ def cmd_backup(args: argparse.Namespace) -> int:
     if not source_path.exists():
         print(f"worker: no store at {source_path}", file=sys.stderr)
         return 2
+    migrate_state(state)
     dest = Path(args.dest)
     try:
         os.close(os.open(dest, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600))
