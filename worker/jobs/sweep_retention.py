@@ -40,10 +40,7 @@ def sweep_retention(conn: sqlite3.Connection, config: WorkerConfig, now: float) 
                 and job["state"] != "succeeded"
                 and now - job["finished"] >= _INSPECTION_S
             )
-            retained_out = (
-                job["acked"] is not None
-                and now - ended >= config.queues[job["queue"]].retention_days * 86400
-            )
+            retained_out = now - ended >= config.queues[job["queue"]].retention_days * 86400
             if sensitive_done or retained_out:
                 delete_payloads(conn, job["id"])
                 swept += 1

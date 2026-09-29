@@ -87,3 +87,32 @@ def test_cancel_a_queued_job_and_status_counts_it(conn, config):
     assert cancel_job(conn, "pa", job_id, 1.0) == "cancelled"
     status = read_status(conn, 2.0)
     assert status["queues"]["pa.bulk"]["states"]["cancelled"] == 1
+
+
+def test_get_job_finds_its_result_behind_a_hundred_others(conn, config):
+    other = succeed(conn, config, key="other", now=0.0)
+    for i in range(101):
+        conn.execute(
+            "INSERT INTO results (result_id, job_id, producer, queue, control, created)"
+            " VALUES (?, ?, 'pa', 'pa.bulk', 'failed', ?)",
+            (f"f{i}", other, float(i)),
+        )
+    target = succeed(conn, config, key="target", now=2000.0)
+    assert get_job(conn, "pa", target)["result"]["job_id"] == target
+
+
+def test_unacked_public_payload_is_retained_from_finish(conn, config):
+    succeed(conn, config, privacy="public")
+    sweep_retention(conn, config, 6 * DAY)
+    assert conn.execute("SELECT count(*) FROM p.inputs").fetchone()[0] == 1
+    sweep_retention(conn, config, 8 * DAY)
+    assert conn.execute("SELECT count(*) FROM p.inputs").fetchone()[0] == 0
+
+
+def test_duplicate_ack_keeps_the_first_time(conn, config):
+    job_id = succeed(conn, config, privacy="public")
+    rid = list_results(conn, "pa", "pa.bulk", 0, 10)[0]["result_id"]
+    ack_result(conn, config, "pa", job_id, rid, False, 10.0)
+    ack_result(conn, config, "pa", job_id, rid, False, 50.0)
+    assert conn.execute("SELECT acked FROM jobs").fetchone()[0] == 10.0
+    assert conn.execute("SELECT acked FROM results").fetchone()[0] == 10.0

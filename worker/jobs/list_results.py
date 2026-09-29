@@ -1,8 +1,9 @@
 """The producer's unacknowledged results, in completion order (spec 6)."""
 
-import json
 import sqlite3
 from typing import Any
+
+from worker.jobs.result_row_to_dict import result_row_to_dict
 
 
 def list_results(
@@ -14,16 +15,4 @@ def list_results(
         " WHERE r.producer=? AND r.queue=? AND r.seq>? AND r.acked IS NULL ORDER BY r.seq LIMIT ?",
         (producer, queue, after, min(limit, 100)),
     ).fetchall()
-    return [
-        {
-            "seq": r["seq"],
-            "result_id": r["result_id"],
-            "job_id": r["job_id"],
-            "control": r["control"],
-            "detail": json.loads(r["detail"]) if r["detail"] else None,
-            "output": json.loads(r["output"]) if r["output"] else None,
-            "executor": json.loads(r["executor"]) if r["executor"] else None,
-            "usage": json.loads(r["usage"]) if r["usage"] else None,
-        }
-        for r in rows
-    ]
+    return [result_row_to_dict(r) for r in rows]
