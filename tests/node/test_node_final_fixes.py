@@ -206,3 +206,12 @@ def test_an_unreachable_ps_after_unload_never_restarts():
         pause=lambda _s: None,
     )
     assert calls == ["unload"]
+
+
+@pytest.mark.parametrize("code", ["transport_error", "node_error", "http_404"])
+def test_a_failed_attempt_never_makes_the_model_the_nodes_own(code):
+    memory = NodeMemory()
+    settle_attempt(memory, "model-a", False, "failed", code, 0.0)
+    assert memory.owned == set()
+    settle_attempt(memory, "model-a", False, "succeeded", None, 0.0)
+    assert memory.owned == {"model-a"}

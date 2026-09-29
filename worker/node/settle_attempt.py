@@ -5,6 +5,7 @@ from worker.node.pressure_samples import PRESSURE_SAMPLES
 
 _MAX_BACKOFF_S = 7200.0
 _FIRST_BACKOFF_S = 900.0
+_RAN = ("succeeded", "preempted", "fenced", "drain_failed")
 
 
 def settle_attempt(  # noqa: PLR0913, PLR0917
@@ -18,9 +19,11 @@ def settle_attempt(  # noqa: PLR0913, PLR0917
     """Return True when the node should rest before asking for more work.
 
     A pressure release starts a backoff of 15 minutes, doubling per
-    consecutive pressure release up to 2 hours; a success resets it.
+    consecutive pressure release up to 2 hours; a success resets it. A model
+    becomes the node's own only when the attempt ran on it: a failed attempt
+    (``transport_error``, ``node_error``, an HTTP error) may never have loaded it.
     """
-    if not was_resident:
+    if not was_resident and outcome in _RAN:
         memory.owned.add(model)
     if outcome == "drain_failed":
         memory.failed_model = model
