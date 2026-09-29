@@ -191,7 +191,12 @@ succeeded -> unacked_expired               (sensitive payload deleted, section 9
   3. The coordinator moves the parent to `superseded` once the first child
      arrives, and rejects further children whose `count` differs from the
      first.
-  4. A producer that does not support splitting acknowledges the control
+  4. Children of a `split_requested` or `superseded` parent are admitted
+     outside the producer's outstanding limit, up to `count`, which is capped
+     at `max_split` (default 8). Splitting at capacity therefore never gets a
+     `429`, and the bound becomes the limit times `max_split` in the worst
+     case.
+  5. A producer that does not support splitting acknowledges the control
      result with `"decline"`. The job stays `queued` and parked (section 7).
 - **Reconciliation.** `needs_reconciliation` is resolved by the operator or by
   the producer through `POST /v1/jobs/{id}/reconcile` with `reconciled` or
@@ -293,18 +298,22 @@ Rust client crate, and both are tested against shared JSON fixtures.
 
 **No starvation by preemption.**
 - A job carries a `preemptions` counter.
-- After N preemptions (default 3), the producer's batch-shrink hint applies:
-  the job is marked `shrink_requested`, and a producer that supports splitting
-  resubmits smaller batches.
+- After N preemptions (default 3), the job moves to `split_requested`
+  (section 6), and a producer that supports splitting resubmits smaller
+  batches.
 - If the producer declines, or the job cannot be split, the job is **parked**.
   A parked job is eligible again only when the node's *current* idle period
   has already lasted at least 1.5 times the job's measured p90 runtime, or the
   queue's `parked_min_idle`, whichever is larger. The scheduler hands parked
   work to the idle period in progress, not to history.
-- This bounds wasted work: at most N+1 interrupted runs per job. It does not
-  bound latency. A parked job on a machine that never stays idle long enough
-  waits indefinitely, and `queue` shows it as parked with the idle time it
-  needs.
+- Each interruption of a parked job doubles the current idle it needs next
+  time. After `max_parked_runs` interrupted parked runs (default 3), the job
+  becomes `failed` with `preemption_exhausted`, and the producer decides
+  whether to resubmit it.
+- Wasted work is therefore bounded at N + `max_parked_runs` interrupted runs
+  per job. Latency is not bounded. A parked job on a machine that never stays
+  idle long enough waits until then, and `queue` shows it as parked with the
+  idle time it needs.
 - Wasted runtime per job and per day is recorded and shown in `status`.
 
 **Model residency.**
