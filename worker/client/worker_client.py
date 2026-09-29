@@ -9,10 +9,15 @@ from typing import Any
 
 from worker.client.api_failure import ApiFailure
 from worker.client.error_code import error_code
+from worker.client.quote_job_id import quote_job_id
 
 
 class WorkerClient:
-    """Record ``result_id`` with your domain writes, then ``ack`` (spec 6)."""
+    """Record ``result_id`` with your domain writes, then ``ack`` (spec 6).
+
+    Coordinator refusals raise ``ApiFailure``. Transport errors (``URLError``,
+    ``TimeoutError``) propagate unwrapped.
+    """
 
     def __init__(self, base_url: str, token: str) -> None:
         self.base_url = base_url.rstrip("/")
@@ -41,7 +46,7 @@ class WorkerClient:
 
     def get(self, job_id: str) -> dict[str, Any]:
         """``{"id", "state", "error", "result"}``."""
-        return dict(self._call("GET", f"/v1/jobs/{job_id}"))
+        return dict(self._call("GET", f"/v1/jobs/{quote_job_id(job_id)}"))
 
     def results(
         self, queue: str, after: int = 0, limit: int = 50, wait: float = 0
@@ -55,17 +60,21 @@ class WorkerClient:
     def ack(self, job_id: str, result_id: str, decline: bool = False) -> None:
         """Acknowledge, or decline a ``split_requested`` control result."""
         payload = {"result_id": result_id, "decline": decline}
-        self._call("POST", f"/v1/jobs/{job_id}/ack", payload)
+        self._call("POST", f"/v1/jobs/{quote_job_id(job_id)}/ack", payload)
 
     def cancel(self, job_id: str) -> str:
         """The state the job ended in."""
-        return str(self._call("POST", f"/v1/jobs/{job_id}/cancel", {})["state"])
+        return str(self._call("POST", f"/v1/jobs/{quote_job_id(job_id)}/cancel", {})["state"])
 
     def wait_for(self, job_id: str, timeout: float, poll: float = 5.0) -> dict[str, Any] | None:
-        """The job's latest unacknowledged result, or None when ``timeout`` passes."""
+        """The job's latest unacknowledged result, control results included.
+
+        None when ``timeout`` passes, which is also the answer for a job with no
+        unacknowledged result, such as a cancelled or already acknowledged one.
+        """
         deadline = time.monotonic() + timeout
         while True:
             result = self.get(job_id)["result"]
             if result is not None or time.monotonic() >= deadline:
                 return dict(result) if result is not None else None
-            time.sleep(poll)
+            time.sleep(min(poll, max(0.0, deadline - time.monotonic())))

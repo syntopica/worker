@@ -29,12 +29,21 @@ Errors are `{"error": "<code>"}` with the HTTP status. `error_stale_attempt.json
 
 ## Control results
 
-A result row with a non-null `control` carries no output.
+A result row with a non-null `control` carries no output, executor or usage, and its `detail` depends on the control.
 
-- `split_requested`: the job was preempted repeatedly. Submit split children, or decline through `ack` with `decline: true` to park the job.
-- `failed`: attempts were exhausted.
-- `expired`: the deadline passed before completion.
-- `unacked_expired`: a result was never acknowledged in time.
+- `split_requested`: the job was preempted repeatedly. `detail` is `{"preemptions": <count>}`. Submit split children, or decline through `ack` with `decline: true` to park the job.
+- `failed`: attempts were exhausted, the lease was lost or preemption was exhausted. `detail` is `{"error": "<code>"}`. See `result_failed.json`.
+- `expired`: the deadline passed before completion. `detail` is `{"error": "deadline"}`.
+- `unacked_expired`: a result was never acknowledged in time. `detail` is `{}`.
+
+The codes a `failed` result can carry are `lease_lost`, `preemption_exhausted`, `schema_violation`, `executor_error`, `transport_error`, `bad_response`, `cancelled` and `unknown_model`. They are allowlisted; a code never contains provider or generated text.
+
+## Limits and scope
+
+- Phase 1a accepts `kind: "inference"` only. `kind: "task"` is rejected with `400 unsupported_kind`.
+- `limit` on `GET /v1/results` is capped at 100.
+- `wait` on `GET /v1/results` is capped at 30 seconds.
+- The `needs_reconciliation` state and its `/reconcile` route are deferred to phase 2.
 
 ## Split children
 

@@ -59,29 +59,84 @@ def test_result_fixtures_carry_the_documented_keys():
         assert set(fixture(name)) == keys
 
 
-def test_fixture_key_sets_match_the_real_server(api):
-    base, tokens = api
-    job = {**fixture("submit_inference.json"), "queue": "pa.bulk"}
-    assert call(base, tokens["pa"], "POST", "/v1/jobs", job)[0] == 201
+def lease_one(base, tokens):
     status, lease = call(base, tokens["node-a"], "POST", "/v1/leases", LEASE_REQUEST)
     assert status == 200
-    assert set(fixture("lease.json")) == set(lease)
-    stale = {"generation": lease["generation"] + 1, "outcome": "succeeded"}
-    path = f"/v1/attempts/{lease['attempt_id']}/complete"
-    status, error = call(base, tokens["node-a"], "POST", path, stale)
-    assert (status, set(error)) == (409, set(fixture("error_stale_attempt.json")))
-    assert error == fixture("error_stale_attempt.json")
-    report = {
+    return lease, f"/v1/attempts/{lease['attempt_id']}/complete"
+
+
+def report(lease, outcome, **extra):
+    body = {
         "generation": lease["generation"],
-        "outcome": "succeeded",
-        "output": {"text": "ok", "json": None},
-        "usage": {"tokens_in": 1, "tokens_out": 1},
+        "outcome": outcome,
+        "output": None,
+        "usage": {},
         "executor": {"node": "node-a", "provider": "ollama", "model": "model-a"},
         "error_code": None,
         "wall_s": 1.0,
     }
-    assert call(base, tokens["node-a"], "POST", path, report)[0] == 200
+    return {**body, **extra}
+
+
+def submit(base, tokens, **extra):
+    job = {**fixture("submit_inference.json"), "queue": "pa.bulk", **extra}
+    assert call(base, tokens["pa"], "POST", "/v1/jobs", job)[0] == 201
+
+
+def first_result(base, tokens):
     _, results = call(base, tokens["pa"], "GET", "/v1/results?queue=pa.bulk&after=0")
-    real = set(results["results"][0])
-    for name in ("result_succeeded.json", "result_split_requested.json"):
-        assert set(fixture(name)) == real
+    return results["results"][0]
+
+
+def test_lease_and_stale_error_match_the_real_server(api):
+    base, tokens = api
+    submit(base, tokens)
+    lease, path = lease_one(base, tokens)
+    assert set(fixture("lease.json")) == set(lease)
+    assert set(fixture("lease.json")["input"]) == set(lease["input"])
+    stale = report(lease, "succeeded", generation=lease["generation"] + 1)
+    status, error = call(base, tokens["node-a"], "POST", path, stale)
+    assert (status, error) == (409, fixture("error_stale_attempt.json"))
+
+
+def test_succeeded_fixture_matches_the_real_server(api):
+    base, tokens = api
+    submit(base, tokens)
+    lease, path = lease_one(base, tokens)
+    done = report(
+        lease,
+        "succeeded",
+        output={"text": "ok", "json": None},
+        usage={"tokens_in": 1, "tokens_out": 1},
+    )
+    assert call(base, tokens["node-a"], "POST", path, done)[0] == 200
+    real, expected = first_result(base, tokens), fixture("result_succeeded.json")
+    assert set(real) == set(expected)
+    for key in ("output", "executor", "usage"):
+        assert set(real[key]) == set(expected[key])
+
+
+def test_split_requested_fixture_matches_the_real_server(api):
+    base, tokens = api
+    submit(base, tokens)
+    for _ in range(3):
+        lease, path = lease_one(base, tokens)
+        call(base, tokens["node-a"], "POST", path, report(lease, "preempted"))
+    real, expected = first_result(base, tokens), fixture("result_split_requested.json")
+    assert set(real) == set(expected)
+    assert real["control"] == expected["control"]
+    assert (real["output"], real["executor"], real["usage"]) == (None, None, None)
+    assert set(real["detail"]) == set(expected["detail"])
+
+
+def test_failed_fixture_matches_the_real_server(api):
+    base, tokens = api
+    submit(base, tokens, max_attempts=1)
+    lease, path = lease_one(base, tokens)
+    failed = report(lease, "failed", error_code="transport_error")
+    assert call(base, tokens["node-a"], "POST", path, failed)[0] == 200
+    real, expected = first_result(base, tokens), fixture("result_failed.json")
+    assert set(real) == set(expected)
+    assert real["control"] == expected["control"]
+    assert (real["output"], real["executor"], real["usage"]) == (None, None, None)
+    assert set(real["detail"]) == set(expected["detail"])

@@ -1,1 +1,1 @@
-{"job_id": "0f3c...", "attempt_id": "9b1e...", "generation": 1, "model": "model-a", "input": {"messages": [], "format": "json"}, "run_when": "idle", "ttl_s": 60.0}
+{"job_id": "0f3c...", "attempt_id": "9b1e...", "generation": 1, "model": "model-a", "input": {"messages": [], "format": "json", "options": {"temperature": 0}}, "run_when": "idle", "ttl_s": 60.0}
