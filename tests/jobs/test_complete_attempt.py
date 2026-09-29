@@ -1,4 +1,6 @@
 import json
+import socket
+import urllib.request
 
 from tests.conftest import body
 from worker.jobs.complete_attempt import complete_attempt
@@ -120,3 +122,40 @@ def test_malformed_schema_is_a_schema_violation_not_a_crash(conn, config):
         "queued",
         "schema_violation",
     )
+
+
+def _violation(conn, config, schema, output=None):
+    submit_job(conn, config, "pa", body(input={"messages": [], "schema": schema}), 0.0)
+    lease = run(conn, config)
+    out = {"text": "{}", "json": {}} if output is None else output
+    state = complete_attempt(
+        conn, config, lease.attempt_id, lease.generation, report("succeeded", out), 2.0
+    )
+    return state, conn.execute("SELECT error FROM jobs").fetchone()[0]
+
+
+def test_dangling_local_ref_is_a_schema_violation(conn, config):
+    assert _violation(conn, config, {"$ref": "#/nope"}) == ("queued", "schema_violation")
+
+
+def test_remote_ref_is_a_schema_violation_without_network(conn, config, monkeypatch):
+
+    def refuse(*_a, **_k):
+        raise AssertionError("network retrieval attempted")
+
+    monkeypatch.setattr(socket.socket, "connect", refuse)
+    monkeypatch.setattr(urllib.request, "urlopen", refuse)
+    assert _violation(conn, config, {"$ref": "http://x.invalid/s"}) == (
+        "queued",
+        "schema_violation",
+    )
+
+
+def test_falsy_schema_is_validated_not_skipped(conn, config):
+    assert _violation(conn, config, False) == ("queued", "schema_violation")
+
+
+def test_non_dict_output_fails_the_check(conn, config):
+    assert _violation(conn, config, SCHEMA, output=["x"]) == ("queued", "schema_violation")
+    attempt = conn.execute("SELECT outcome, error FROM attempts").fetchone()
+    assert (attempt["outcome"], attempt["error"]) == ("schema_violation", "schema_violation")

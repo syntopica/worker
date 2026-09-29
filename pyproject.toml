@@ -3,7 +3,7 @@ name = "worker"
 version = "0.1.0"
 description = "Background AI job processor for idle local machines"
 requires-python = ">=3.11"
-dependencies = ["jsonschema>=4.25,<5"]
+dependencies = ["jsonschema>=4.25,<5", "referencing>=0.37,<1"]
 
 [project.scripts]
 worker = "worker.cli.main:main"

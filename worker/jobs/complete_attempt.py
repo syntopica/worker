@@ -41,7 +41,10 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
         if report.outcome != "succeeded":
             return fail_attempt(conn, job, report.error_code or "executor_error", now)
         if not output_matches_schema(conn, job["id"], report.output):
-            conn.execute("UPDATE attempts SET outcome='schema_violation' WHERE id=?", (attempt_id,))
+            conn.execute(
+                "UPDATE attempts SET outcome='schema_violation', error='schema_violation' WHERE id=?",
+                (attempt_id,),
+            )
             return fail_attempt(conn, job, "schema_violation", now)
         result_id = uuid.uuid4().hex
         conn.execute(
