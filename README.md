@@ -33,6 +33,56 @@ privacy policy, queues, the database and the logs all live in a private data
 instance, located through `SYNTOPICA_DATA` or the enclosing
 `syntopica.config.json`, the same way as the other Syntopica engines.
 
+## Running it
+
+Install the coordinator and node agents:
+
+```bash
+uv tool install --editable .
+```
+
+Create tokens for the coordinator, the node, and any producers:
+
+```bash
+worker token add --kind admin --name admin
+worker token add --kind node --name <node-name>
+worker token add --kind producer --name <producer-name>
+```
+
+Each token is printed once and then saved at `$SYNTOPICA_DATA/worker/state/tokens/` with mode `0600`.
+
+Render the LaunchAgent templates by substituting `@WORKER_BIN@`, `@SYNTOPICA_DATA@`, and `@NODE@`:
+
+```bash
+for t in serve node; do
+  sed -e "s#@WORKER_BIN@#$(command -v worker)#" \
+      -e "s#@SYNTOPICA_DATA@#$SYNTOPICA_DATA#" \
+      -e "s#@NODE@#<node-name>#" \
+    launchd/com.syntopica.worker.$t.plist.template > \
+    ~/Library/LaunchAgents/com.syntopica.worker.$t.plist
+done
+```
+
+Bootstrap both agents:
+
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.serve.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.node.plist
+```
+
+Check status:
+
+```bash
+worker status
+worker nodes
+```
+
+Both agents are LaunchAgents that require a logged-in GUI session, not LaunchDaemons.
+The node reports `pressure_recovering` for the first 120 seconds and then transitions
+to an idle-awareness state. The instance configuration lives in
+`$SYNTOPICA_DATA/worker/config.json`; never store it in this repository. The `worker/state/`
+directory must be git-ignored in the instance.
+
 ## License
 
 MIT

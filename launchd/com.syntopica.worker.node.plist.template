@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.syntopica.worker.node</string>
+  <key>ProgramArguments</key>
+  <array><string>@WORKER_BIN@</string><string>node</string><string>--name</string><string>@NODE@</string></array>
+  <key>EnvironmentVariables</key>
+  <dict><key>SYNTOPICA_DATA</key><string>@SYNTOPICA_DATA@</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardErrorPath</key><string>@SYNTOPICA_DATA@/worker/state/node.err.log</string>
+</dict>
+</plist>
