@@ -30,9 +30,6 @@ addopts = "-m 'not manual'"
 [tool.deptry]
 known_first_party = ["worker"]
 
-[tool.deptry.per_rule_ignores]
-DEP002 = ["jsonschema"]
-
 [tool.coverage.run]
 branch = true
 
