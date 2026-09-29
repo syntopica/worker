@@ -35,7 +35,7 @@ instance, located through `SYNTOPICA_DATA` or the enclosing
 
 ## Running it
 
-Install the coordinator and node agents:
+Install the `worker` command:
 
 ```bash
 uv tool install --editable .
@@ -78,8 +78,9 @@ worker nodes
 ```
 
 Both agents are LaunchAgents that require a logged-in GUI session, not LaunchDaemons.
-The node reports `pressure_recovering` for the first 120 seconds and then transitions
-to an idle-awareness state. The instance configuration lives in
+The node reports `pressure_recovering` for its first 120 seconds, then no reason
+when it may take work, or the reason it may not (`on_battery`, `user_active`,
+`memory_pressure`). The instance configuration lives in
 `$SYNTOPICA_DATA/worker/config.json`; never store it in this repository. The `worker/state/`
 directory must be git-ignored in the instance.
 

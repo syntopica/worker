@@ -162,3 +162,13 @@ def test_pressure_unloads_the_resident_model_once_per_episode(config, fake, monk
     )
     drive(config, fake, Link(), rests=3, state=HostState(900, True, "critical"))
     assert unloaded == ["model-a"]
+
+
+def test_the_startup_recovery_window_does_not_unload_the_model(config, fake, monkeypatch):
+    unloaded = []
+    monkeypatch.setattr(
+        run_node_module, "unload_model", lambda url, model: unloaded.append(model) or True
+    )
+    link = Link()
+    drive(config, fake, link, rests=1)
+    assert (link.reasons, unloaded) == (["pressure_recovering"], [])

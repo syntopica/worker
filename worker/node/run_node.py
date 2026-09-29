@@ -15,7 +15,7 @@ from worker.node.sample_host_state import sample_host_state
 from worker.node.unload_model import unload_model
 
 _REST_S = 30.0
-_PRESSURE_BLOCKS = frozenset({"memory_pressure", "pressure_recovering"})
+_PRESSURE_BLOCKS = frozenset({"memory_pressure"})
 
 
 def run_node(  # noqa: PLR0913, PLR0917
