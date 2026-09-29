@@ -10,9 +10,15 @@ from worker.config.load_worker_config import load_worker_config
 
 
 def cmd_serve(args: argparse.Namespace) -> int:  # noqa: ARG001
-    """Serve until killed; lease reclaim and retention run every minute."""
+    """Serve until interrupted; lease reclaim and retention run every minute."""
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
+    server = build_server(config, state)
     threading.Thread(target=run_sweeper, args=(state, config), daemon=True).start()
-    build_server(config, state).serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
     return 0

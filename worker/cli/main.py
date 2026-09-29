@@ -22,3 +22,12 @@ def main(argv: list[str] | None = None) -> int:
     except urllib.error.URLError as error:
         print(f"worker: coordinator unreachable ({type(error.reason).__name__})", file=sys.stderr)
         return 1
+    except (ConnectionError, TimeoutError) as error:
+        print(f"worker: coordinator unreachable ({type(error).__name__})", file=sys.stderr)
+        return 1
+    except (OSError, ValueError) as error:
+        # Only the class and a file name: messages may quote file contents or payloads.
+        named = getattr(error, "filename", None)
+        detail = f": {named}" if named else ""
+        print(f"worker: {type(error).__name__}{detail}", file=sys.stderr)
+        return 2

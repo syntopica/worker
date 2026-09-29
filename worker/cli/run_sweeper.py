@@ -23,10 +23,11 @@ def run_sweeper(
     """A failing pass logs its exception class only and never stops the loop."""
     while True:
         try:
+            now = clock()
             conn = open_store(state)
             try:
-                expire_leases(conn, clock())
-                sweep_retention(conn, config, clock())
+                expire_leases(conn, now)
+                sweep_retention(conn, config, now)
             finally:
                 conn.close()
         except Exception as error:
