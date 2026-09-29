@@ -1,6 +1,7 @@
 """Build the BaseHTTPRequestHandler class bound to one configuration."""
 
 import json
+import sys
 import time
 import urllib.parse
 from http import HTTPStatus
@@ -47,7 +48,9 @@ def make_handler(config: WorkerConfig, state_dir: Path) -> type[BaseHTTPRequestH
                 status, payload = error.status, {"error": error.code}
             except (KeyError, ValueError, TypeError, AttributeError):
                 status, payload = 400, {"error": "bad_request"}
-            except Exception:
+            except Exception as error:
+                route = urllib.parse.urlsplit(self.path).path
+                print(f"worker: 500 {type(error).__name__} {self.command} {route}", file=sys.stderr)
                 status, payload = 500, {"error": "internal"}
             data = b"" if status == HTTPStatus.NO_CONTENT else json.dumps(payload).encode()
             self.send_response(status)

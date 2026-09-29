@@ -1,6 +1,7 @@
 """`worker node --name <node>`."""
 
 import argparse
+import sys
 
 from worker.cli.base_url import base_url
 from worker.cli.read_token import read_token
@@ -14,6 +15,9 @@ def cmd_node(args: argparse.Namespace) -> int:
     """Run the node loop against the configured coordinator address."""
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
+    if args.name not in config.nodes:
+        print(f"worker: node {args.name} is not in the configuration", file=sys.stderr)
+        return 2
     link = CoordinatorLink(base_url(config), read_token(state, args.name), args.name)
     run_node(config, args.name, link)
     return 0

@@ -1,6 +1,8 @@
 """`worker serve` - the coordinator."""
 
 import argparse
+import errno
+import sys
 import threading
 import time
 
@@ -21,7 +23,15 @@ def cmd_serve(args: argparse.Namespace) -> int:  # noqa: ARG001
         reconcile_lost_payloads(conn, time.time())
     finally:
         conn.close()
-    server = build_server(config, state)
+    try:
+        server = build_server(config, state)
+    except OSError as error:
+        if error.errno != errno.EADDRINUSE:
+            raise
+        print(
+            f"worker: {config.listen_host}:{config.listen_port} is already in use", file=sys.stderr
+        )
+        return 2
     threading.Thread(target=run_sweeper, args=(state, config), daemon=True).start()
     try:
         server.serve_forever()
