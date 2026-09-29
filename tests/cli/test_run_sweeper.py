@@ -1,6 +1,7 @@
 import pytest
 
 from tests.conftest import body
+from worker.cli import run_sweeper as run_sweeper_module
 from worker.cli.run_sweeper import run_sweeper
 from worker.jobs.submit_job import submit_job
 from worker.store.open_store import open_store
@@ -35,3 +36,14 @@ def test_a_failing_pass_is_logged_by_class_and_does_not_stop_the_loop(config, tm
     assert len(calls) == 2
     assert err.count("worker: sweeper pass failed: ") == 2
     assert "a file where" not in err
+
+
+def test_both_sweeps_of_one_pass_receive_the_same_now(config, tmp_path, monkeypatch):
+    seen = []
+    ticks = iter([10.0, 20.0, 30.0, 40.0])
+    monkeypatch.setattr(run_sweeper_module, "expire_leases", lambda _c, now: seen.append(now))
+    monkeypatch.setattr(
+        run_sweeper_module, "sweep_retention", lambda _c, _cfg, now: seen.append(now)
+    )
+    run_sweeper(tmp_path / "state", config, forever=False, clock=lambda: next(ticks))
+    assert seen == [10.0, 10.0]

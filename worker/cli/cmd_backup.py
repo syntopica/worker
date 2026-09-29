@@ -33,4 +33,7 @@ def cmd_backup(args: argparse.Namespace) -> int:
         dest.unlink(missing_ok=True)
         print(f"worker: backup failed: {type(error).__name__}", file=sys.stderr)
         return 1
+    except BaseException:
+        dest.unlink(missing_ok=True)
+        raise
     return 0

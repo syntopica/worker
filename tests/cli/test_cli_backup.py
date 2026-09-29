@@ -1,6 +1,8 @@
 import sqlite3
 import stat
 
+import pytest
+
 from tests.cli.test_cli import instance
 from tests.conftest import body
 from worker.cli.main import main
@@ -61,3 +63,41 @@ def test_existing_dest_is_refused_and_untouched(tmp_path, monkeypatch, capsys):
     assert main(["backup", str(dest)]) == 2
     assert "already exists" in capsys.readouterr().err
     assert dest.read_text() == "keep me"
+
+
+def failing_backup(monkeypatch, action):
+    real_connect = sqlite3.connect
+
+    class Failing(sqlite3.Connection):
+        def backup(self, *args, **kwargs):
+            action(*args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: real_connect(*a, factory=Failing, **k))
+
+
+def test_a_sqlite_failure_is_one_line_exit_1_and_removes_dest(tmp_path, monkeypatch, capsys):
+    state = instance(tmp_path, monkeypatch)
+    open_store(state).close()
+
+    def fail(*_args, **_kwargs):
+        raise sqlite3.OperationalError("secret-detail")
+
+    failing_backup(monkeypatch, fail)
+    dest = tmp_path / "b.sqlite3"
+    assert main(["backup", str(dest)]) == 1
+    assert capsys.readouterr().err == "worker: backup failed: OperationalError\n"
+    assert not dest.exists()
+
+
+def test_an_interrupt_removes_dest_and_propagates(tmp_path, monkeypatch):
+    state = instance(tmp_path, monkeypatch)
+    open_store(state).close()
+
+    def interrupt(*_args, **_kwargs):
+        raise KeyboardInterrupt
+
+    failing_backup(monkeypatch, interrupt)
+    dest = tmp_path / "b.sqlite3"
+    with pytest.raises(KeyboardInterrupt):
+        main(["backup", str(dest)])
+    assert not dest.exists()
