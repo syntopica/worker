@@ -2,7 +2,10 @@ import json
 import socket
 import urllib.request
 
+import pytest
+
 from tests.conftest import body
+from worker.jobs.api_error import ApiError
 from worker.jobs.complete_attempt import complete_attempt
 from worker.jobs.completion_report import CompletionReport
 from worker.jobs.lease_job import lease_job
@@ -10,6 +13,8 @@ from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.submit_job import submit_job
 
 SCHEMA = {"type": "object", "required": ["label"], "properties": {"label": {"type": "string"}}}
+
+MSG = [{"role": "user", "content": "hi"}]
 
 
 def run(conn, config, now=1.0):
@@ -28,7 +33,7 @@ def report(outcome, output=None, code=None):
 
 
 def test_valid_output_becomes_a_result(conn, config):
-    submit_job(conn, config, "pa", body(input={"messages": [], "schema": SCHEMA}), 0.0)
+    submit_job(conn, config, "pa", body(input={"messages": MSG, "schema": SCHEMA}), 0.0)
     lease = run(conn, config)
     state = complete_attempt(
         conn,
@@ -47,7 +52,7 @@ def test_valid_output_becomes_a_result(conn, config):
 
 
 def test_schema_violation_is_a_failed_attempt_with_backoff(conn, config):
-    submit_job(conn, config, "pa", body(input={"messages": [], "schema": SCHEMA}), 0.0)
+    submit_job(conn, config, "pa", body(input={"messages": MSG, "schema": SCHEMA}), 0.0)
     lease = run(conn, config)
     state = complete_attempt(
         conn,
@@ -108,7 +113,7 @@ def test_parked_runs_double_the_idle_needed_then_exhaust(conn, config):
 
 
 def test_malformed_schema_is_a_schema_violation_not_a_crash(conn, config):
-    submit_job(conn, config, "pa", body(input={"messages": [], "schema": {"type": 12}}), 0.0)
+    submit_job(conn, config, "pa", body(input={"messages": MSG, "schema": {"type": 12}}), 0.0)
     lease = run(conn, config)
     state = complete_attempt(
         conn,
@@ -125,7 +130,7 @@ def test_malformed_schema_is_a_schema_violation_not_a_crash(conn, config):
 
 
 def _violation(conn, config, schema, output=None):
-    submit_job(conn, config, "pa", body(input={"messages": [], "schema": schema}), 0.0)
+    submit_job(conn, config, "pa", body(input={"messages": MSG, "schema": schema}), 0.0)
     lease = run(conn, config)
     out = {"text": "{}", "json": {}} if output is None else output
     state = complete_attempt(
@@ -151,8 +156,10 @@ def test_remote_ref_is_a_schema_violation_without_network(conn, config, monkeypa
     )
 
 
-def test_falsy_schema_is_validated_not_skipped(conn, config):
-    assert _violation(conn, config, False) == ("queued", "schema_violation")
+def test_a_non_object_schema_is_refused_at_submit(conn, config):
+    with pytest.raises(ApiError) as error:
+        _violation(conn, config, False)
+    assert error.value.code == "bad_input"
 
 
 def test_non_dict_output_fails_the_check(conn, config):

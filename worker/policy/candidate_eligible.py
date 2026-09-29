@@ -7,7 +7,10 @@ from worker.jobs.lease_request import LeaseRequest
 
 def candidate_eligible(c: Candidate, req: LeaseRequest, config: WorkerConfig) -> bool:
     """Queue run policy, incremental memory and parking; privacy is filtered earlier."""
-    if req.user_active and config.queues[c.queue].run_when != "active_ok":
+    queue = config.queues.get(c.queue)
+    if queue is None:
+        return False  # a queue removed from the configuration runs nothing
+    if req.user_active and queue.run_when != "active_ok":
         return False
     pin = config.models.get(c.model)
     if pin is None:

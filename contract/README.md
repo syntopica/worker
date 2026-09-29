@@ -36,7 +36,11 @@ A result row with a non-null `control` carries no output, executor or usage, and
 - `expired`: the deadline passed before completion. `detail` is `{"error": "deadline"}`.
 - `unacked_expired`: a result was never acknowledged in time. `detail` is `{}`.
 
-The codes a `failed` result can carry come from a fixed vocabulary: `lease_lost`, `preemption_exhausted`, `schema_violation`, `executor_error`, `transport_error`, `bad_response` and `unknown_model`, plus `http_<status>` for a non-200 answer from the backend, where `<status>` is the numeric status only. A code never contains provider or generated text.
+The codes a `failed` result can carry come from a fixed vocabulary: `lease_lost`, `preemption_exhausted`, `schema_violation`, `executor_error`, `transport_error`, `bad_response`, `unknown_model`, `payload_lost` (the stored input is gone; resubmit the job) and `node_error` (the node failed unexpectedly), plus `http_<status>` for a non-200 answer from the backend, where `<status>` is the numeric status only. A code never contains provider or generated text.
+
+## Input
+
+An inference `input` carries `messages`, a non-empty list of `{"role": <string>, "content": <string>}`, and optionally `options` (an object), `schema` (an object) and `format` (only `"json"`). Anything else is rejected with `400 bad_input`.
 
 ## Limits and scope
 

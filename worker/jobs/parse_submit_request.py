@@ -3,6 +3,7 @@
 from typing import Any
 
 from worker.jobs.api_error import ApiError
+from worker.jobs.check_inference_input import check_inference_input
 from worker.jobs.coerce_number import coerce_number
 from worker.jobs.states import PRIVACY_CLASSES
 from worker.jobs.submit_request import SubmitRequest
@@ -33,6 +34,7 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         raise ApiError(400, "out_of_range")
     if not isinstance(body.get("input"), dict):
         raise ApiError(400, "missing_input")
+    check_inference_input(body["input"])
     deadline = body.get("deadline")
     parent_id = body.get("parent_id")
     if parent_id is not None and not isinstance(parent_id, str):

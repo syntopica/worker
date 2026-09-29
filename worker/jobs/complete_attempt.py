@@ -8,6 +8,8 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.check_fence import check_fence
 from worker.jobs.completion_report import CompletionReport
 from worker.jobs.fail_attempt import fail_attempt
+from worker.jobs.fail_payload_lost import fail_payload_lost
+from worker.jobs.load_job_input import load_job_input
 from worker.jobs.output_matches_schema import output_matches_schema
 from worker.jobs.preempt_job import preempt_job
 from worker.store.transaction import transaction
@@ -40,7 +42,11 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
             return preempt_job(conn, config, job, now)
         if report.outcome != "succeeded":
             return fail_attempt(conn, job, report.error_code or "executor_error", now)
-        if not output_matches_schema(conn, job["id"], report.output):
+        job_input = load_job_input(conn, job["id"])
+        if job_input is None:
+            fail_payload_lost(conn, job["id"], now)
+            return "failed"
+        if not output_matches_schema(job_input, report.output):
             conn.execute(
                 "UPDATE attempts SET outcome='schema_violation', error='schema_violation' WHERE id=?",
                 (attempt_id,),

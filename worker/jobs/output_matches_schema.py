@@ -1,18 +1,14 @@
 """Check a node's output against the job's requested JSON schema."""
 
-import json
-import sqlite3
+from typing import Any
 
 from jsonschema import Draft202012Validator, SchemaError
 from referencing.exceptions import Unresolvable
 
 
-def output_matches_schema(conn: sqlite3.Connection, job_id: str, output: object) -> bool:
+def output_matches_schema(job_input: dict[str, Any], output: object) -> bool:
     """A malformed or unresolvable schema counts as a violation, not a crash."""
-    body = json.loads(
-        conn.execute("SELECT body FROM p.inputs WHERE job_id=?", (job_id,)).fetchone()[0]
-    )
-    schema = body["input"].get("schema")
+    schema = job_input.get("schema")
     if not isinstance(output, dict):
         return False
     if schema is None:

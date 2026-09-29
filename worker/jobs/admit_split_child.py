@@ -7,16 +7,17 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.api_error import ApiError
 from worker.jobs.submit_request import SubmitRequest
 
-_CHILD_KEY = re.compile(r"/(\d+)/(\d+)$")
+_CHILD_KEY = re.compile(r"/(0|[1-9]\d*)/([1-9]\d*)$")
 _MIN_SPLIT = 2
 
 
 def admit_split_child(
     conn: sqlite3.Connection, config: WorkerConfig, producer: str, req: SubmitRequest, now: float
 ) -> None:
-    """Validate the child key and count, then mark the parent superseded."""
+    """The key is exactly ``<parent key>/<index>/<count>``; then mark the parent superseded."""
     parent = conn.execute(
-        "SELECT producer, queue, state, split_count FROM jobs WHERE id=?", (req.parent_id,)
+        "SELECT producer, queue, state, split_count, idempotency_key FROM jobs WHERE id=?",
+        (req.parent_id,),
     ).fetchone()
     match = _CHILD_KEY.search(req.idempotency_key)
     if (
@@ -24,6 +25,8 @@ def admit_split_child(
         or parent["producer"] != producer
         or parent["queue"] != req.queue
         or match is None
+        or req.idempotency_key
+        != f"{parent['idempotency_key']}/{int(match.group(1))}/{int(match.group(2))}"
     ):
         raise ApiError(400, "bad_split_child")
     if parent["state"] not in ("split_requested", "superseded"):
