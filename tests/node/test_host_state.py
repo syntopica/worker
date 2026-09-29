@@ -1,0 +1,44 @@
+from worker.node.admission_block import admission_block
+from worker.node.host_state import HostState
+from worker.node.parse_hid_idle_seconds import parse_hid_idle_seconds
+from worker.node.parse_on_ac import parse_on_ac
+from worker.node.parse_pressure import parse_pressure
+from worker.node.release_reason import release_reason
+from worker.node.sample_host_state import sample_host_state
+
+IOREG = '    | |     "HIDIdleTime" = 16558114625\n'
+
+
+def test_parsers():
+    assert parse_hid_idle_seconds(IOREG) == 16.558114625
+    assert parse_hid_idle_seconds("nothing") is None
+    assert parse_on_ac("Now drawing from 'AC Power'\n") is True
+    assert parse_on_ac("Now drawing from 'Battery Power'\n") is False
+    assert (
+        parse_pressure("1\n"),
+        parse_pressure("2"),
+        parse_pressure("4"),
+        parse_pressure("x"),
+    ) == ("normal", "warn", "critical", "unknown")
+
+
+def test_a_failed_read_counts_as_busy():
+    state = sample_host_state(lambda args: None)
+    assert release_reason(state, "active_ok") == "host_state_unreadable"
+
+
+def test_user_input_releases_idle_only_work_but_not_active_ok():
+    typing = HostState(2.0, True, "normal")
+    assert release_reason(typing, "idle") == "user_active"
+    assert release_reason(typing, "active_ok") is None
+
+
+def test_battery_and_pressure_release_everything():
+    assert release_reason(HostState(900, False, "normal"), "active_ok") == "on_battery"
+    assert release_reason(HostState(900, True, "warn"), "active_ok") == "memory_pressure"
+
+
+def test_admission_waits_for_pressure_recovery():
+    normal = HostState(900, True, "normal")
+    assert admission_block(normal, normal_since=100.0, now=150.0) == "pressure_recovering"
+    assert admission_block(normal, normal_since=100.0, now=230.0) is None
