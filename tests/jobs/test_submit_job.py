@@ -67,4 +67,5 @@ def test_split_children_bypass_the_limit_and_supersede_the_parent(conn, config):
     with pytest.raises(ApiError) as error:
         submit_job(conn, config, "pa", body(key="k0/1/3", parent_id=ids[0]), 101.0)
     assert error.value.code == "split_count_mismatch"
-    assert child
+    row = conn.execute("SELECT parent_id, state FROM jobs WHERE id=?", (child,)).fetchone()
+    assert (row["parent_id"], row["state"]) == (ids[0], "queued")

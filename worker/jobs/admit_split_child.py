@@ -16,10 +16,15 @@ def admit_split_child(
 ) -> None:
     """Validate the child key and count, then mark the parent superseded."""
     parent = conn.execute(
-        "SELECT producer, state, split_count FROM jobs WHERE id=?", (req.parent_id,)
+        "SELECT producer, queue, state, split_count FROM jobs WHERE id=?", (req.parent_id,)
     ).fetchone()
     match = _CHILD_KEY.search(req.idempotency_key)
-    if parent is None or parent["producer"] != producer or match is None:
+    if (
+        parent is None
+        or parent["producer"] != producer
+        or parent["queue"] != req.queue
+        or match is None
+    ):
         raise ApiError(400, "bad_split_child")
     if parent["state"] not in ("split_requested", "superseded"):
         raise ApiError(409, "parent_not_splitting")

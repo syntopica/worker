@@ -8,6 +8,7 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.admit_split_child import admit_split_child
 from worker.jobs.api_error import ApiError
 from worker.jobs.check_outstanding import check_outstanding
+from worker.jobs.decode_body import decode_body
 from worker.jobs.parse_submit_request import parse_submit_request
 from worker.jobs.payload_hash import payload_hash
 from worker.store.transaction import transaction
@@ -19,7 +20,7 @@ def submit_job(
     """Return ``(job_id, created)``; raise ApiError for every refusal."""
     if len(raw) > config.max_payload_bytes:
         raise ApiError(413, "payload_too_large")
-    body = json.loads(raw)
+    body = decode_body(raw)
     req = parse_submit_request(body)
     if (
         req.queue not in config.producers.get(producer, frozenset())
