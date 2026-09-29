@@ -11,7 +11,7 @@ max-file-lines = 150
 test-max-file-lines = 300
 
 [roles]
-data = ["worker/contract_version.py"]
+data = ["worker/contract_version.py", "worker/config/default_privacy.py", "worker/config/default_trust.py"]
 registry = []
 entrypoint = []
 generated = []
