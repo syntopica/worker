@@ -21,8 +21,8 @@ def pick_job(
         return None
     resident = [c for c in eligible if c.model == req.resident_model]
     others = [c for c in eligible if c.model != req.resident_model]
-    overdue = any(now - c.created > config.queues[c.queue].max_model_age_s for c in others)
-    pool = resident if resident and not overdue else eligible
+    overdue = [c for c in others if now - c.created > config.queues[c.queue].max_model_age_s]
+    pool = overdue or resident or eligible
     top = max(c.priority for c in pool)
     tier = [c for c in pool if c.priority == top]
     return min(

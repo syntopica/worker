@@ -39,6 +39,7 @@ def test_resident_model_needs_warm_memory_only(config):
     # Another resident model is evicted (OLLAMA_MAX_LOADED_MODELS=1), so the
     # cold footprint is checked against the node's whole budget.
     assert candidate_eligible(cand("a"), req(resident="model-b", free=3.0), config)
+    # Fails on memory (cold 30 GB against a budget of 8), not on trust.
     assert not candidate_eligible(cand("a"), req(node="node-g"), config)
 
 
@@ -60,3 +61,11 @@ def test_priority_then_weighted_share_then_age(config):
     assert pick_job(jobs, req(), config, {"pa.bulk": 2, "pa.live": 3}, 10.0).job_id == "live"
     jobs.append(cand("urgent", priority=99, created=9.0))
     assert pick_job(jobs, req(), config, {}, 10.0).job_id == "urgent"
+
+
+def test_overdue_other_model_beats_higher_priority_resident_job(config):
+    jobs = [
+        cand("a", priority=50, created=1000.0),
+        cand("b", model="model-b", priority=10, created=1000.0),
+    ]
+    assert pick_job(jobs, req(resident="model-a"), config, {}, 1000.0 + 3601).job_id == "b"
