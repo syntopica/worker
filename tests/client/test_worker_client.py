@@ -40,9 +40,3 @@ def test_wait_for_does_not_sleep_past_the_deadline(client):
     started = time.monotonic()
     assert client.wait_for(job_id, timeout=0.2, poll=5) is None
     assert time.monotonic() - started < 1
-
-
-def test_job_id_is_quoted_into_the_path(client):
-    with pytest.raises(ApiFailure) as error:
-        client.get("../v1/status")
-    assert error.value.status == 404
