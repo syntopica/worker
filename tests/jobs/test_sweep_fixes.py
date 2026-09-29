@@ -1,5 +1,5 @@
 import json
-import time
+import re
 
 from tests.conftest import body, fresh_store
 from tests.jobs.test_results_and_retention import succeed
@@ -57,22 +57,36 @@ def seed(state, count):
     return conn
 
 
-def timed_sweep(state, config, count):
+def traced_sweep(state, config, count):
+    """Seed ``count`` due jobs, sweep twice, return (conn, first pass, second pass) statements."""
     conn = seed(state, count)
-    started = time.perf_counter()
-    swept = sweep_retention(conn, config, 8 * DAY)
-    elapsed = time.perf_counter() - started
-    assert swept == count
-    assert conn.execute("SELECT count(*) FROM p.inputs").fetchone()[0] == 0
-    conn.close()
-    return elapsed
+    passes = []
+    for _ in range(2):
+        statements = []
+        conn.set_trace_callback(statements.append)
+        swept = sweep_retention(conn, config, 8 * DAY)
+        conn.set_trace_callback(None)
+        passes.append((swept, statements))
+    assert [swept for swept, _ in passes] == [count, 0]
+    assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+    return conn, passes[0][1], passes[1][1]
 
 
-def test_the_sweep_is_linear_and_fast_at_five_thousand_jobs(tmp_path, config):
-    small = timed_sweep(tmp_path / "small", config, 1250)
-    large = timed_sweep(tmp_path / "large", config, 5000)
-    assert large < 5.0
-    assert large / max(small, 0.05) < 8  # quadratic would be about 16
+def test_the_sweep_issues_a_linear_number_of_statements(tmp_path, config):
+    _, small, small_again = traced_sweep(tmp_path / "small", config, 1250)
+    _, large, large_again = traced_sweep(tmp_path / "large", config, 5000)
+    assert len(large) - 4 * len(small) <= 60  # per-batch overhead only, never per job squared
+    assert len(small_again) == len(large_again)  # a pass over nothing costs the same at any size
+
+
+def test_every_sweep_statement_uses_an_index(tmp_path, config):
+    conn, first, _ = traced_sweep(tmp_path / "state", config, 600)
+    queries = {s for s in first if s.lstrip().upper().startswith(("SELECT", "DELETE", "UPDATE"))}
+    assert queries
+    for sql in queries:
+        plan = [r["detail"] for r in conn.execute("EXPLAIN QUERY PLAN " + sql)]
+        scans = [d for d in plan if re.match(r"SCAN (\w+\.)?(results|attempts|jobs)\b", d)]
+        assert scans == [], (sql, plan)
 
 
 def test_unacked_public_output_expires_with_a_control_result(conn, config):
