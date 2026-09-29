@@ -13,3 +13,4 @@ TODO_HISTORY_INDEX.jsonl
 .ruff_cache/
 .codegraph/
 .serena/
+.superpowers/

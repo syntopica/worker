@@ -574,3 +574,30 @@ Each phase is independently useful. Details are in the implementation plan.
    `kern.memorystatus_vm_pressure_level` (1 normal, 2 warn, 4 critical;
    measured on the reference workstation) and treats any other value or a
    failed read as busy. The dispatch-source reader stays open for plan 1c.
+
+### 2026-09-30 - phase 1a final review
+
+1. Retention (section 9): an unacknowledged `succeeded` job of any privacy
+   class becomes `unacked_expired`, with its control result, at its deadline:
+   `unacked_ttl` for sensitive classes, the queue retention for the others.
+   A terminal job whose payloads are gone is removed, with its results and
+   attempts, once `retention_days` have passed since its last transition or
+   ack; this releases its idempotency key (section 6). Payloads are deleted
+   exactly once and swept in bounded batches.
+2. Restore (section 9): `payload_lost` is also applied at lease and
+   completion time, and `serve` reconciles every live job before serving.
+3. Submit validates the inference input shape and answers `400 bad_input`.
+4. Node (section 7): memory pressure releases work or unloads only after
+   three consecutive warn/critical samples; only models the node made
+   resident, or released for pressure, are unloaded; each pressure release
+   starts `pressure_backoff` (15 min doubling to 2 h, reset by a success).
+   An unreachable `/api/ps` is `backend_down`. An unexpected node failure is
+   reported as `node_error`.
+5. Drain (amendment 2 of 2026-09-29): probes only a resident model; after an
+   unload, quiet is `/api/ps` no longer listing the model; the LaunchAgent is
+   restarted only if the model is still resident after the unload. A failed
+   drain clears through `/api/ps`, never a probe, and only while pressure is
+   normal.
+6. Content files: the state directory is 0700 and its files 0600; the payload
+   file is excluded from Time Machine and its WAL is truncated after each
+   deleting sweep.

@@ -15,7 +15,7 @@ Producers talk to the coordinator over HTTP with JSON bodies and a bearer token.
 | POST | `/v1/attempts/{id}/heartbeat` | node | Extend a lease. |
 | POST | `/v1/attempts/{id}/complete` | node | Report the outcome of an attempt. |
 | POST | `/v1/nodes/{name}/report` | node | Report host state. |
-| GET | `/v1/status` | any | Queue and node status. |
+| GET | `/v1/status` | admin | Queue and node status. |
 
 Errors are `{"error": "<code>"}` with the HTTP status. `error_stale_attempt.json` is an example.
 
@@ -26,6 +26,7 @@ Errors are `{"error": "<code>"}` with the HTTP status. `error_stale_attempt.json
 3. The outcome appears as a result row in `GET /v1/results`, ordered by `seq`.
 4. Record `result_id` transactionally with your own domain writes, then ack. Acknowledging the same result twice is harmless, so a crash between the two steps only repeats the ack.
 5. An unacknowledged result expires after its retention window and is reported as `unacked_expired`.
+6. A finished job is forgotten once its retention has passed after its ack or last transition; its idempotency key can then be reused for a new job.
 
 ## Control results
 
