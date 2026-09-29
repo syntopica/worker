@@ -19,12 +19,17 @@ def drain_backend(  # noqa: PLR0913, PLR0917
     unload: Callable[[str, str], bool] = unload_model,
     restart: Callable[[str], bool] = restart_ollama,
 ) -> bool:
-    """True once a probe answers; False is a drain failure and the node stays unavailable."""
+    """True once a probe answers; False is a drain failure and the node stays unavailable.
+
+    A fenced heartbeat (False) stops the escalation after one probe.
+    """
     for recover in (None, lambda: unload(url, pin.name), lambda: restart(label)):
         if recover is not None:
             recover()
         for _ in range(3):
-            heartbeat()
+            fenced = not heartbeat()
             if probe(url, pin, timeout=_PROBE_S):
                 return True
+            if fenced:
+                return False  # fenced out: report the state, never unload or restart
     return False

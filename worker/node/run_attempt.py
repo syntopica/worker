@@ -39,10 +39,12 @@ def run_attempt(  # noqa: PLR0913, PLR0917
             break
         if not link.heartbeat(attempt, gen, False):
             call.cancel()
-            drain_backend(node.ollama_url, pin, node.ollama_launchd_label, lambda: True)
-            return "fenced"
+            quiet = drain_backend(node.ollama_url, pin, node.ollama_launchd_label, lambda: True)
+            return "fenced" if quiet else "drain_failed"
+        if call.done():
+            break
         reason = release_reason(sample(), lease["run_when"])
-        if reason is not None:
+        if reason is not None and not call.done():
             call.cancel()
             quiet = drain_backend(
                 node.ollama_url,
