@@ -122,6 +122,7 @@ def test_quality_counts_outcomes_and_ratings_by_model(tmp_path):
     assert (row["schema_violations"], row["failed"], row["mean_wall_s"]) == (1, 0, 2.0)
     result_id = conn.execute("SELECT result_id FROM results WHERE job_id=?", (good,)).fetchone()[0]
     ack_result(conn, config, "pa", good, result_id, False, 30.0, "edited")
+    assert read_result_ratings(conn, 0.0)[0]["good"] == 0
     [rated] = read_result_ratings(conn, 0.0)
     assert (rated["model"], rated["results"], rated["rated"], rated["edited"]) == (
         "model-a",
