@@ -88,6 +88,14 @@ worker status
 worker nodes
 ```
 
+A shell script that wants one answer submits and waits in one call; `-` reads the job from stdin:
+
+```bash
+worker run --producer <producer-name> --wait 1800 job.json > answer.json
+```
+
+It prints the output (the JSON when there is one) and acknowledges it. Exit 1 means the job ended without output, 3 that it is parked behind its runner's quota wall, and 4 that it is still pending at `--wait`; in the last two cases running the same job again collects it by its idempotency key.
+
 Both agents are LaunchAgents that require a logged-in GUI session, not LaunchDaemons.
 The node reports `pressure_recovering` for its first 120 seconds, then no reason
 when it may take work, or the reason it may not (`on_battery`, `user_active`,

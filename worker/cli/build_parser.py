@@ -6,6 +6,7 @@ from worker.cli.cmd_backup import cmd_backup
 from worker.cli.cmd_cancel import cmd_cancel
 from worker.cli.cmd_jobs import cmd_jobs
 from worker.cli.cmd_node import cmd_node
+from worker.cli.cmd_run import cmd_run
 from worker.cli.cmd_serve import cmd_serve
 from worker.cli.cmd_status import cmd_status
 from worker.cli.cmd_submit import cmd_submit
@@ -41,6 +42,12 @@ def build_parser() -> argparse.ArgumentParser:
     submit.add_argument("--producer", required=True)
     submit.add_argument("file")
     submit.set_defaults(run=cmd_submit)
+    run = sub.add_parser("run")
+    run.add_argument("--producer", required=True)
+    run.add_argument("--wait", type=float, default=3600.0)
+    run.add_argument("--poll", type=float, default=5.0)
+    run.add_argument("file")
+    run.set_defaults(run=cmd_run)
     token = sub.add_parser("token").add_subparsers(dest="action", required=True).add_parser("add")
     token.add_argument("--kind", required=True, choices=("producer", "node", "admin"))
     token.add_argument("--name", required=True)
