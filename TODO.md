@@ -62,6 +62,7 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       classifier path had been failing every run), and queue `clips.synthesis`
       declared for the clips engine. Transcription: no scheduled job exists
       (only an unscheduled prototype), nothing to absorb.
+      Weekly review moved: `review.weekly`, local model (wiki f5a85407).
 - [!] Phase 4: coordinator on the always-on server, Tailscale binding, more
       nodes; HID idle test under fast user switching before any guest node.
       Blocked on the owner's gate (2026-09-29): the coordinator moves to the
