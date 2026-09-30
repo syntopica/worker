@@ -6,12 +6,14 @@ from typing import Any
 
 
 def print_run_result(job_id: str, result: dict[str, Any]) -> int:
-    """0 with the output on stdout; 1 with the control and its code on stderr.
+    """0 with the output on stdout and the result id on stderr; 1 with the control and its code on stderr.
 
     The JSON output wins over the text, the same choice every producer makes,
     so a caller with a schema reads validated JSON either way.
     """
     if result["control"] is None:
+        # The result id lets the script rate the output once it has judged it.
+        print(f"worker job {job_id} result {result['result_id']}", file=sys.stderr)
         output = result["output"] or {}
         if output.get("json") is not None:
             print(json.dumps(output["json"]))
