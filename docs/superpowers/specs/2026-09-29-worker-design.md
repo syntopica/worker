@@ -716,3 +716,23 @@ cooldown only while every runner it could use rests. Configuration refuses a
 fallback that is not granted by the queue, accepts fewer privacy classes than
 its primary, or reads a different `input_root`. This replaces the per-lane
 choice that `drip-loop.sh` makes today.
+
+### 2026-09-30 - phase 2b: OpenRouter free rung and the ledger
+
+1. **Route.** A queue's `openrouter` entry maps a local model to a `:free`
+   OpenRouter model and sets `after_s`, how long a job waits before it may
+   escalate; paid ids are refused (rung 5 needs a budget, not built). The
+   class must also allow the `openrouter` executor (by default only `public`).
+   `zdr` (default true) sends non-public jobs to zero-data-retention endpoints
+   only; on 2026-09-30 no free endpoint offered ZDR, so turning it off is an
+   explicit, per-queue owner decision.
+2. **Executor.** `worker remote --name <node>` leases with kind `openrouter`,
+   one job at a time, at most one call per 3.1 s (20 rpm), and only while
+   `GET /api/v1/key` reports free daily requests left; unknown headroom is no
+   headroom. The key lives in the node's `openrouter_key_file` and never
+   leaves the node. The lease carries the remote model id, `queue` and
+   `privacy`; the job keeps its local model, so a failed remote attempt
+   retries at home under the normal attempt budget.
+3. **Ledger.** Attempts record `provider` and `cost_usd` (store version 5);
+   `GET /v1/costs?days=N` (admin) and `worker costs` show attempts, tokens,
+   cost and wall time by UTC day, provider and queue.

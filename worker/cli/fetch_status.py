@@ -1,4 +1,4 @@
-"""GET /v1/status as the admin principal."""
+"""An admin GET: /v1/status by default."""
 
 import json
 import urllib.error
@@ -9,10 +9,10 @@ from worker.client.api_failure import ApiFailure
 from worker.client.error_code import error_code
 
 
-def fetch_status(base_url: str, token: str) -> dict[str, Any]:
-    """The status payload; a refusal raises ApiFailure."""
+def fetch_status(base_url: str, token: str, path: str = "/v1/status") -> dict[str, Any]:
+    """The payload at ``path``; a refusal raises ApiFailure."""
     request = urllib.request.Request(
-        f"{base_url}/v1/status", headers={"Authorization": f"Bearer {token}"}
+        f"{base_url}{path}", headers={"Authorization": f"Bearer {token}"}
     )
     try:
         with urllib.request.urlopen(request, timeout=10) as response:

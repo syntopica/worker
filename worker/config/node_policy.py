@@ -10,7 +10,8 @@ class NodePolicy:
     """``trust`` is ``owner``, ``server`` or ``guest``.
 
     ``min_free_pct`` is the free memory below which a kernel pressure warning
-    counts as pressure on this machine.
+    counts as pressure on this machine. ``openrouter_key_file`` is the file,
+    local to the node, holding its OpenRouter key; none means no remote loop.
     """
 
     name: str
@@ -20,3 +21,4 @@ class NodePolicy:
     ollama_url: str
     ollama_launchd_label: str
     min_free_pct: float = DEFAULT_MIN_FREE_PCT
+    openrouter_key_file: str | None = None

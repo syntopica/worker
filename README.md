@@ -71,15 +71,24 @@ For tasks, also render `com.syntopica.worker.tasks.plist.template`, substituting
 "runners": {"codex": {"cooldown_s": 3600}}
 ```
 
+To escalate inference to OpenRouter's free endpoints, render `com.syntopica.worker.remote.plist.template` the same way, give the node a key file that lives on the node only (`"openrouter_key_file": "~/.config/worker/openrouter.key"`, mode 600), and route a queue's local model to a `:free` model. A job escalates after waiting `after_s`; non-public classes go to zero-data-retention endpoints unless `zdr` is false, and must also be allowed the `openrouter` executor in `privacy`:
+
+```json
+"queues": {"<producer>.bulk": {"run_when": "idle", "openrouter": {"models": {"<local-model>": "<vendor>/<model>:free"}, "after_s": 600}}}
+```
+
+`worker costs --days 7` prints the ledger by day, provider and queue.
+
 Bootstrap the agents:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.serve.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.node.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.tasks.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.remote.plist
 ```
 
-Exclude `$SYNTOPICA_DATA/worker/state` from any backup tool other than Time Machine (Backblaze and similar); the payload file is excluded from Time Machine automatically.
+The payload file is excluded from Time Machine automatically; exclude `$SYNTOPICA_DATA/worker/state` from any other backup tool that is not your own private copy.
 
 Check status:
 

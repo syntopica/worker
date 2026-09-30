@@ -67,6 +67,14 @@ class CoordinatorLink:
         )
         return body if status == HTTPStatus.OK else None
 
+    def lease_remote(self) -> dict[str, Any] | None:
+        """An escalated inference lease for the ``worker remote`` loop, or None."""
+        status, body = self._post(
+            "/v1/leases",
+            {"node": self.node, "kind": "openrouter", "user_active": False, "current_idle_s": 0},
+        )
+        return body if status == HTTPStatus.OK else None
+
     def heartbeat(self, attempt_id: str, generation: int, draining: bool) -> bool:
         """False only when fenced out (409); an unreachable coordinator keeps the attempt."""
         status, _ = self._post(

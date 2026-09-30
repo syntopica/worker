@@ -19,7 +19,7 @@ def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
         raise ApiError(403, "forbidden")
     expire_leases(ctx.conn, ctx.now)
     kind = body.get("kind", "inference")
-    if kind not in {"inference", "task"}:
+    if kind not in {"inference", "task", "openrouter"}:
         raise ApiError(400, "unsupported_kind")
     req = LeaseRequest(
         body["node"],

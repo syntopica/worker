@@ -16,9 +16,11 @@ def load_candidates(
 
     At most ``_PER_QUEUE`` per queue, best priority first: a single row cap
     let one queue's backlog - or a removed queue's - hide every other queue.
-    Inference runs on the ``ollama`` executor and tasks on ``runner`` (spec 8).
+    Inference runs on the ``ollama`` executor and tasks on ``runner`` (spec 8);
+    the ``openrouter`` loop sees inference jobs its executor may take.
     """
-    executor = "runner" if kind == "task" else "ollama"
+    executor = {"task": "runner", "openrouter": "openrouter"}.get(kind, "ollama")
+    kind = "inference" if kind == "openrouter" else kind
     allowed = [c for c in config.privacy if privacy_allows(config, c, executor, trust)]
     queues = list(config.queues)
     if not allowed or not queues:

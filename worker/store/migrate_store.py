@@ -13,8 +13,8 @@ def migrate_store(conn: sqlite3.Connection) -> None:
 
     A store from before ``payloads_deleted`` gains the column; finished jobs
     whose input is already gone are marked, so the first sweep after the
-    upgrade does not revisit them. ``user_version`` is set last, in the same
-    transaction.
+    upgrade does not revisit them. Attempts gain the ledger's ``provider`` and
+    ``cost_usd``. ``user_version`` is set last, in the same transaction.
     """
     with transaction(conn):
         for statement in filter(str.strip, SCHEMA.split(";")):
@@ -26,6 +26,10 @@ def migrate_store(conn: sqlite3.Connection) -> None:
                 "UPDATE jobs SET payloads_deleted=1 WHERE finished IS NOT NULL"
                 " AND id NOT IN (SELECT job_id FROM p.inputs)"
             )
+        attempt_columns = {r[1] for r in conn.execute("PRAGMA main.table_info(attempts)")}
+        for column, sql_type in (("provider", "TEXT"), ("cost_usd", "REAL")):
+            if column not in attempt_columns:
+                conn.execute(f"ALTER TABLE attempts ADD COLUMN {column} {sql_type}")
         for statement in INDEXES:
             conn.execute(statement)
         conn.execute(f"PRAGMA user_version={STORE_VERSION}")

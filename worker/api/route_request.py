@@ -6,6 +6,7 @@ from typing import Any
 from worker.api.handle_ack import handle_ack
 from worker.api.handle_cancel import handle_cancel
 from worker.api.handle_complete import handle_complete
+from worker.api.handle_costs import handle_costs
 from worker.api.handle_get_job import handle_get_job
 from worker.api.handle_heartbeat import handle_heartbeat
 from worker.api.handle_lease import handle_lease
@@ -29,6 +30,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "v1/attempts/*/complete"): handle_complete,
     ("POST", "v1/nodes/*/report"): handle_node_report,
     ("GET", "v1/status"): handle_status,
+    ("GET", "v1/costs"): handle_costs,
 }
 
 

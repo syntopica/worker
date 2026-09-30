@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from worker.config.parse_openrouter_route import parse_openrouter_route
 from worker.config.queue_policy import QueuePolicy
 
 _RUN_WHEN = ("idle", "active_ok")
@@ -34,4 +35,5 @@ def parse_queue_policy(name: str, raw: dict[str, Any]) -> QueuePolicy:
             (str(primary), tuple(str(a) for a in alternatives))
             for primary, alternatives in (raw.get("fallbacks") or {}).items()
         ),
+        openrouter=parse_openrouter_route(name, raw.get("openrouter")),
     )

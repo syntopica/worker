@@ -12,6 +12,7 @@ from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
 from worker.policy.pick_job import pick_job
+from worker.policy.pick_remote import pick_remote
 from worker.policy.pick_task import pick_task
 from worker.store.transaction import transaction
 
@@ -40,11 +41,12 @@ def lease_job(
             )
         }
         for _ in range(_MAX_LOST_PER_LEASE):
-            chosen = (
-                pick_task(candidates, req, config, recent, cooling)
-                if req.kind == "task"
-                else pick_job(candidates, req, config, recent, now)
-            )
+            if req.kind == "task":
+                chosen = pick_task(candidates, req, config, recent, cooling)
+            elif req.kind == "openrouter":
+                chosen = pick_remote(candidates, config, recent, now)
+            else:
+                chosen = pick_job(candidates, req, config, recent, now)
             if chosen is None:
                 return None
             job_input = load_job_input(conn, chosen.job_id)
@@ -57,9 +59,10 @@ def lease_job(
         attempt_id = uuid.uuid4().hex
         conn.execute(
             # A task picked under a fallback profile keeps it: a wall is then
-            # charged to the runner that actually ran.
+            # charged to the runner that actually ran. An escalated inference
+            # job keeps its local model for a retry at home.
             "UPDATE jobs SET state='leased', generation=generation+1, lease_node=?, lease_attempt=?,"
-            " lease_expires=?, updated=?, model=? WHERE id=?",
+            " lease_expires=?, updated=?, model=CASE WHEN kind='task' THEN ? ELSE model END WHERE id=?",
             (req.node, attempt_id, now + LEASE_TTL_S, now, chosen.model, chosen.job_id),
         )
         generation = conn.execute(
@@ -79,4 +82,6 @@ def lease_job(
         run_when,
         LEASE_TTL_S,
         req.kind,
+        chosen.queue,
+        chosen.privacy,
     )

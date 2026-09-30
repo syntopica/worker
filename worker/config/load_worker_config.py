@@ -46,6 +46,7 @@ def load_worker_config(path: Path) -> WorkerConfig:
                 v["ollama_url"],
                 v["ollama_launchd_label"],
                 float(v.get("min_free_pct", DEFAULT_MIN_FREE_PCT)),
+                v.get("openrouter_key_file"),
             )
             for n, v in raw["nodes"].items()
         },

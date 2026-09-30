@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS attempts (
   error TEXT,
   wall_s REAL,
   tokens_in INTEGER,
-  tokens_out INTEGER
+  tokens_out INTEGER,
+  provider TEXT,
+  cost_usd REAL
 );
 CREATE INDEX IF NOT EXISTS attempts_started ON attempts (started);
 CREATE TABLE IF NOT EXISTS results (

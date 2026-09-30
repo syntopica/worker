@@ -4,8 +4,10 @@ import argparse
 
 from worker.cli.cmd_backup import cmd_backup
 from worker.cli.cmd_cancel import cmd_cancel
+from worker.cli.cmd_costs import cmd_costs
 from worker.cli.cmd_jobs import cmd_jobs
 from worker.cli.cmd_node import cmd_node
+from worker.cli.cmd_remote import cmd_remote
 from worker.cli.cmd_run import cmd_run
 from worker.cli.cmd_serve import cmd_serve
 from worker.cli.cmd_status import cmd_status
@@ -25,10 +27,17 @@ def build_parser() -> argparse.ArgumentParser:
     tasks = sub.add_parser("tasks")
     tasks.add_argument("--name", required=True)
     tasks.set_defaults(run=cmd_tasks)
+    remote = sub.add_parser("remote")
+    remote.add_argument("--name", required=True)
+    remote.set_defaults(run=cmd_remote)
     for name, nodes in (("status", False), ("nodes", True)):
         p = sub.add_parser(name)
         p.add_argument("--json", action="store_true")
         p.set_defaults(run=cmd_status, nodes=nodes)
+    costs = sub.add_parser("costs")
+    costs.add_argument("--days", type=float, default=7.0)
+    costs.add_argument("--json", action="store_true")
+    costs.set_defaults(run=cmd_costs)
     jobs = sub.add_parser("jobs")
     jobs.add_argument("--producer", required=True)
     jobs.add_argument("--queue", required=True)

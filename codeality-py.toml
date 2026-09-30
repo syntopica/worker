@@ -11,7 +11,7 @@ max-file-lines = 150
 test-max-file-lines = 300
 
 [roles]
-data = ["worker/contract_version.py", "worker/config/default_privacy.py", "worker/config/default_trust.py", "worker/jobs/states.py", "worker/store/schema_sql.py", "worker/store/index_sql.py", "worker/store/store_version.py", "worker/node/sampling_keys.py", "worker/node/pressure_samples.py", "worker/config/default_min_free_pct.py", "worker/config/task_runners.py", "worker/tasks/max_workspace_bytes.py", "worker/tasks/quota_wall_patterns.py", "worker/store/excluded_files.py"]
+data = ["worker/contract_version.py", "worker/config/default_privacy.py", "worker/config/default_trust.py", "worker/jobs/states.py", "worker/store/schema_sql.py", "worker/store/index_sql.py", "worker/store/store_version.py", "worker/node/sampling_keys.py", "worker/node/pressure_samples.py", "worker/config/default_min_free_pct.py", "worker/config/task_runners.py", "worker/tasks/max_workspace_bytes.py", "worker/tasks/quota_wall_patterns.py", "worker/store/excluded_files.py", "worker/remote/openrouter_endpoint.py"]
 registry = ["worker/api/route_request.py"]
 entrypoint = []
 generated = []
