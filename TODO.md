@@ -8,13 +8,13 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Phase 1b - Vexa producer (plan written when 1a lands)
 
-- [~] Rust client crate and translation/enrichment producers pushed to vexa
-      main (461ef497..db2db6af, migration 085 installed 2026-09-30 with build
-      4ef420b0). Enrichment proven end to end on a store copy (29 applied, 2
-      rejected); translation never ran (machine not idle). Off until the
-      installed engine's `.env` gets `SYNTOPICA_DATA` or
-      `VEXA_WORKER_TOKEN_FILE`. Next: an idle translation check, then enable;
-      appliers should send `rating` on ack.
+- [~] Vexa producer live: worker path enabled in the installed engine
+      (2026-09-30, app-data .env gets SYNTOPICA_DATA); translation proven end to
+      end (40-text batch, 37 translated, rated good); production applied 23
+      translation batches and 31 classifications. Open: ~60 vexa.enrich
+      submissions stuck from scratch-copy key reuse, fixed in vexa a0a79e57
+      but not installed (vexa main also carries another session's commits;
+      vexa-8b asked to install). Ratings on ack ship with that install (148ab32c).
 
 ## Phase 1c - acceptance on the workstation
 
@@ -80,6 +80,14 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       output is still weaker than the Claude-written one: it carries steps
       that were already done. The quality follow-up lives in the wiki
       `TODO.md`. A strong tier for `personal` would be the engine-side lever.
+
+- [!] Routing rule 2026-09-30: codex only for adversarial review and
+      consultation, cursor cancelled; bulk AI goes through the worker on agy or
+      local models. Done: clips.refine runs on agy (wiki e470c8d8). Atrium lane
+      agy-only: in progress (Atrium agent). Blocked: clips.grade still runs on
+      codex because clips' `workerGradeTier` accepts only codex or cursor (agy
+      takes no input files). Smallest unblock, in clips: grade on agy with the
+      evidence inlined in the prompt, or on a local inference job.
 
 ## Known gaps accepted in the plan
 
