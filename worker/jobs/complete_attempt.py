@@ -11,10 +11,8 @@ from worker.jobs.fail_attempt import fail_attempt
 from worker.jobs.fail_payload_lost import fail_payload_lost
 from worker.jobs.load_job_input import load_job_input
 from worker.jobs.output_matches_schema import output_matches_schema
-from worker.jobs.preempt_job import preempt_job
-from worker.jobs.requeue_after_wall import requeue_after_wall
-from worker.jobs.requeue_rate_limited import requeue_rate_limited
 from worker.jobs.schema_violation_path import schema_violation_path
+from worker.jobs.settle_unsuccessful import settle_unsuccessful
 from worker.store.transaction import transaction
 
 
@@ -44,14 +42,8 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
                 attempt_id,
             ),
         )
-        if report.outcome == "preempted":
-            return preempt_job(conn, config, job, now)
-        if report.error_code == "quota_wall" and job["kind"] == "task":
-            return requeue_after_wall(conn, config, job, now)
-        if report.error_code == "rate_limited":
-            return requeue_rate_limited(conn, job, now)
         if report.outcome != "succeeded":
-            return fail_attempt(conn, job, report.error_code or "executor_error", now)
+            return settle_unsuccessful(conn, config, job, report, now)
         job_input = load_job_input(conn, job["id"])
         if job_input is None:
             fail_payload_lost(conn, job["id"], now)
