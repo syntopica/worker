@@ -9,6 +9,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
+from worker.api.discard_body import discard_body
 from worker.api.request_context import RequestContext
 from worker.api.route_request import route_request
 from worker.auth.authenticate import authenticate
@@ -35,6 +36,7 @@ def make_handler(
             length = int(self.headers.get("Content-Length") or 0)
             if length > live.max_payload_bytes:
                 self.close_connection = True
+                discard_body(self.rfile, self.connection, length)
                 raise ApiError(413, "payload_too_large")
             url = urllib.parse.urlsplit(self.path)
             raw = self.rfile.read(max(length, 0)) if length > 0 else b""

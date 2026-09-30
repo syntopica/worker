@@ -85,3 +85,13 @@ def test_principal_files_are_owner_only(tmp_path):
     add_principal(state, "producer", "pa")
     assert stat.S_IMODE((state / "principals.json").stat().st_mode) == 0o600
     assert stat.S_IMODE((state / "tokens" / "pa.token").stat().st_mode) == 0o600
+
+
+def test_an_oversized_body_that_is_sent_still_gets_the_413(api, config):  # noqa: F811
+    base, t = api
+    body = b"x" * (config.max_payload_bytes + 1)
+    conn = http.client.HTTPConnection(base.removeprefix("http://"), timeout=10)
+    conn.request("POST", "/v1/jobs", body, {"Authorization": f"Bearer {t['pa']}"})
+    response = conn.getresponse()
+    assert (response.status, response.read()) == (413, b'{"error": "payload_too_large"}')
+    conn.close()
