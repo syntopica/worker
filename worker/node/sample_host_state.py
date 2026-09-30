@@ -24,6 +24,10 @@ def sample_host_state(
     """
     ioreg = run(["/usr/sbin/ioreg", "-c", "IOHIDSystem", "-d", "4"])
     pmset = run(["/usr/bin/pmset", "-g", "ps"])
+    if pmset is None:
+        # pmset alone was seen failing transiently (2026-09-30), which blocked
+        # admission for a whole sample; one immediate retry absorbs it.
+        pmset = run(["/usr/bin/pmset", "-g", "ps"])
     level = run(["/usr/sbin/sysctl", "-n", "kern.memorystatus_vm_pressure_level"])
     free = run(["/usr/sbin/sysctl", "-n", "kern.memorystatus_level"])
     idle = parse_hid_idle_seconds(ioreg) if ioreg is not None else None

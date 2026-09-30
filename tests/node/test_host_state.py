@@ -53,3 +53,17 @@ def test_a_failed_reader_is_logged_by_name_only(capsys):
 def test_an_unparsable_reading_is_logged_as_a_parse_failure(capsys):
     sample_host_state(lambda args: "garbage")
     assert "ioreg_parse" in capsys.readouterr().err
+
+
+def test_a_transient_pmset_failure_is_retried_once():
+    calls = []
+
+    def flaky(args):
+        calls.append(args[0])
+        if args[0] == "/usr/bin/pmset" and calls.count("/usr/bin/pmset") == 1:
+            return None
+        return {"/usr/bin/pmset": "Now drawing from 'AC Power'\n"}.get(args[0])
+
+    state = sample_host_state(flaky)
+    assert state.on_ac is True
+    assert calls.count("/usr/bin/pmset") == 2
