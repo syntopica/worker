@@ -35,11 +35,14 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 ## Later phases (see roadmap)
 
 - [~] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
-      retire `drip-loop.sh`. 2a done 2026-09-30: read-only tasks (codex, agy,
+      retire `drip-loop.sh`. 2b (OpenRouter free rung, ledger and `costs`,
+      queue fallback profiles) done 2026-09-30. 2a done 2026-09-30: read-only tasks (codex, agy,
       cursor) with profiles, workspaces, timeouts and quota-wall cooldowns
-      (amendment 2026-09-30). Open: write tasks and `needs_reconciliation`
-      (2b, for clips synthesis), CodexBar headroom before dispatch, OpenRouter,
-      ledger and `costs`, and a progress guard beyond the hard timeout.
+      (amendment 2026-09-30). Open: CodexBar headroom before dispatch, paid
+      rung with budget reservations, and a progress guard beyond the hard
+      timeout. Write tasks and `needs_reconciliation` are no longer needed for
+      clips synthesis: clips moves it through inference jobs whose page writes
+      clips applies itself (`src/worker-synthesis`, another session, 2026-09-30).
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
       Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
       newsletter triage runs as inference on queue `clips.triage`
@@ -47,14 +50,18 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       2026-09-30: triage refiner (`clips.refine` task, clips c643ae7), grade
       (`clips.grade` task with an evidence manifest, clips ab681f3) and the
       wiki's offers scan (`offers.classify`, `mail` inference on the local
-      model, via `worker run`). Left: clips synthesis (needs 2b write tasks)
-      and the wiki's weekly-actions review, which runs Claude with Read/Grep
-      over the whole personal wiki: there is no `claude` runner, and
-      `personal` never reaches a runner node by design, so moving it is an
-      owner decision (a claude runner plus an explicit privacy exception, or a
-      local-model rewrite over a precomputed manifest).
-- [ ] Phase 4: coordinator on the always-on server, Tailscale binding, more
+      model, via `worker run`). Left: clips synthesis (in progress in clips
+      through inference, another session), the weekly-actions review (owner
+      chose 2026-09-30 a local-model rewrite over a precomputed manifest; in
+      progress), agents library-loop and transcription.
+- [!] Phase 4: coordinator on the always-on server, Tailscale binding, more
       nodes; HID idle test under fast user switching before any guest node.
+      Blocked on the owner's gate (2026-09-29): the coordinator moves to the
+      Mac mini only once more nodes join and the mini stops panicking. On
+      2026-09-30 18:40 the mini was up 12 minutes with load 79 (a fresh
+      reboot); the two M1 laptops need their users' agreement, Remote Login
+      and Tailscale. Smallest unblock: a week of mini uptime without a
+      watchdog panic, then a `server` node there for small models.
 
 ## Known gaps accepted in the plan
 
