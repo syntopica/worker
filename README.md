@@ -6,7 +6,7 @@ providers, under per-job privacy rules. Projects submit jobs through one
 stable HTTP contract and collect the results without knowing where the jobs
 ran.
 
-Status: phase 1a (coordinator, node, contract v1 for inference jobs). The design is in
+Status: phase 1a (coordinator, node, contract v1 for inference jobs) and phase 2a (read-only `task` jobs run by codex, agy or cursor-agent). The design is in
 [`docs/superpowers/specs/2026-09-29-worker-design.md`](docs/superpowers/specs/2026-09-29-worker-design.md).
 
 ## Shape
@@ -63,11 +63,20 @@ for t in serve node; do
 done
 ```
 
-Bootstrap both agents:
+For tasks, also render `com.syntopica.worker.tasks.plist.template`, substituting `@PATH@` with a PATH that reaches the runner CLIs, and declare the task profiles and the queues that grant them in the instance configuration:
+
+```json
+"profiles": {"<producer>.refine": {"runner": "codex", "model": "<model>", "env_unset": ["OPENAI_API_KEY"]}},
+"queues": {"<producer>.refine": {"run_when": "active_ok", "profiles": ["<producer>.refine"]}},
+"runners": {"codex": {"cooldown_s": 3600}}
+```
+
+Bootstrap the agents:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.serve.plist
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.node.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.tasks.plist
 ```
 
 Exclude `$SYNTOPICA_DATA/worker/state` from any backup tool other than Time Machine (Backblaze and similar); the payload file is excluded from Time Machine automatically.

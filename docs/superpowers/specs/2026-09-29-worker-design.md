@@ -618,3 +618,48 @@ Each phase is independently useful. Details are in the implementation plan.
    `normal`. Any other level, or a failed read of either value, is `unknown`
    and blocks work, as before.
 3. The dispatch-source reader of amendment 5 (2026-09-29) stays open.
+
+### 2026-09-30 - phase 2a: read-only tasks
+
+Phase 2a brings `kind: "task"` (section 6) forward for the tasks whose only
+product is a final message: classification, refinement, grading. Tasks that
+write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
+
+1. **Input.** `{"runner", "profile", "prompt", "inputs"?, "output_schema"?}`.
+   `inputs` is a list of paths relative to the profile's `input_root`; no
+   absolute path, no `..`. A profile without an `input_root` takes no inputs.
+   The coordinator validates `output_schema` exactly as it validates `schema`.
+2. **Profiles** live in instance configuration under `profiles`:
+   `runner` (`codex`, `agy` or `cursor`), `model` (optional), `reasoning`
+   (codex only, optional), `privacy` (the classes it accepts, default
+   `public` and `internal`), `timeout_s` (default 900), `nodes` (optional
+   allowlist) and `input_root` (optional, resolved against the instance). A
+   queue grants profiles with `profiles: [...]`; a submit naming a profile the
+   queue does not grant, or a runner other than the profile's, is refused.
+   `agy` profiles take no inputs in 2a: reading files needs
+   `--dangerously-skip-permissions`, which stays an explicit later decision.
+3. **Storage.** A task is stored with `kind='task'` and its profile in the
+   `model` column, which already means "the executor target". No migration
+   beyond a new `cooldowns` table.
+4. **Execution** is a separate loop, `worker tasks --name <node>`, so a task
+   running for minutes never holds the inference slot. It leases only tasks,
+   one at a time, obeys the queue's `run_when` against HID idle and power,
+   and ignores memory pressure (the runner is a CLI talking to a remote model).
+   It copies the manifest into a fresh temporary workspace, runs the runner
+   there in its own process group with the profile's timeout, heartbeats
+   every 20 s, kills the group when fenced out or timed out, and deletes the
+   workspace afterwards. Runners always run in their read-only posture:
+   codex `-s read-only`, agy `--sandbox --mode plan`, cursor `--mode ask`.
+5. **Output** is `{"text", "json"}` like inference: codex's `-o` last message,
+   agy's `structured_output` (else `response`), cursor's `result` (else the
+   last balanced JSON object in it). `executor` carries the runner as
+   `provider` and the profile's model.
+6. **Quota walls.** The node reports `quota_wall` when the runner's own wall
+   sentence appears (codex "out of credits ... refill", agy "Individual quota
+   reached ... upgrade", or agy exiting 0 with no answer). The coordinator
+   puts that runner in cooldown for its `runners.<name>.cooldown_s` (default
+   3600) and requeues the job for after the cooldown without charging an
+   attempt; no task for a cooling runner is leased. New error codes:
+   `quota_wall`, `timeout`, `runner_failed`, `no_output`.
+7. **Privacy.** Runners are the `runner` executor of section 8, so by default
+   only `public` and `internal` jobs reach them, on `owner` or `server` nodes.

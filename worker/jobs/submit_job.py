@@ -8,6 +8,7 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.admit_split_child import admit_split_child
 from worker.jobs.api_error import ApiError
 from worker.jobs.check_outstanding import check_outstanding
+from worker.jobs.check_task_grant import check_task_grant
 from worker.jobs.decode_body import decode_body
 from worker.jobs.parse_submit_request import parse_submit_request
 from worker.jobs.payload_hash import payload_hash
@@ -27,7 +28,10 @@ def submit_job(
         or req.queue not in config.queues
     ):
         raise ApiError(403, "queue_not_granted")
-    model = next((m for m in req.models if m in config.models), None)
+    if req.kind == "task":
+        model: str | None = check_task_grant(config, req)
+    else:
+        model = next((m for m in req.models if m in config.models), None)
     if model is None:
         raise ApiError(400, "unknown_model")
     digest = payload_hash(body)
@@ -48,11 +52,12 @@ def submit_job(
         conn.execute(
             "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority, privacy, model,"
             " state, max_attempts, not_before, deadline, parent_id, created, updated)"
-            " VALUES (?, ?, ?, 'inference', ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)",
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)",
             (
                 job_id,
                 producer,
                 req.queue,
+                req.kind,
                 req.idempotency_key,
                 digest,
                 req.priority,

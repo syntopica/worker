@@ -9,6 +9,7 @@ from worker.cli.cmd_node import cmd_node
 from worker.cli.cmd_serve import cmd_serve
 from worker.cli.cmd_status import cmd_status
 from worker.cli.cmd_submit import cmd_submit
+from worker.cli.cmd_tasks import cmd_tasks
 from worker.cli.cmd_token import cmd_token
 
 
@@ -20,6 +21,9 @@ def build_parser() -> argparse.ArgumentParser:
     node = sub.add_parser("node")
     node.add_argument("--name", required=True)
     node.set_defaults(run=cmd_node)
+    tasks = sub.add_parser("tasks")
+    tasks.add_argument("--name", required=True)
+    tasks.set_defaults(run=cmd_tasks)
     for name, nodes in (("status", False), ("nodes", True)):
         p = sub.add_parser(name)
         p.add_argument("--json", action="store_true")

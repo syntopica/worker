@@ -54,6 +54,19 @@ class CoordinatorLink:
         )
         return body if status == HTTPStatus.OK else None
 
+    def lease_task(self, user_active: bool, idle_s: float) -> dict[str, Any] | None:
+        """A task lease for the ``worker tasks`` loop, or None."""
+        status, body = self._post(
+            "/v1/leases",
+            {
+                "node": self.node,
+                "kind": "task",
+                "user_active": user_active,
+                "current_idle_s": idle_s,
+            },
+        )
+        return body if status == HTTPStatus.OK else None
+
     def heartbeat(self, attempt_id: str, generation: int, draining: bool) -> bool:
         """False only when fenced out (409); an unreachable coordinator keeps the attempt."""
         status, _ = self._post(

@@ -5,12 +5,14 @@ import uuid
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.api_error import ApiError
+from worker.jobs.cooling_runners import cooling_runners
 from worker.jobs.fail_payload_lost import fail_payload_lost
 from worker.jobs.lease import LEASE_TTL_S, Lease
 from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
 from worker.policy.pick_job import pick_job
+from worker.policy.pick_task import pick_task
 from worker.store.transaction import transaction
 
 _MAX_LOST_PER_LEASE = 16
@@ -28,7 +30,8 @@ def lease_job(
     if node is None:
         raise ApiError(403, "unknown_node")
     with transaction(conn):
-        candidates = load_candidates(conn, config, node.trust, now)
+        candidates = load_candidates(conn, config, node.trust, now, req.kind)
+        cooling = cooling_runners(conn, now)
         recent = {
             r[0]: r[1]
             for r in conn.execute(
@@ -37,7 +40,11 @@ def lease_job(
             )
         }
         for _ in range(_MAX_LOST_PER_LEASE):
-            chosen = pick_job(candidates, req, config, recent, now)
+            chosen = (
+                pick_task(candidates, req, config, recent, cooling)
+                if req.kind == "task"
+                else pick_job(candidates, req, config, recent, now)
+            )
             if chosen is None:
                 return None
             job_input = load_job_input(conn, chosen.job_id)
@@ -62,5 +69,12 @@ def lease_job(
         )
     run_when = config.queues[chosen.queue].run_when
     return Lease(
-        chosen.job_id, attempt_id, generation, chosen.model, job_input, run_when, LEASE_TTL_S
+        chosen.job_id,
+        attempt_id,
+        generation,
+        chosen.model,
+        job_input,
+        run_when,
+        LEASE_TTL_S,
+        req.kind,
     )

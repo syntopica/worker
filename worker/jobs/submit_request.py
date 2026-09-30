@@ -6,7 +6,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class SubmitRequest:
-    """``models`` is the ordered preference list from ``requirements``."""
+    """``models`` is the ordered preference list from ``requirements``; empty for a task."""
 
     queue: str
     idempotency_key: str
@@ -17,3 +17,4 @@ class SubmitRequest:
     models: tuple[str, ...]
     input: dict[str, Any]
     parent_id: str | None
+    kind: str = "inference"

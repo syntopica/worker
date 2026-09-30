@@ -9,6 +9,7 @@ from worker.config.default_trust import DEFAULT_TRUST
 from worker.config.model_pin import ModelPin
 from worker.config.node_policy import NodePolicy
 from worker.config.parse_queue_policy import parse_queue_policy
+from worker.config.parse_task_profile import parse_task_profile
 from worker.config.worker_config import WorkerConfig
 
 
@@ -50,4 +51,10 @@ def load_worker_config(path: Path) -> WorkerConfig:
         max_split=int(raw.get("max_split", 8)),
         max_parked_runs=int(raw.get("max_parked_runs", 3)),
         split_after_preemptions=int(raw.get("split_after_preemptions", 3)),
+        profiles={
+            n: parse_task_profile(n, p, path.parent) for n, p in (raw.get("profiles") or {}).items()
+        },
+        runner_cooldown_s={
+            n: float(r.get("cooldown_s", 3600)) for n, r in (raw.get("runners") or {}).items()
+        },
     )

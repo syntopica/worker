@@ -4,6 +4,7 @@ from typing import Any
 
 from worker.jobs.api_error import ApiError
 from worker.jobs.check_inference_input import check_inference_input
+from worker.jobs.check_task_input import check_task_input
 from worker.jobs.coerce_number import coerce_number
 from worker.jobs.states import PRIVACY_CLASSES
 from worker.jobs.submit_request import SubmitRequest
@@ -17,13 +18,16 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
     """Return the request or raise ApiError(400) naming the first problem."""
     if body.get("contract") != 1:
         raise ApiError(400, "unsupported_contract")
-    if body.get("kind") != "inference":
+    kind = body.get("kind")
+    if kind not in {"inference", "task"}:
         raise ApiError(400, "unsupported_kind")
     if body.get("privacy") not in PRIVACY_CLASSES:
         raise ApiError(400, "unknown_privacy")
     requirements = body.get("requirements")
     models = requirements.get("models") if isinstance(requirements, dict) else None
-    if not isinstance(models, list) or not models:
+    if kind == "task":
+        models = []
+    elif not isinstance(models, list) or not models:
         raise ApiError(400, "missing_models")
     key = body.get("idempotency_key")
     if not isinstance(key, str) or not key or len(key) > _MAX_KEY_LENGTH:
@@ -34,7 +38,10 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         raise ApiError(400, "out_of_range")
     if not isinstance(body.get("input"), dict):
         raise ApiError(400, "missing_input")
-    check_inference_input(body["input"])
+    if kind == "task":
+        check_task_input(body["input"])
+    else:
+        check_inference_input(body["input"])
     deadline = body.get("deadline")
     parent_id = body.get("parent_id")
     if parent_id is not None and not isinstance(parent_id, str):
@@ -49,4 +56,5 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         models=tuple(str(m) for m in models),
         input=body["input"],
         parent_id=parent_id,
+        kind=kind,
     )

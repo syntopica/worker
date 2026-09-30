@@ -35,8 +35,13 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Later phases (see roadmap)
 
-- [ ] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
-      retire `drip-loop.sh`.
+- [~] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
+      retire `drip-loop.sh`. 2a done 2026-09-30: read-only tasks (codex, agy,
+      cursor) with profiles, workspaces, timeouts and quota-wall cooldowns
+      (amendment 2026-09-30). Open: write tasks and `needs_reconciliation`
+      (2b, for clips synthesis), CodexBar headroom before dispatch, OpenRouter,
+      ledger and `costs`, a progress guard beyond the hard timeout, and
+      `worker status` showing cooldowns.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
       Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
       newsletter triage runs as inference on queue `clips.triage`

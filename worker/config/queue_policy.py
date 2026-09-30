@@ -1,11 +1,11 @@
 """How one queue is scheduled and retained."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
 class QueuePolicy:
-    """``run_when`` is ``idle`` or ``active_ok``."""
+    """``run_when`` is ``idle`` or ``active_ok``; ``profiles`` are the task profiles it grants."""
 
     name: str
     run_when: str
@@ -15,3 +15,4 @@ class QueuePolicy:
     unacked_ttl_hours: int
     parked_min_idle_s: float
     max_model_age_s: float
+    profiles: frozenset[str] = field(default_factory=frozenset)

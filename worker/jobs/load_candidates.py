@@ -8,18 +8,22 @@ from worker.policy.privacy_allows import privacy_allows
 
 
 def load_candidates(
-    conn: sqlite3.Connection, config: WorkerConfig, trust: str, now: float
+    conn: sqlite3.Connection, config: WorkerConfig, trust: str, now: float, kind: str = "inference"
 ) -> list[Candidate]:
-    """Queued, due and not past deadline; at most 500, best priority first."""
-    allowed = [c for c in config.privacy if privacy_allows(config, c, "ollama", trust)]
+    """Queued, due and not past deadline, of one kind; at most 500, best priority first.
+
+    Inference runs on the ``ollama`` executor and tasks on ``runner`` (spec 8).
+    """
+    executor = "runner" if kind == "task" else "ollama"
+    allowed = [c for c in config.privacy if privacy_allows(config, c, executor, trust)]
     if not allowed:
         return []
     marks = ",".join("?" * len(allowed))
     rows = conn.execute(
         "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s FROM jobs"  # noqa: S608
-        f" WHERE state='queued' AND not_before<=? AND (deadline IS NULL OR deadline>?) AND privacy IN ({marks})"
+        f" WHERE state='queued' AND kind=? AND not_before<=? AND (deadline IS NULL OR deadline>?) AND privacy IN ({marks})"
         " ORDER BY priority DESC, created LIMIT 500",
-        (now, now, *allowed),
+        (kind, now, now, *allowed),
     ).fetchall()
     return [
         Candidate(
@@ -33,5 +37,5 @@ def load_candidates(
             r["parked_min_idle_s"],
         )
         for r in rows
-        if privacy_allows(config, r["privacy"], "ollama", trust)
+        if privacy_allows(config, r["privacy"], executor, trust)
     ]

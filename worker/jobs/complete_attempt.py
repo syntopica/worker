@@ -12,6 +12,7 @@ from worker.jobs.fail_payload_lost import fail_payload_lost
 from worker.jobs.load_job_input import load_job_input
 from worker.jobs.output_matches_schema import output_matches_schema
 from worker.jobs.preempt_job import preempt_job
+from worker.jobs.requeue_after_wall import requeue_after_wall
 from worker.store.transaction import transaction
 
 
@@ -40,6 +41,8 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
         )
         if report.outcome == "preempted":
             return preempt_job(conn, config, job, now)
+        if report.error_code == "quota_wall" and job["kind"] == "task":
+            return requeue_after_wall(conn, config, job, now)
         if report.outcome != "succeeded":
             return fail_attempt(conn, job, report.error_code or "executor_error", now)
         job_input = load_job_input(conn, job["id"])

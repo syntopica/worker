@@ -31,7 +31,8 @@ def test_payload_lives_only_in_the_payload_file(conn, config):
     ("raw", "status", "code"),
     [
         (body(contract=2), 400, "unsupported_contract"),
-        (body(kind="task"), 400, "unsupported_kind"),
+        (body(kind="batch"), 400, "unsupported_kind"),
+        (body(kind="task"), 400, "bad_input"),
         (body(privacy="nope"), 400, "unknown_privacy"),
         (body(queue="other.q"), 403, "queue_not_granted"),
         (body(requirements={"capability": "chat", "models": ["missing"]}), 400, "unknown_model"),

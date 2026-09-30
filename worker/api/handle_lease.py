@@ -18,12 +18,16 @@ def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
     if body.get("node") != ctx.principal.name:
         raise ApiError(403, "forbidden")
     expire_leases(ctx.conn, ctx.now)
+    kind = body.get("kind", "inference")
+    if kind not in {"inference", "task"}:
+        raise ApiError(400, "unsupported_kind")
     req = LeaseRequest(
         body["node"],
         body.get("resident_model"),
         bool(body["user_active"]),
-        float(body["free_gb"]),
+        float(body.get("free_gb", 0)),
         float(body["current_idle_s"]),
+        kind,
     )
     lease = lease_job(ctx.conn, ctx.config, req, ctx.now)
     return (204, {}) if lease is None else (200, lease.to_json())

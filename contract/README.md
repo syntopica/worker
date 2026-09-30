@@ -37,15 +37,17 @@ A result row with a non-null `control` carries no output, executor or usage, and
 - `expired`: the deadline passed before completion. `detail` is `{"error": "deadline"}`.
 - `unacked_expired`: a result was never acknowledged in time. `detail` is `{}`.
 
-The codes a `failed` result can carry come from a fixed vocabulary: `lease_lost`, `preemption_exhausted`, `schema_violation`, `executor_error`, `transport_error`, `bad_response`, `unknown_model`, `payload_lost` (the stored input is gone; resubmit the job) and `node_error` (the node failed unexpectedly), plus `http_<status>` for a non-200 answer from the backend, where `<status>` is the numeric status only. A code never contains provider or generated text.
+The codes a `failed` result can carry come from a fixed vocabulary: `lease_lost`, `preemption_exhausted`, `schema_violation`, `executor_error`, `transport_error`, `bad_response`, `unknown_model`, `payload_lost` (the stored input is gone; resubmit the job) and `node_error` (the node failed unexpectedly), plus `http_<status>` for a non-200 answer from the backend, where `<status>` is the numeric status only. Tasks add `timeout`, `runner_failed` (the runner exited non-zero with no answer, or could not start), `no_output` (it exited 0 with no answer), `input_missing`, `input_too_large`, `inputs_not_allowed` and `unknown_profile`. A `quota_wall` never reaches a result: the job is requeued after the runner's cooldown. A code never contains provider or generated text.
 
 ## Input
 
 An inference `input` carries `messages`, a non-empty list of `{"role": <string>, "content": <string>}`, and optionally `options` (an object), `schema` (an object) and `format` (only `"json"`). Anything else is rejected with `400 bad_input`.
 
+A task `input` carries `runner`, `profile` and `prompt` (non-empty strings), optionally `inputs` (at most 64 paths relative to the profile's input root, without `..`) and `output_schema` (an object, validated like `schema`). Anything else is `400 bad_input`. The queue must grant the profile (`403 profile_not_granted`), `runner` must be the profile's (`400 runner_mismatch`), the privacy class must be one the profile accepts (`403 privacy_not_allowed`), and inputs need a profile with an input root (`400 inputs_not_allowed`). `submit_task.json` is an example. A task's result has the same `output` shape as inference, `{"text", "json"}`, and its `executor.provider` is the runner.
+
 ## Limits and scope
 
-- Phase 1a accepts `kind: "inference"` only. `kind: "task"` is rejected with `400 unsupported_kind`.
+- `kind: "task"` runs read-only tasks only: the product is the final message, never a file.
 - `limit` on `GET /v1/results` is capped at 100.
 - `wait` on `GET /v1/results` is capped at 30 seconds.
 - The `needs_reconciliation` state and its `/reconcile` route are deferred to phase 2.

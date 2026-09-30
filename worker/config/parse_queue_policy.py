@@ -21,4 +21,5 @@ def parse_queue_policy(name: str, raw: dict[str, Any]) -> QueuePolicy:
         unacked_ttl_hours=int(raw.get("unacked_ttl_hours", 72)),
         parked_min_idle_s=float(raw.get("parked_min_idle_s", 600)),
         max_model_age_s=float(raw.get("max_model_age_s", 3600)),
+        profiles=frozenset(raw.get("profiles", ())),
     )

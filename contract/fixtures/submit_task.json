@@ -1,0 +1,11 @@
+{
+  "contract": 1,
+  "kind": "task",
+  "queue": "producer-a.refine",
+  "idempotency_key": "refine:batch-0001",
+  "priority": 50,
+  "privacy": "internal",
+  "deadline": null,
+  "max_attempts": 2,
+  "input": {"runner": "codex", "profile": "producer-a.refine", "prompt": "Classify: ...", "inputs": [], "output_schema": {"type": "object"}}
+}

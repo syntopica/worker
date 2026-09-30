@@ -1,4 +1,4 @@
-"""Check a node's output against the job's requested JSON schema."""
+"""Check a node's output against the job's requested JSON schema (``output_schema`` for a task)."""
 
 from typing import Any
 
@@ -8,7 +8,7 @@ from referencing.exceptions import Unresolvable
 
 def output_matches_schema(job_input: dict[str, Any], output: object) -> bool:
     """A malformed or unresolvable schema counts as a violation, not a crash."""
-    schema = job_input.get("schema")
+    schema = job_input.get("schema", job_input.get("output_schema"))
     if not isinstance(output, dict):
         return False
     if schema is None:
