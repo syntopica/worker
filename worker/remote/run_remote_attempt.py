@@ -6,6 +6,7 @@ from typing import Any
 
 from worker.config.worker_config import WorkerConfig
 from worker.node.attempt_report import attempt_report
+from worker.node.report_shutdown import report_shutdown
 from worker.remote.openrouter_output import openrouter_output
 from worker.remote.openrouter_request_body import openrouter_request_body
 from worker.remote.post_openrouter import post_openrouter
@@ -42,12 +43,16 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     )
     started = clock()
     thread.start()
-    while True:
-        thread.join(_BEAT_S)
-        if not thread.is_alive():
-            break
-        if not link.heartbeat(attempt, gen, False):
-            return "fenced"
+    try:
+        while True:
+            thread.join(_BEAT_S)
+            if not thread.is_alive():
+                break
+            if not link.heartbeat(attempt, gen, False):
+                return "fenced"
+    except (SystemExit, KeyboardInterrupt):
+        report_shutdown(link, attempt, gen, executor, clock() - started)
+        raise
     answer, error = holder.get("r", (None, "node_error"))
     if answer is None:
         if on_code is not None:

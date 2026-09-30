@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from worker.config.worker_config import WorkerConfig
+from worker.node.hold_power_source import HoldPowerSource
 from worker.node.host_state import HostState
 from worker.node.sample_host_state import sample_host_state
 from worker.tasks.probe_runner_walls import probe_runner_walls
@@ -34,8 +35,8 @@ def run_task_node(  # noqa: PLR0913, PLR0917
     """
     next_probe = 0.0
     if sample is None:
-        sample = functools.partial(
-            sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct
+        sample = HoldPowerSource(
+            functools.partial(sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct)
         )
     while True:
         try:

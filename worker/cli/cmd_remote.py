@@ -10,6 +10,7 @@ from worker.cli.resolve_paths import resolve_paths
 from worker.config.config_source import ConfigSource
 from worker.config.load_worker_config import load_worker_config
 from worker.node.coordinator_link import CoordinatorLink
+from worker.node.raise_on_sigterm import raise_on_sigterm
 from worker.remote.run_remote_node import run_remote_node
 
 
@@ -30,5 +31,6 @@ def cmd_remote(args: argparse.Namespace) -> int:
         print("worker: the OpenRouter key file cannot be read", file=sys.stderr)
         return 2
     link = CoordinatorLink(base_url(config), read_token(state, args.name), args.name)
+    raise_on_sigterm()
     run_remote_node(config, args.name, link, key, current=ConfigSource(config_path, config).current)
     return 0

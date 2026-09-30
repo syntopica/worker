@@ -19,18 +19,24 @@ def supervise_process(
     """``exited``, ``fenced`` (the lease is someone else's now) or ``timeout``.
 
     The lease TTL is 60 s, so a heartbeat every 20 s survives two lost ones.
-    Fenced and timed-out runners are killed as a group before returning.
+    Fenced and timed-out runners are killed as a group before returning, and
+    so is a runner whose loop is interrupted.
     """
     started = last_beat = clock()
-    while proc.poll() is None:
-        sleep(_POLL_S)
-        now = clock()
-        if now - started > timeout_s:
-            kill_group(proc)
-            return "timeout"
-        if now - last_beat >= HEARTBEAT_EVERY_S:
-            last_beat = now
-            if not heartbeat():
+    try:
+        while proc.poll() is None:
+            sleep(_POLL_S)
+            now = clock()
+            if now - started > timeout_s:
                 kill_group(proc)
-                return "fenced"
+                return "timeout"
+            if now - last_beat >= HEARTBEAT_EVERY_S:
+                last_beat = now
+                if not heartbeat():
+                    kill_group(proc)
+                    return "fenced"
+    except BaseException:
+        # Stopping the loop must not leave a runner spending quota unattended.
+        kill_group(proc)
+        raise
     return "exited"

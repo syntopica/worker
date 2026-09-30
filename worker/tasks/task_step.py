@@ -9,6 +9,7 @@ from worker.config.worker_config import WorkerConfig
 from worker.node.attempt_report import attempt_report
 from worker.node.host_state import HostState
 from worker.node.release_reason import release_reason
+from worker.node.report_shutdown import report_shutdown
 from worker.tasks.run_task import run_task
 
 
@@ -42,14 +43,20 @@ def task_step(  # noqa: PLR0913, PLR0917
             "failed", executor, 0.0, error_code="unknown_profile"
         )
     else:
-        report = run_task(
-            profile,
-            lease,
-            node_name,
-            lambda: bool(link.heartbeat(attempt, generation, False)),
-            clock,
-            sleep,
-        )
+        started = clock()
+        try:
+            report = run_task(
+                profile,
+                lease,
+                node_name,
+                lambda: bool(link.heartbeat(attempt, generation, False)),
+                clock,
+                sleep,
+            )
+        except (SystemExit, KeyboardInterrupt):
+            executor = {"node": node_name, "provider": profile.runner, "model": profile.model or ""}
+            report_shutdown(link, attempt, generation, executor, clock() - started)
+            raise
     if report is None:
         print(f"worker: task fenced job={lease.get('job_id')}", file=sys.stderr)
         return False

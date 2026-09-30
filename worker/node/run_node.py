@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from worker.config.worker_config import WorkerConfig
+from worker.node.hold_power_source import HoldPowerSource
 from worker.node.host_state import HostState
 from worker.node.node_memory import NodeMemory
 from worker.node.node_step import node_step
@@ -31,8 +32,8 @@ def run_node(  # noqa: PLR0913, PLR0917
     configured ``min_free_pct``.
     """
     if sample is None:
-        sample = functools.partial(
-            sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct
+        sample = HoldPowerSource(
+            functools.partial(sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct)
         )
     memory = NodeMemory()
     while True:

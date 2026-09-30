@@ -11,6 +11,7 @@ from worker.node.drain_backend import drain_backend
 from worker.node.host_state import HostState
 from worker.node.ollama_call import OllamaCall
 from worker.node.ollama_request_body import ollama_request_body
+from worker.node.report_shutdown import report_shutdown
 from worker.node.sustained_release_reason import sustained_release_reason
 
 _SAMPLE_S = 2.0
@@ -67,6 +68,10 @@ def run_attempt(  # noqa: PLR0913, PLR0917
                 link.complete(attempt, gen, report)
                 note(reason)
                 return "preempted" if quiet else "drain_failed"
+    except (SystemExit, KeyboardInterrupt):
+        call.cancel()
+        report_shutdown(link, attempt, gen, executor, clock() - started)
+        raise
     except BaseException:
         # The call runs in its own thread; left alone it would hold the backend
         # and the next lease would queue behind it.

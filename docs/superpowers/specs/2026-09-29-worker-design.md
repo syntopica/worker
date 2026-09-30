@@ -788,3 +788,19 @@ whether cheap models are good enough.
 4. **Later.** Shadow sampling - re-running a fraction of results on a strong
    model and scoring agreement with a judge - is deferred; when it comes it is
    only for privacy classes already allowed on the executors it uses.
+
+### 2026-09-30 - clean shutdown and a flaky power reader
+
+1. **Clean shutdown.** The node, task and remote loops turn SIGTERM into an
+   exit that first completes the running attempt as `preempted` with code
+   `node_shutdown` (a task's runner group is killed first). The coordinator
+   requeues it at once charging neither an attempt nor a preemption, like
+   `rate_limited`. Before this, every service restart lost the lease and
+   charged an attempt: a weekly-review map job ended `failed lease_lost`
+   after restarts on 2026-09-30. A report that cannot reach the coordinator
+   falls back to lease expiry, as before.
+2. **Power source hold.** `pmset -g ps` kept failing now and then after its
+   one retry (nine times on 2026-09-30), and each failure released the
+   running attempt as `host_state_unreadable`. A failed power read now reuses
+   the last good one if it is at most two minutes old; idle time and memory
+   pressure are never carried over.

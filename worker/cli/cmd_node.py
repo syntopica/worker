@@ -9,6 +9,7 @@ from worker.cli.resolve_paths import resolve_paths
 from worker.config.config_source import ConfigSource
 from worker.config.load_worker_config import load_worker_config
 from worker.node.coordinator_link import CoordinatorLink
+from worker.node.raise_on_sigterm import raise_on_sigterm
 from worker.node.run_node import run_node
 
 
@@ -20,5 +21,6 @@ def cmd_node(args: argparse.Namespace) -> int:
         print(f"worker: node {args.name} is not in the configuration", file=sys.stderr)
         return 2
     link = CoordinatorLink(base_url(config), read_token(state, args.name), args.name)
+    raise_on_sigterm()
     run_node(config, args.name, link, current=ConfigSource(config_path, config).current)
     return 0
