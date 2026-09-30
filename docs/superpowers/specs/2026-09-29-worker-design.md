@@ -625,7 +625,8 @@ Phase 2a brings `kind: "task"` (section 6) forward for the tasks whose only
 product is a final message: classification, refinement, grading. Tasks that
 write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
 
-1. **Input.** `{"runner", "profile", "prompt", "inputs"?, "output_schema"?}`.
+1. **Input.** `{"runner"?, "profile", "prompt", "inputs"?, "output_schema"?}`.
+   `runner` may be left to the profile; when given it must match.
    `inputs` is a list of paths relative to the profile's `input_root`; no
    absolute path, no `..`. A profile without an `input_root` takes no inputs.
    The coordinator validates `output_schema` exactly as it validates `schema`.

@@ -43,7 +43,7 @@ The codes a `failed` result can carry come from a fixed vocabulary: `lease_lost`
 
 An inference `input` carries `messages`, a non-empty list of `{"role": <string>, "content": <string>}`, and optionally `options` (an object), `schema` (an object) and `format` (only `"json"`). Anything else is rejected with `400 bad_input`.
 
-A task `input` carries `runner`, `profile` and `prompt` (non-empty strings), optionally `inputs` (at most 64 paths relative to the profile's input root, without `..`) and `output_schema` (an object, validated like `schema`). Anything else is `400 bad_input`. The queue must grant the profile (`403 profile_not_granted`), `runner` must be the profile's (`400 runner_mismatch`), the privacy class must be one the profile accepts (`403 privacy_not_allowed`), and inputs need a profile with an input root (`400 inputs_not_allowed`). `submit_task.json` is an example. A task's result has the same `output` shape as inference, `{"text", "json"}`, and its `executor.provider` is the runner.
+A task `input` carries `profile` and `prompt` (non-empty strings), optionally `runner` (when given it must be the profile's), `inputs` (at most 64 paths relative to the profile's input root, without `..`) and `output_schema` (an object, validated like `schema`). Anything else is `400 bad_input`. The queue must grant the profile (`403 profile_not_granted`), `runner` must be the profile's (`400 runner_mismatch`), the privacy class must be one the profile accepts (`403 privacy_not_allowed`), and inputs need a profile with an input root (`400 inputs_not_allowed`). `submit_task.json` is an example. A task's result has the same `output` shape as inference, `{"text", "json"}`, and its `executor.provider` is the runner.
 
 ## Limits and scope
 

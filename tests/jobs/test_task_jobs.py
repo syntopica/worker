@@ -137,6 +137,13 @@ def test_task_output_is_checked_against_output_schema(tconn, tconfig):
     )
 
 
+def test_the_runner_may_be_left_to_the_profile(tconn, tconfig):
+    raw = json.loads(task())
+    del raw["input"]["runner"]
+    _, created = submit_job(tconn, tconfig, "pa", json.dumps(raw).encode(), 0.0)
+    assert created
+
+
 def test_input_root_resolves_against_the_config_file(tconfig, tmp_path):
     assert tconfig.profiles["pa.grade"].input_root == (tmp_path / "store").resolve()
     assert tconfig.profiles["pa.codex"].privacy == frozenset({"public", "internal"})

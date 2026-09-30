@@ -13,9 +13,11 @@ def check_task_input(job_input: dict[str, Any]) -> None:
     """Raise ApiError(400, "bad_input") unless it is a runnable read-only task."""
     if set(job_input) - _KEYS:
         raise ApiError(400, "bad_input")
-    for name in ("runner", "profile", "prompt"):
+    for name in ("profile", "prompt"):
         if not isinstance(job_input.get(name), str) or not job_input[name]:
             raise ApiError(400, "bad_input")
+    if "runner" in job_input and not isinstance(job_input["runner"], str):
+        raise ApiError(400, "bad_input")
     inputs = job_input.get("inputs", [])
     if not isinstance(inputs, list) or len(inputs) > _MAX_INPUTS:
         raise ApiError(400, "bad_input")
