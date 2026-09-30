@@ -657,7 +657,9 @@ write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
    `provider` and the profile's model.
 6. **Quota walls.** The node reports `quota_wall` when the runner's own wall
    sentence appears (codex "out of credits ... refill", agy "Individual quota
-   reached ... upgrade", or agy exiting 0 with no answer). The coordinator
+   reached ... upgrade", or agy exiting 0 with no answer; cursor "You're out
+   of usage ... increase your limit" or "You've hit your usage limit ...
+   Spend Limit", only when the run produced no answer). The coordinator
    puts that runner in cooldown for its `runners.<name>.cooldown_s` (default
    3600) and requeues the job for after the cooldown without charging an
    attempt; no task for a cooling runner is leased. New error codes:

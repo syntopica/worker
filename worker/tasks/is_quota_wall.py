@@ -7,8 +7,12 @@ def is_quota_wall(runner: str, exit_code: int, output: str, answer: str | None) 
     """The runner's wall sentence anywhere in its output, or agy's silent wall.
 
     agy exits 0 with no answer when its quota is spent; that shape is read as a
-    wall too, since nothing else in a no-tools run produces it.
+    wall too, since nothing else in a no-tools run produces it. A cursor run
+    that answered is never a wall: its stdout carries the model's answer, which
+    may quote the wall sentence from the material it was given.
     """
+    if runner == "cursor" and answer is not None:
+        return False
     pattern = QUOTA_WALL_PATTERNS.get(runner)
     if pattern is not None and pattern.search(output):
         return True

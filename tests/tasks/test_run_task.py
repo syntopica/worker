@@ -89,6 +89,16 @@ def test_cursor_takes_the_prompt_on_stdin_and_the_last_object_of_its_result(tmp_
     assert report["output"]["json"] == {"echo": "big prompt"}
 
 
+def test_cursor_out_of_usage_is_a_quota_wall_unless_it_answered(tmp_path):
+    wall = "ActionRequiredError: Increase limits for faster responses You're out of usage. Switch to Auto, or ask your admin to increase your limit to continue."
+    body = f"sys.stderr.write({wall!r})\nsys.exit(1)"
+    report = run(profile("cursor", fake_runner(tmp_path, "cursor", body)), lease())
+    assert report["error_code"] == "quota_wall"
+    quoted = f"print(json.dumps({{'is_error': False, 'result': json.dumps({{'s': {wall!r}}})}}))"
+    report = run(profile("cursor", fake_runner(tmp_path, "cursor2", quoted)), lease())
+    assert report["outcome"] == "succeeded"
+
+
 def test_a_runner_that_answers_nothing_fails_without_a_wall(tmp_path):
     report = run(profile("codex", fake_runner(tmp_path, "codex", "sys.exit(3)")), lease())
     assert (report["outcome"], report["error_code"]) == ("failed", "runner_failed")
