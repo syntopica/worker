@@ -24,6 +24,12 @@ def handle_complete(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
     )
     return 200, {
         "state": complete_attempt(
-            ctx.conn, ctx.config, ctx.parts[2], int(b["generation"]), report, ctx.now
+            ctx.conn,
+            ctx.config,
+            ctx.parts[2],
+            int(b["generation"]),
+            report,
+            ctx.now,
+            node=ctx.principal.name,
         )
     }

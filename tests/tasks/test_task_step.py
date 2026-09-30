@@ -36,7 +36,13 @@ def step(config, link, state):
     return task_step(config, "node-a", link, lambda: state, lambda: 0.0, lambda _s: None)
 
 
-LEASE = {"attempt_id": "a1", "generation": 2, "model": "p", "input": {"prompt": "x"}}
+LEASE = {
+    "attempt_id": "a1",
+    "generation": 2,
+    "privacy": "internal",
+    "model": "p",
+    "input": {"prompt": "x"},
+}
 ANSWER = 'open(args[args.index("-o") + 1], "w").write("{}")'
 
 

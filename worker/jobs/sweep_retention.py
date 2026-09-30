@@ -4,6 +4,7 @@ import sqlite3
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.delete_payloads_batch import delete_payloads_batch
+from worker.jobs.expire_split_requests_batch import expire_split_requests_batch
 from worker.jobs.expire_unacked_batch import expire_unacked_batch
 from worker.jobs.release_jobs_batch import release_jobs_batch
 from worker.jobs.retention_policies import retention_policies
@@ -20,11 +21,16 @@ def sweep_retention(conn: sqlite3.Connection, config: WorkerConfig, now: float) 
     """
     swept = 0
     for policy in retention_policies(conn, config):
-        for step in (expire_unacked_batch, delete_payloads_batch, release_jobs_batch):
+        for step in (
+            expire_split_requests_batch,
+            expire_unacked_batch,
+            delete_payloads_batch,
+            release_jobs_batch,
+        ):
             while True:
                 with transaction(conn):
                     done = step(conn, policy, now, _BATCH)
-                if step is not release_jobs_batch:
+                if step in (expire_unacked_batch, delete_payloads_batch):
                     swept += done
                 if done < _BATCH:
                     break

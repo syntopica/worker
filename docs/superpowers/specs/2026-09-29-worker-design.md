@@ -804,3 +804,24 @@ whether cheap models are good enough.
    running attempt as `host_state_unreadable`. A failed power read now reuses
    the last good one if it is at most two minutes old; idle time and memory
    pressure are never carried over.
+
+### 2026-09-30 - deferred engine items closed
+
+1. **Fence by node.** Heartbeats and completions must come from the node
+   holding the lease; any other node's report is `stale_attempt` (409), so one
+   node's token cannot settle another node's attempt.
+2. **Node privacy re-check (section 8).** Before running anything, the
+   inference, task and remote loops check the lease's privacy class against
+   their own configuration for their executor (`ollama`, `runner`,
+   `openrouter`) and trust. A refusal completes the attempt as `failed` with
+   `privacy_refused`; a lease without a class is refused.
+3. **Unanswered split requests.** A job left in `split_requested` longer than
+   its queue's `unacked_ttl_hours` is declined by the sweeper on the
+   producer's behalf: it is parked and its control result marked
+   acknowledged, so it no longer holds an outstanding slot forever.
+4. **Completion spool (section 10), memory only.** A completion the
+   coordinator could not receive is held in the node's memory and retried
+   before its next lease request; while any is undelivered the node takes no
+   new work. Nothing is written to disk, content-bearing or not, which is
+   stricter than section 10 allows; a node restart loses held completions and
+   lease expiry reclaims them, as before.

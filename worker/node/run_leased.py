@@ -7,6 +7,7 @@ from typing import Any
 from worker.config.worker_config import WorkerConfig
 from worker.node.attempt_report import attempt_report
 from worker.node.host_state import HostState
+from worker.node.lease_privacy_allowed import lease_privacy_allowed
 from worker.node.node_memory import NodeMemory
 from worker.node.run_attempt import run_attempt
 from worker.node.settle_attempt import settle_attempt
@@ -27,8 +28,13 @@ def run_leased(  # noqa: PLR0913, PLR0917
     node = config.nodes[node_name]
     model = str(lease["model"])
     executor = {"node": node.name, "provider": "ollama", "model": model}
-    if model not in config.models:
-        report = attempt_report("failed", executor, 0.0, error_code="unknown_model")
+    refusal = None
+    if not lease_privacy_allowed(config, node_name, lease, "ollama"):
+        refusal = "privacy_refused"
+    elif model not in config.models:
+        refusal = "unknown_model"
+    if refusal is not None:
+        report = attempt_report("failed", executor, 0.0, error_code=refusal)
         link.complete(lease["attempt_id"], lease["generation"], report)
         return False
     codes: list[str | None] = [None]

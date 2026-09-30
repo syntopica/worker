@@ -82,6 +82,12 @@ def test_a_rate_limited_call_rests_the_loop_five_minutes(config, monkeypatch):
         return real(*args, post=lambda *_a: (None, "rate_limited"), **kwargs)
 
     monkeypatch.setattr(step_module, "run_remote_attempt", limited)
-    link = Link(LEASE)
+    link = Link({**LEASE, "privacy": "public"})
     assert remote_step(config, "node-a", link, "k", lambda: 0.0, headroom=lambda _k: 3) == 300.0
     assert link.completed[0]["error_code"] == "rate_limited"
+
+
+def test_a_lease_this_node_may_not_send_remote_is_refused_unrun(config):
+    link = Link(LEASE)
+    assert remote_step(config, "node-a", link, "k", lambda: 0.0, headroom=lambda _k: 3) == 3.1
+    assert link.completed[0]["error_code"] == "privacy_refused"

@@ -8,6 +8,7 @@ from typing import Any
 from worker.config.worker_config import WorkerConfig
 from worker.node.attempt_report import attempt_report
 from worker.node.host_state import HostState
+from worker.node.lease_privacy_allowed import lease_privacy_allowed
 from worker.node.release_reason import release_reason
 from worker.node.report_shutdown import report_shutdown
 from worker.tasks.run_task import run_task
@@ -37,11 +38,10 @@ def task_step(  # noqa: PLR0913, PLR0917
         return True
     attempt, generation = lease["attempt_id"], lease["generation"]
     profile = config.profiles.get(lease["model"])
-    if profile is None:
+    if profile is None or not lease_privacy_allowed(config, node_name, lease, "runner"):
         executor = {"node": node_name, "provider": "runner", "model": ""}
-        report: dict[str, Any] | None = attempt_report(
-            "failed", executor, 0.0, error_code="unknown_profile"
-        )
+        refusal = "unknown_profile" if profile is None else "privacy_refused"
+        report: dict[str, Any] | None = attempt_report("failed", executor, 0.0, error_code=refusal)
     else:
         started = clock()
         try:

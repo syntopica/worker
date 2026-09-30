@@ -23,10 +23,12 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
     generation: int,
     report: CompletionReport,
     now: float,
+    *,
+    node: str | None = None,
 ) -> str:
     """Return the job's new state; raise ApiError(409) for a fenced-out attempt."""
     with transaction(conn):
-        job = check_fence(conn, attempt_id, generation)
+        job = check_fence(conn, attempt_id, generation, node)
         conn.execute(
             "UPDATE attempts SET ended=?, outcome=?, error=?, wall_s=?, tokens_in=?, tokens_out=?,"
             " provider=?, cost_usd=?, model=? WHERE id=?",

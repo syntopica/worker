@@ -19,6 +19,7 @@ IDLE = HostState(900, True, "normal")
 LEASE = {
     "job_id": "j",
     "attempt_id": "a",
+    "privacy": "mail",
     "generation": 1,
     "model": "model-a",
     "input": {"messages": []},

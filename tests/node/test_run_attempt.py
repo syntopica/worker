@@ -40,6 +40,7 @@ def lease(run_when="idle"):
     return {
         "job_id": "j",
         "attempt_id": "a",
+        "privacy": "mail",
         "generation": 1,
         "model": "model-a",
         "input": {"messages": []},

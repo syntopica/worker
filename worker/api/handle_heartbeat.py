@@ -14,6 +14,11 @@ def handle_heartbeat(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
         raise ApiError(403, "forbidden")
     body = json.loads(ctx.body or b"{}")
     heartbeat_attempt(
-        ctx.conn, ctx.parts[2], int(body["generation"]), bool(body.get("draining")), ctx.now
+        ctx.conn,
+        ctx.parts[2],
+        int(body["generation"]),
+        bool(body.get("draining")),
+        ctx.now,
+        node=ctx.principal.name,
     )
     return 200, {"ok": True}
