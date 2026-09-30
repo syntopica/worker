@@ -45,9 +45,16 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
       Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
       newsletter triage runs as inference on queue `clips.triage`
-      (`runners.triage = "worker"`, clips b06252f, brain ede2b3b). Still on
-      agy/codex/cursor and waiting on the `task` kind: clips synthesis, grade
-      and triage refiner, and the wiki's offers scan and weekly-actions review.
+      (`runners.triage = "worker"`, clips b06252f, brain ede2b3b). Also moved
+      2026-09-30: triage refiner (`clips.refine` task, clips c643ae7), grade
+      (`clips.grade` task with an evidence manifest, clips ab681f3) and the
+      wiki's offers scan (`offers.classify`, `mail` inference on the local
+      model, via `worker run`). Left: clips synthesis (needs 2b write tasks)
+      and the wiki's weekly-actions review, which runs Claude with Read/Grep
+      over the whole personal wiki: there is no `claude` runner, and
+      `personal` never reaches a runner node by design, so moving it is an
+      owner decision (a claude runner plus an explicit privacy exception, or a
+      local-model rewrite over a precomputed manifest).
 - [ ] Phase 4: coordinator on the always-on server, Tailscale binding, more
       nodes; HID idle test under fast user switching before any guest node.
 
