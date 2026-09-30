@@ -25,7 +25,9 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       reload loop. Count unloads per hour in 1c before accepting.
 - [ ] Useful work under repeated interruptions; 1000 translated texts;
       `worker status` shows progress.
-- [ ] Memory-pressure source: dispatch source vs sysctl (amendment 5).
+- [~] Memory-pressure source: dispatch source vs sysctl (amendment 5).
+      2026-09-30: warn now counts only below the node's `min_free_pct`
+      (amendment 2026-09-30); the dispatch-source reader is still open.
       Observed 2026-09-29 on the workstation: `kern.memorystatus_vm_pressure_level`
       read 2 (warn) with `memory_pressure` reporting 72% free, and the node
       unloaded the resident qwen3.6:35b at that moment. Measure how often warn
@@ -80,13 +82,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       while `sample_host_state()` run by hand returned all three fields five
       times in a row, then the node recovered on its own. Next step: log which
       of ioreg/pmset/sysctl returned None (allowlisted field name only).
-- [ ] Warn pressure starves `active_ok` queues too. 2026-09-30 03:53-04:07:
-      the first `clips.triage` job sat queued over 12 min while the node
-      reported `memory_pressure`, with `memory_pressure` showing 30% free and
-      the sysctl back at 1 (normal) for part of that window (`pressure_backoff`
-      holding). Resident at the time: the node's own 24 GB llama-server, a
-      17 GB CodexBar and a 7 GB Backblaze uploader. Same root as the 1c
-      reload-loop item; measure it there.
 - [ ] Deferred for later phases: `split_requested` timeout, `check_fence`
       node match and lease privacy re-check (before guest nodes), completion
       spool (spec 10), status gaps (spec 13, reload counter needed by 1c),

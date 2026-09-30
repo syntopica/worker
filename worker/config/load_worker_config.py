@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from worker.config.default_min_free_pct import DEFAULT_MIN_FREE_PCT
 from worker.config.default_privacy import DEFAULT_PRIVACY
 from worker.config.default_trust import DEFAULT_TRUST
 from worker.config.model_pin import ModelPin
@@ -38,6 +39,7 @@ def load_worker_config(path: Path) -> WorkerConfig:
                 float(v["memory_budget_gb"]),
                 v["ollama_url"],
                 v["ollama_launchd_label"],
+                float(v.get("min_free_pct", DEFAULT_MIN_FREE_PCT)),
             )
             for n, v in raw["nodes"].items()
         },

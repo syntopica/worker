@@ -23,3 +23,11 @@
   files 0600 and excluded from Time Machine; Atrium drip lane `worker`
   submitting to `atrium.synthesis` (atrium cc1727d, 6b3a1b6, 0a48096;
   dotfiles 60da964).
+
+- 2026-09-30 [x] Warn pressure no longer unloads the node's own model with a
+  third of memory free. `kern.memorystatus_vm_pressure_level` read 2 with
+  28-30% free (`kern.memorystatus_level`), preempting the first `clips.triage`
+  job twice in 45 min. Warn now counts only below the node's `min_free_pct`
+  (default 15); critical always counts; an unreadable value still blocks.
+  Spec amendment 2026-09-30. Verified: `uv run codeality-py gate` (all
+  passed), `tests/node/test_memory_check.py`.

@@ -601,3 +601,20 @@ Each phase is independently useful. Details are in the implementation plan.
 6. Content files: the state directory is 0700 and its files 0600; the payload
    file is excluded from Time Machine and its WAL is truncated after each
    deleting sweep.
+
+### 2026-09-30 - memory check
+
+1. Memory pressure (section 7) is no longer the raw
+   `kern.memorystatus_vm_pressure_level`. That level read 2 (warn) with 72%
+   and with 28-30% of memory free on the reference workstation, while the
+   node's own 22 GB model was the largest resident. Acting on it made the node
+   release and unload its own model, reload it on the next lease and warn
+   again: the first `clips.triage` job was preempted twice and never finished
+   in 45 minutes.
+2. The node now also reads `kern.memorystatus_level`, the free-memory
+   percentage `memory_pressure` reports. Level 4 is `critical` regardless of
+   free memory. Level 2 is `warn` only while free memory is below the node's
+   `min_free_pct` (default 15); above it the sample is `normal`. Level 1 is
+   `normal`. Any other level, or a failed read of either value, is `unknown`
+   and blocks work, as before.
+3. The dispatch-source reader of amendment 5 (2026-09-29) stays open.
