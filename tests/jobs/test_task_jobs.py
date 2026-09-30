@@ -7,6 +7,7 @@ from worker.config.load_worker_config import load_worker_config
 from worker.jobs.api_error import ApiError
 from worker.jobs.complete_attempt import complete_attempt
 from worker.jobs.completion_report import CompletionReport
+from worker.jobs.job_cooling_until import job_cooling_until
 from worker.jobs.lease_job import lease_job
 from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.submit_job import submit_job
@@ -119,7 +120,10 @@ def test_a_quota_wall_rests_the_runner_and_requeues_without_charging(tconn, tcon
     ).fetchone()
     assert (row["attempts"], row["not_before"]) == (0, 602.0)
     assert lease(tconn, tconfig, now=3.0) is None  # the other codex task waits too
+    second = tconn.execute("SELECT id FROM jobs WHERE id<>?", (first.job_id,)).fetchone()["id"]
+    assert job_cooling_until(tconn, tconfig, second, 3.0) == 602.0
     assert lease(tconn, tconfig, now=603.0) is not None
+    assert job_cooling_until(tconn, tconfig, second, 603.0) is None
 
 
 def test_task_output_is_checked_against_output_schema(tconn, tconfig):
