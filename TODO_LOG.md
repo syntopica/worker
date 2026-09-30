@@ -74,3 +74,6 @@
 - 2026-09-30 [-] Memory-pressure dispatch source: dropped, same kernel level
   as the sysctl already read (amendment "phase 1c decisions"). CPU-time
   progress guard for tasks: dropped, runners idle on network by design.
+- 2026-10-01 [x] OpenRouter credit: owner bought $10; `/api/v1/key` now reports
+  `is_free_tier: false` and free-model daily requests limit 1000 (was 50).
+  Credits may expire 365 days after purchase (OpenRouter terms).
