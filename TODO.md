@@ -36,6 +36,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 - [ ] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
       retire `drip-loop.sh`.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
+      Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
+      newsletter triage runs as inference on queue `clips.triage`
+      (`runners.triage = "worker"`, clips b06252f, brain ede2b3b). Still on
+      agy/codex/cursor and waiting on the `task` kind: clips synthesis, grade
+      and triage refiner, and the wiki's offers scan and weekly-actions review.
 - [ ] Phase 4: coordinator on the always-on server, Tailscale binding, more
       nodes; HID idle test under fast user switching before any guest node.
 
@@ -70,6 +75,18 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       `ack_result` (400 `bad_request`).
 - [ ] The Time Machine exclusion failure is cached per inode and never
       retried until the file is recreated.
+- [ ] `host_state_unreadable` flaps with every reader healthy. Seen
+      2026-09-30 03:48: two consecutive `worker nodes` reports (`idle=None`)
+      while `sample_host_state()` run by hand returned all three fields five
+      times in a row, then the node recovered on its own. Next step: log which
+      of ioreg/pmset/sysctl returned None (allowlisted field name only).
+- [ ] Warn pressure starves `active_ok` queues too. 2026-09-30 03:53-04:07:
+      the first `clips.triage` job sat queued over 12 min while the node
+      reported `memory_pressure`, with `memory_pressure` showing 30% free and
+      the sysctl back at 1 (normal) for part of that window (`pressure_backoff`
+      holding). Resident at the time: the node's own 24 GB llama-server, a
+      17 GB CodexBar and a 7 GB Backblaze uploader. Same root as the 1c
+      reload-loop item; measure it there.
 - [ ] Deferred for later phases: `split_requested` timeout, `check_fence`
       node match and lease privacy re-check (before guest nodes), completion
       spool (spec 10), status gaps (spec 13, reload counter needed by 1c),
