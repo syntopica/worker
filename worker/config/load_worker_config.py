@@ -63,6 +63,11 @@ def load_worker_config(path: Path) -> WorkerConfig:
         runner_cooldown_s={
             n: float(r.get("cooldown_s", 3600)) for n, r in (raw.get("runners") or {}).items()
         },
+        runner_quota={
+            n: (str(r["quota_provider"]), tuple(str(w) for w in r.get("quota_windows", ())))
+            for n, r in (raw.get("runners") or {}).items()
+            if r.get("quota_provider")
+        },
     )
     check_queue_fallbacks(config.queues, config.profiles)
     return config

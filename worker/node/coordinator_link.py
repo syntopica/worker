@@ -75,6 +75,10 @@ class CoordinatorLink:
         )
         return body if status == HTTPStatus.OK else None
 
+    def report_walls(self, walls: dict[str, float]) -> None:
+        """Tell the coordinator which runners' quotas are spent; best effort."""
+        self._post(f"/v1/nodes/{self.node}/walls", dict(walls))
+
     def heartbeat(self, attempt_id: str, generation: int, draining: bool) -> bool:
         """False only when fenced out (409); an unreachable coordinator keeps the attempt."""
         status, _ = self._post(

@@ -9,9 +9,11 @@ from typing import Any
 from worker.config.worker_config import WorkerConfig
 from worker.node.host_state import HostState
 from worker.node.sample_host_state import sample_host_state
+from worker.tasks.probe_runner_walls import probe_runner_walls
 from worker.tasks.task_step import task_step
 
 _REST_S = 30.0
+_PROBE_S = 600.0
 
 
 def run_task_node(  # noqa: PLR0913, PLR0917
@@ -24,7 +26,13 @@ def run_task_node(  # noqa: PLR0913, PLR0917
     forever: bool = True,
     current: Callable[[], WorkerConfig] | None = None,
 ) -> None:
-    """A failing iteration logs its exception class, rests, and never stops the loop."""
+    """A failing iteration logs its exception class, rests, and never stops the loop.
+
+    Every ten minutes the runners' quotas are read through CodexBar and any
+    spent one is reported, so the coordinator rests it (and uses a queue
+    fallback) without first spending a call against its wall.
+    """
+    next_probe = 0.0
     if sample is None:
         sample = functools.partial(
             sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct
@@ -33,6 +41,11 @@ def run_task_node(  # noqa: PLR0913, PLR0917
         try:
             if current is not None:
                 config = current()
+            if config.runner_quota and clock() >= next_probe:
+                next_probe = clock() + _PROBE_S
+                walls = probe_runner_walls(config, clock())
+                if walls:
+                    link.report_walls(walls)
             rest = task_step(config, node_name, link, sample, clock, sleep)
         except Exception as error:
             print(f"worker: task iteration failed: {type(error).__name__}", file=sys.stderr)

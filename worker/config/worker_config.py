@@ -14,6 +14,8 @@ class WorkerConfig:
     """``producers`` maps a producer to the queues it is granted.
 
     ``runner_cooldown_s`` is how long a runner rests after a quota wall.
+    ``runner_quota`` maps a runner to its CodexBar provider and the window
+    names to read (empty: every unlabelled window).
     """
 
     listen_host: str
@@ -30,3 +32,4 @@ class WorkerConfig:
     split_after_preemptions: int
     profiles: Mapping[str, TaskProfile] = field(default_factory=dict)
     runner_cooldown_s: Mapping[str, float] = field(default_factory=dict)
+    runner_quota: Mapping[str, tuple[str, tuple[str, ...]]] = field(default_factory=dict)

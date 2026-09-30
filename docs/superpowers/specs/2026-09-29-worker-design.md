@@ -747,3 +747,14 @@ model seen in `/api/ps` over the last hour, whatever caused them (lease,
 pressure unload, keep-alive expiry, another application). This is the
 measurement behind the 1c criterion "zero model reloads"; `worker nodes`
 prints it.
+
+### 2026-09-30 - quota headroom from CodexBar
+
+`runners.<name>` may name a CodexBar `quota_provider` and `quota_windows`
+(substrings of labelled windows; none means the unlabelled ones). Every ten
+minutes the task loop reads each and reports a known spent window (used at
+least 95%, reset in the future) to `POST /v1/nodes/{name}/walls`; the
+coordinator rests that runner until the reset, never shortening a cooldown and
+refusing a reset more than 40 days out. Unknown usage is no evidence either
+way here: the reactive wall remains the backstop. This is the headroom check
+before dispatch that `drip-loop.sh` did with `drip-quota.py`.
