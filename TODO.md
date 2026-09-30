@@ -11,10 +11,9 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 - [~] Vexa producer live: worker path enabled in the installed engine
       (2026-09-30, app-data .env gets SYNTOPICA_DATA); translation proven end to
       end (40-text batch, 37 translated, rated good); production applied 23
-      translation batches and 31 classifications. Open: ~60 vexa.enrich
-      submissions stuck from scratch-copy key reuse, fixed in vexa a0a79e57
-      but not installed (vexa main also carries another session's commits;
-      vexa-8b asked to install). Ratings on ack ship with that install (148ab32c).
+      translation batches and 31 classifications. Installed 2026-10-01 as build c4f35285:
+      the engine closed 75 orphaned vexa.enrich submissions, acks now carry
+      ratings, and store copies keep the worker path off (c228f685).
 
 ## Phase 1c - acceptance on the workstation
 
