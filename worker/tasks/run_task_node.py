@@ -22,6 +22,7 @@ def run_task_node(  # noqa: PLR0913, PLR0917
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.time,
     forever: bool = True,
+    current: Callable[[], WorkerConfig] | None = None,
 ) -> None:
     """A failing iteration logs its exception class, rests, and never stops the loop."""
     if sample is None:
@@ -30,6 +31,8 @@ def run_task_node(  # noqa: PLR0913, PLR0917
         )
     while True:
         try:
+            if current is not None:
+                config = current()
             rest = task_step(config, node_name, link, sample, clock, sleep)
         except Exception as error:
             print(f"worker: task iteration failed: {type(error).__name__}", file=sys.stderr)

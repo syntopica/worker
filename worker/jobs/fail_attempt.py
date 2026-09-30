@@ -1,17 +1,24 @@
 """Charge a failed attempt to the job: retry with backoff or fail for good."""
 
 import sqlite3
+from typing import Any
 
 from worker.jobs.finish_failed import finish_failed
 from worker.jobs.retry_backoff import retry_backoff
 
 
-def fail_attempt(conn: sqlite3.Connection, job: sqlite3.Row, code: str, now: float) -> str:
-    """Return the job's new state."""
+def fail_attempt(
+    conn: sqlite3.Connection,
+    job: sqlite3.Row,
+    code: str,
+    now: float,
+    extra: dict[str, Any] | None = None,
+) -> str:
+    """Return the job's new state; ``extra`` reaches the final control result only."""
     attempts = job["attempts"] + 1
     conn.execute("UPDATE jobs SET attempts=? WHERE id=?", (attempts, job["id"]))
     if attempts >= job["max_attempts"]:
-        finish_failed(conn, job, code, now)
+        finish_failed(conn, job, code, now, extra=extra)
         return "failed"
     conn.execute(
         "UPDATE jobs SET state='queued', error=?, not_before=?, updated=?,"

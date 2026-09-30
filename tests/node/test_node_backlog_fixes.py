@@ -5,6 +5,7 @@ import pytest
 from tests.node.fake_ollama import FakeOllama
 from worker.config.model_pin import ModelPin
 from worker.config.node_policy import NodePolicy
+from worker.node import run_leased as run_leased_module
 from worker.node.host_state import HostState
 from worker.node.node_block import node_block
 from worker.node.node_memory import NodeMemory
@@ -90,3 +91,15 @@ def test_an_exception_mid_attempt_cancels_the_backend_call(fake, monkeypatch):
     with pytest.raises(RuntimeError):
         run_attempt(LEASE, BrokenLink(), PIN, node, lambda: IDLE, lambda _s: None, time.time)
     assert cancelled == [True]
+
+
+def test_a_preempted_attempt_logs_its_reason(monkeypatch, capsys, config):
+    def preempted(*args):
+        args[-1]("user_active")
+        return "preempted"
+
+    monkeypatch.setattr(run_leased_module, "run_attempt", preempted)
+    run_leased_module.run_leased(
+        config, "node-a", None, NodeMemory(), LEASE, [], lambda: IDLE, lambda _s: None, time.time
+    )
+    assert "worker: attempt preempted: user_active job=j" in capsys.readouterr().err

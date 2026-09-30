@@ -44,3 +44,10 @@
   failure, host reader failures logged by name. CI fixed as well: gitleaks CLI
   instead of the licensed action, actionlint and zizmor added, mypy no longer
   host-dependent. Verified: `uv run codeality-py gate` all passed.
+- 2026-09-30 [x] Operability items found moving brain jobs onto the worker
+  (spec amendment "operability after the first producers"): non-success
+  attempt outcomes logged with their code, `schema_path` on a final
+  `schema_violation`, `config.json` reloaded on change by serve, node and
+  tasks, worker state refused as a task input (`input_denied`, closes the
+  `clips.grade` broad `input_root` exposure of tokens), `cooldowns` and
+  per-node `last_release` in status. Verified: `uv run codeality-py gate`.

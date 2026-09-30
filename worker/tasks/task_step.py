@@ -1,6 +1,7 @@
 """One iteration of the task loop: check the host, lease a task, run it, complete it."""
 
 import dataclasses
+import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -49,6 +50,14 @@ def task_step(  # noqa: PLR0913, PLR0917
             clock,
             sleep,
         )
-    if report is not None:
-        link.complete(attempt, generation, report)
+    if report is None:
+        print(f"worker: task fenced job={lease.get('job_id')}", file=sys.stderr)
+        return False
+    if report["outcome"] != "succeeded":
+        # Outcome and error code are fixed allowlisted words; the job id is opaque.
+        code = report.get("error_code")
+        print(
+            f"worker: task {report['outcome']}: {code} job={lease.get('job_id')}", file=sys.stderr
+        )
+    link.complete(attempt, generation, report)
     return False

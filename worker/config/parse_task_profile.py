@@ -32,4 +32,5 @@ def parse_task_profile(name: str, raw: dict[str, Any], config_dir: Path) -> Task
         input_root=None if root is None else (config_dir / str(root)).resolve(),
         command=raw.get("command"),
         env_unset=frozenset(raw.get("env_unset", ())),
+        denied_root=(config_dir / "state").resolve(),
     )

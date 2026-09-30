@@ -685,3 +685,19 @@ write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
 7. **Host readers.** A failed or unparsable host reader is logged by its fixed
    name (`ioreg`, `pmset`, `pressure_level`, with `_parse` for a parse
    failure). The Time Machine exclusion is remembered only when it succeeded.
+
+### 2026-09-30 - operability after the first producers
+
+1. **Outcome log.** A node or task attempt that does not succeed logs one
+   stderr line: the outcome, its allowlisted code and the opaque job id.
+2. **Schema path.** A final `schema_violation` failure adds `schema_path` to
+   the control result's `detail`: a JSON pointer into the producer's schema
+   naming the first rule the output broke. Never a path into the output.
+3. **Config reload.** `serve`, `node` and `tasks` reload `config.json` when its
+   mtime or size changes; an invalid file is refused with its exception class
+   and the last good configuration stays. The listen address still needs a
+   restart.
+4. **Worker state is never an input.** A task entry inside the worker's own
+   state directory fails `input_denied`, whatever the profile's `input_root`.
+5. **Status.** `GET /v1/status` adds `cooldowns` (runner to seconds left) and,
+   per node, `last_release` (the last preemption code in a day and its age).

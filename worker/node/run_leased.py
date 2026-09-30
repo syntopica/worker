@@ -41,4 +41,7 @@ def run_leased(  # noqa: PLR0913, PLR0917
         report = attempt_report("failed", executor, 0.0, error_code="node_error")
         link.complete(lease["attempt_id"], lease["generation"], report)
         outcome, codes[-1:] = "failed", ["node_error"]
+    if outcome != "succeeded":
+        # Outcome and code are fixed allowlisted words; the job id is opaque.
+        print(f"worker: attempt {outcome}: {codes[-1]} job={lease.get('job_id')}", file=sys.stderr)
     return settle_attempt(memory, model, model in resident, outcome, codes[-1], clock())

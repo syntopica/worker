@@ -71,3 +71,9 @@ def test_agy_profiles_take_no_input_root(tmp_path):
     path.write_text(json.dumps(raw))
     with pytest.raises(ValueError, match="agy"):
         load_worker_config(path)
+
+
+def test_a_failed_task_logs_its_outcome_and_code_only(tmp_path, capsys):
+    link = Link({**LEASE, "model": "gone"})
+    step(make_config(tmp_path, "codex"), link, HostState(900.0, True, "normal"))
+    assert "worker: task failed: unknown_profile" in capsys.readouterr().err

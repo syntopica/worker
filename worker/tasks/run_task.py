@@ -39,7 +39,8 @@ def run_task(  # noqa: PLR0913, PLR0917
         workspace = scratch / "workspace"
         workspace.mkdir()
         try:
-            build_workspace(profile.input_root, list(task.get("inputs") or []), workspace)
+            inputs = list(task.get("inputs") or [])
+            build_workspace(profile.input_root, inputs, workspace, profile.denied_root)
         except WorkspaceError as error:
             return attempt_report("failed", executor, 0.0, error_code=str(error))
         schema = None

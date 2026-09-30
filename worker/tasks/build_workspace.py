@@ -7,11 +7,14 @@ from worker.tasks.max_workspace_bytes import MAX_WORKSPACE_BYTES
 from worker.tasks.workspace_error import WorkspaceError
 
 
-def build_workspace(root: Path | None, inputs: list[str], workspace: Path) -> None:
+def build_workspace(
+    root: Path | None, inputs: list[str], workspace: Path, denied: Path | None = None
+) -> None:
     """Copy each entry to the same relative path; raise WorkspaceError on any doubt.
 
     An entry must resolve inside ``root`` after symlinks, so a link planted in
-    the input store cannot hand the runner a file from elsewhere.
+    the input store cannot hand the runner a file from elsewhere, and outside
+    ``denied`` (the worker's state), which a broad ``root`` may contain.
     """
     if inputs and root is None:
         raise WorkspaceError("inputs_not_allowed")
@@ -20,6 +23,8 @@ def build_workspace(root: Path | None, inputs: list[str], workspace: Path) -> No
         source = (root / entry).resolve() if root is not None else Path()
         if root is None or not source.is_relative_to(root) or not source.is_file():
             raise WorkspaceError("input_missing")
+        if denied is not None and source.is_relative_to(denied):
+            raise WorkspaceError("input_denied")
         total += source.stat().st_size
         if total > MAX_WORKSPACE_BYTES:
             raise WorkspaceError("input_too_large")

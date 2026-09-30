@@ -13,6 +13,7 @@ from worker.jobs.load_job_input import load_job_input
 from worker.jobs.output_matches_schema import output_matches_schema
 from worker.jobs.preempt_job import preempt_job
 from worker.jobs.requeue_after_wall import requeue_after_wall
+from worker.jobs.schema_violation_path import schema_violation_path
 from worker.store.transaction import transaction
 
 
@@ -54,7 +55,9 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
                 "UPDATE attempts SET outcome='schema_violation', error='schema_violation' WHERE id=?",
                 (attempt_id,),
             )
-            return fail_attempt(conn, job, "schema_violation", now)
+            path = schema_violation_path(job_input, report.output)
+            extra = {"schema_path": path} if path else None
+            return fail_attempt(conn, job, "schema_violation", now, extra)
         result_id = uuid.uuid4().hex
         conn.execute(
             "INSERT INTO results (result_id, job_id, producer, queue, executor, usage, created) VALUES (?, ?, ?, ?, ?, ?, ?)",

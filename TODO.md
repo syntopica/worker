@@ -36,8 +36,7 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       cursor) with profiles, workspaces, timeouts and quota-wall cooldowns
       (amendment 2026-09-30). Open: write tasks and `needs_reconciliation`
       (2b, for clips synthesis), CodexBar headroom before dispatch, OpenRouter,
-      ledger and `costs`, a progress guard beyond the hard timeout, and
-      `worker status` showing cooldowns.
+      ledger and `costs`, and a progress guard beyond the hard timeout.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
       Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
       newsletter triage runs as inference on queue `clips.triage`
@@ -70,30 +69,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Found 2026-09-30 moving brain jobs onto the worker
 
-- [ ] Preemptions leave no trace. The first `offers.classify` job went
-      running → queued → draining twice (`wasted_1h=234s`) with 62% free
-      memory and pressure level 1, and `node.err.log`, `serve.err.log` and
-      `tasks.err.log` were all empty; the plists set no `StandardOutPath`.
-      Next step: have the node log each preempt/drain reason (the allowlisted
-      reason code only) to stderr.
-- [ ] A `schema_violation` result says nothing about which field failed. The
-      offers prefilter job `39cbe8f0572c434aa401a95cbd450dca` failed that way
-      and the cause could not be established (its schema allowed
-      `["string","number"]` IDs, since narrowed to `"string"` in the wiki,
-      unverified). Next step: put the failing JSON pointer (path only, never
-      the value) in the failure `detail`.
-- [ ] Config changes need a manual restart: after adding the `offers.classify`
-      queue and grant, submits got `403 queue_not_granted` until
-      `launchctl kickstart -k gui/$(id -u)/com.syntopica.worker.serve`; tasks
-      needed the same for new profiles. Next step: reload `config.json` on
-      mtime change or SIGHUP.
-- [ ] `clips.grade` sets `input_root` to the whole instance (`..` from
-      `worker/`), so the `clips` producer can have any instance file copied
-      into a codex workspace, including `worker/state/tokens/` and the
-      brain's inline secrets. The direct codex grader could already read all
-      of it (`-C` the brain, read-only), so this is no regression. Next step:
-      deny `worker/state/**` in `build_workspace`, or allow several input
-      roots so the profile names `brain/` and `clips/` only.
 - [ ] Refine and grade lost their agy fallback on a codex wall: the job now
       parks for the runner's cooldown (3600 s), and clips returns the page
       ungraded or the batch unrefined at once (`cooling_until`). Next step,
@@ -107,7 +82,3 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       passes with string IDs on the next run; merge notes by keeping only
       notes from chunks that returned offers, or summarise them in one extra
       small job.
-- [ ] `worker nodes` / `worker status` show no cooldowns and no drain reason,
-      so a parked or preempted job looks the same as a busy queue from the
-      CLI. Overlaps the phase 2 "status showing cooldowns" item; fold in the
-      last drain reason per node.

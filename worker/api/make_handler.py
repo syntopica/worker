@@ -4,6 +4,7 @@ import json
 import sys
 import time
 import urllib.parse
+from collections.abc import Callable
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
@@ -16,15 +17,23 @@ from worker.jobs.api_error import ApiError
 from worker.store.open_store import open_store
 
 
-def make_handler(config: WorkerConfig, state_dir: Path) -> type[BaseHTTPRequestHandler]:
-    """Each request opens its own connection; errors carry only their code."""
+def make_handler(
+    config: WorkerConfig,
+    state_dir: Path,
+    current: Callable[[], WorkerConfig] | None = None,
+) -> type[BaseHTTPRequestHandler]:
+    """Each request opens its own connection; errors carry only their code.
+
+    With ``current``, every request reads the configuration in force.
+    """
 
     class Handler(BaseHTTPRequestHandler):
         timeout = 30  # a client that stalls mid-request cannot hold a thread forever
 
         def _dispatch(self) -> tuple[int, dict[str, object]]:
+            live = current() if current is not None else config
             length = int(self.headers.get("Content-Length") or 0)
-            if length > config.max_payload_bytes:
+            if length > live.max_payload_bytes:
                 self.close_connection = True
                 raise ApiError(413, "payload_too_large")
             url = urllib.parse.urlsplit(self.path)
@@ -35,7 +44,7 @@ def make_handler(config: WorkerConfig, state_dir: Path) -> type[BaseHTTPRequestH
                 query = dict(urllib.parse.parse_qsl(url.query))
                 parts = [p for p in url.path.split("/") if p]
                 ctx = RequestContext(
-                    principal, self.command, parts, query, raw, config, conn, time.time()
+                    principal, self.command, parts, query, raw, live, conn, time.time()
                 )
                 return route_request(ctx)
             finally:

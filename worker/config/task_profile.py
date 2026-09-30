@@ -11,6 +11,8 @@ class TaskProfile:
     ``command`` is the runner executable (default: its name on PATH) and
     ``env_unset`` the variables removed from its environment, such as an API
     key that would bill a call the subscription login should carry.
+    ``denied_root`` is never copied into a workspace, even inside ``input_root``:
+    the worker's own state, which holds the bearer tokens.
     """
 
     name: str
@@ -23,3 +25,4 @@ class TaskProfile:
     input_root: Path | None
     command: str | None = None
     env_unset: frozenset[str] = frozenset()
+    denied_root: Path | None = None

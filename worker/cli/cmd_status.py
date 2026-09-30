@@ -20,9 +20,11 @@ def cmd_status(args: argparse.Namespace) -> int:
     elif args.nodes:
         for name, node in status.get("nodes", {}).items():
             reason = node.get("reason") or "working/ready"
+            last = node.get("last_release")
+            released = f" last_release={last['code']}@{last['age_s']:.0f}s" if last else ""
             print(
                 f"{name:20} {reason:22} idle={node.get('idle_s')} "
-                f"resident={node.get('resident')} age={node.get('age_s', 0):.0f}s"
+                f"resident={node.get('resident')} age={node.get('age_s', 0):.0f}s{released}"
             )
     else:
         for name, q in status.get("queues", {}).items():
@@ -30,4 +32,6 @@ def cmd_status(args: argparse.Namespace) -> int:
                 f"{name:24} {json.dumps(q.get('states'))} done_1h={q.get('done_1h')} "
                 f"wasted_1h={q.get('wasted_1h_s', 0):.0f}s oldest={q.get('oldest_queued_s')}"
             )
+        for runner, left in status.get("cooldowns", {}).items():
+            print(f"cooldown {runner:15} {left:.0f}s left")
     return 0

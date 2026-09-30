@@ -13,16 +13,20 @@ from worker.store.open_store import open_store
 _SWEEP_S = 60.0
 
 
-def run_sweeper(
+def run_sweeper(  # noqa: PLR0913
     state: Path,
     config: WorkerConfig,
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.time,
     forever: bool = True,
+    *,
+    current: Callable[[], WorkerConfig] | None = None,
 ) -> None:
     """A failing pass logs its exception class only and never stops the loop."""
     while True:
         try:
+            if current is not None:
+                config = current()
             now = clock()
             conn = open_store(state)
             try:

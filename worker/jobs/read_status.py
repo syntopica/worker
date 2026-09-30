@@ -6,7 +6,11 @@ from typing import Any
 
 
 def read_status(conn: sqlite3.Connection, now: float) -> dict[str, Any]:
-    """Counts per queue and state, useful and wasted seconds in the last hour, node reports."""
+    """Counts per queue and state, useful and wasted seconds in the last hour, node reports.
+
+    Each node also carries its last release in a day (preemption code and age), and
+    ``cooldowns`` maps each resting runner to the seconds left.
+    """
     queues: dict[str, Any] = {}
     for r in conn.execute(
         "SELECT queue, state, count(*) n, min(created) oldest FROM jobs GROUP BY queue, state"
@@ -33,10 +37,26 @@ def read_status(conn: sqlite3.Connection, now: float) -> dict[str, Any]:
         r["name"]: {**json.loads(r["report"]), "age_s": now - r["updated"]}
         for r in conn.execute("SELECT * FROM nodes")
     }
+    for r in conn.execute(
+        "SELECT node, error, max(ended) ended FROM attempts"
+        " WHERE started>? AND outcome='preempted' GROUP BY node",
+        (now - 86400,),
+    ):
+        if r["node"] in nodes:
+            nodes[r["node"]]["last_release"] = {"code": r["error"], "age_s": now - r["ended"]}
+    cooldowns = {
+        r["runner"]: r["until"] - now
+        for r in conn.execute("SELECT runner, until FROM cooldowns WHERE until>?", (now,))
+    }
     failures = [
         dict(r)
         for r in conn.execute(
             "SELECT id, queue, error, finished FROM jobs WHERE state='failed' ORDER BY finished DESC LIMIT 10"
         )
     ]
-    return {"queues": queues, "nodes": nodes, "recent_failures": failures}
+    return {
+        "queues": queues,
+        "nodes": nodes,
+        "cooldowns": cooldowns,
+        "recent_failures": failures,
+    }

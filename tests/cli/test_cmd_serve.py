@@ -16,7 +16,7 @@ def test_interrupt_closes_the_server_and_returns_0(served, monkeypatch):
         def server_close(self):
             events.append("close")
 
-    def fake_build(_config, _state):
+    def fake_build(_config, _state, _current=None):
         events.append("build")
         return FakeServer()
 
