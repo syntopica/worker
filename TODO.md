@@ -45,8 +45,9 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 - [~] Quality tiers and model quality (amendment 2026-09-30): `tier`
       (basic/strong) on submit mapped per queue, attempts record the executor
       model, `rating` on ack, `GET /v1/quality` and `worker quality` done
-      2026-09-30. Open: producers do not rate yet (vexa, atrium, clips, brain
-      should pass `rating` when the owner keeps, edits or drops an output);
+      2026-09-30. `worker rate` (7c200d8) lets shell producers rate after
+      `worker run`; the wiki offers scan rates every answer. Open: vexa,
+      atrium, clips and the weekly review do not rate yet;
       no queue maps `tiers.strong` yet; shadow sampling with a judge model is
       deferred until there is a strong executor allowed for the class.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
@@ -74,9 +75,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       and Tailscale. Smallest unblock: a week of mini uptime without a
       watchdog panic, then a `server` node there for small models.
 
-- [~] Weekly review chunk-06 ended `failed lease_lost`: service restarts lost
-      the lease (fixed in a907eef, clean shutdown). Rerun in progress
-      (wiki-side agent, 2026-09-30).
+- [~] Weekly review on `review.weekly` writes a report (wiki eb5aef4d; a
+      failed job is resubmitted along a `:r1`..`:r3` key walk). The 35B
+      output is still weaker than the Claude-written one: it carries steps
+      that were already done. The quality follow-up lives in the wiki
+      `TODO.md`. A strong tier for `personal` would be the engine-side lever.
 
 ## Known gaps accepted in the plan
 
@@ -99,10 +102,3 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       if walls become frequent: a fallback profile per queue (e.g. agy for
       refine, which takes no inputs) chosen by the coordinator while a runner
       cools.
-- [ ] Offers scan (wiki `tools/offers/scan.sh`) on the local model: 7-day run
-      exit 0 in 22 min, 9 offers, but the 40k-token context forces 40-body
-      chunks, and chunk `notes` are joined verbatim, so one chunk's "no audio
-      offers" contradicts another's XLN sale. Next steps: verify the prefilter
-      passes with string IDs on the next run; merge notes by keeping only
-      notes from chunks that returned offers, or summarise them in one extra
-      small job.

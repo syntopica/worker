@@ -59,6 +59,15 @@
   a failed pmset read reuses a reading up to two minutes old. Cause of the
   weekly review's `lease_lost`: service restarts. Verified: gate green on a
   clean export of HEAD.
+- 2026-09-30 [x] `worker rate` and the result id on `worker run` stderr
+  (7c200d8), so a shell producer can rate an output after judging it.
+  Verified: gate green (373 passed), test `test_run_names_the_result_so_the_script_can_rate_it`.
+- 2026-09-30 [x] Wiki offers scan on `offers.classify` (wiki eb5aef4d): notes
+  are kept only from chunks with offers, and short references replace
+  Message-IDs. The prefilter passed with string references (47 of 47
+  matched). The earlier 2 schema violations were the old `["string","number"]`
+  prefilter schema. Answers are rated good or edited. Verified by four 7-day
+  runs on 2026-09-30.
 - 2026-09-30 [x] Deferred engine items (cb27f0f): fence by node, node privacy
   re-check (`privacy_refused`), unanswered `split_requested` parked after the
   unacked TTL, memory-only completion spool. Verified: gate green.
