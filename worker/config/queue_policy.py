@@ -5,7 +5,11 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class QueuePolicy:
-    """``run_when`` is ``idle`` or ``active_ok``; ``profiles`` are the task profiles it grants."""
+    """``run_when`` is ``idle`` or ``active_ok``; ``profiles`` are the task profiles it grants.
+
+    ``fallbacks`` maps a granted profile to the profiles, in order, a task may
+    run under while its own runner rests after a quota wall.
+    """
 
     name: str
     run_when: str
@@ -16,3 +20,4 @@ class QueuePolicy:
     parked_min_idle_s: float
     max_model_age_s: float
     profiles: frozenset[str] = field(default_factory=frozenset)
+    fallbacks: tuple[tuple[str, tuple[str, ...]], ...] = ()

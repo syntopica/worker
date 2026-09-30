@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from worker.config.check_queue_fallbacks import check_queue_fallbacks
 from worker.config.default_min_free_pct import DEFAULT_MIN_FREE_PCT
 from worker.config.default_privacy import DEFAULT_PRIVACY
 from worker.config.default_trust import DEFAULT_TRUST
@@ -26,7 +27,7 @@ def load_worker_config(path: Path) -> WorkerConfig:
     for name, override in (raw.get("privacy") or {}).items():
         privacy[name] = frozenset(override["executors"])
         trust[name] = frozenset(override["trust"])
-    return WorkerConfig(
+    config = WorkerConfig(
         listen_host=host,
         listen_port=int(port),
         models={
@@ -62,3 +63,5 @@ def load_worker_config(path: Path) -> WorkerConfig:
             n: float(r.get("cooldown_s", 3600)) for n, r in (raw.get("runners") or {}).items()
         },
     )
+    check_queue_fallbacks(config.queues, config.profiles)
+    return config

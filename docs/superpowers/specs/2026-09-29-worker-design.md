@@ -701,3 +701,16 @@ write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
    state directory fails `input_denied`, whatever the profile's `input_root`.
 5. **Status.** `GET /v1/status` adds `cooldowns` (runner to seconds left) and,
    per node, `last_release` (the last preemption code in a day and its age).
+
+### 2026-09-30 - queue fallback profiles
+
+A queue may map a granted profile to fallback profiles, in order:
+`"fallbacks": {"<profile>": ["<profile>", ...]}`. While a task's runner rests
+after a quota wall, the task leases under the first fallback whose runner is
+not resting and that may run on the node; the job then keeps that profile, so
+a later wall is charged to the runner that ran. A walled task with a fallback
+is due at once instead of after the cooldown, and `cooling_until` reports a
+cooldown only while every runner it could use rests. Configuration refuses a
+fallback that is not granted by the queue, accepts fewer privacy classes than
+its primary, or reads a different `input_root`. This replaces the per-lane
+choice that `drip-loop.sh` makes today.

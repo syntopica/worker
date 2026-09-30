@@ -12,15 +12,25 @@ def job_cooling_until(
 
     A producer waiting on one job cannot otherwise tell a queue parked behind a
     quota wall from a busy one, and would wait out its whole budget on every
-    job it submitted during the wall.
+    job it submitted during the wall. With queue fallbacks the job is held
+    only while every runner it could use rests, until the first one returns.
     """
-    job = conn.execute("SELECT kind, model, state FROM jobs WHERE id=?", (job_id,)).fetchone()
+    job = conn.execute(
+        "SELECT kind, model, queue, state FROM jobs WHERE id=?", (job_id,)
+    ).fetchone()
     if job is None or job["kind"] != "task" or job["state"] != "queued":
         return None
-    profile = config.profiles.get(job["model"])
-    if profile is None:
+    queue = config.queues.get(job["queue"])
+    names = (job["model"], *(dict(queue.fallbacks).get(job["model"], ()) if queue else ()))
+    runners = {config.profiles[n].runner for n in names if n in config.profiles}
+    if not runners:
         return None
-    row = conn.execute(
-        "SELECT until FROM cooldowns WHERE runner=? AND until>?", (profile.runner, now)
-    ).fetchone()
-    return None if row is None else float(row["until"])
+    ends = []
+    for runner in runners:
+        row = conn.execute(
+            "SELECT until FROM cooldowns WHERE runner=? AND until>?", (runner, now)
+        ).fetchone()
+        if row is None:
+            return None
+        ends.append(float(row["until"]))
+    return min(ends)

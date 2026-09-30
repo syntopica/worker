@@ -30,4 +30,8 @@ def parse_queue_policy(name: str, raw: dict[str, Any]) -> QueuePolicy:
         parked_min_idle_s=float(raw.get("parked_min_idle_s", 600)),
         max_model_age_s=float(raw.get("max_model_age_s", 3600)),
         profiles=frozenset(raw.get("profiles", ())),
+        fallbacks=tuple(
+            (str(primary), tuple(str(a) for a in alternatives))
+            for primary, alternatives in (raw.get("fallbacks") or {}).items()
+        ),
     )

@@ -56,9 +56,11 @@ def lease_job(
             return None
         attempt_id = uuid.uuid4().hex
         conn.execute(
+            # A task picked under a fallback profile keeps it: a wall is then
+            # charged to the runner that actually ran.
             "UPDATE jobs SET state='leased', generation=generation+1, lease_node=?, lease_attempt=?,"
-            " lease_expires=?, updated=? WHERE id=?",
-            (req.node, attempt_id, now + LEASE_TTL_S, now, chosen.job_id),
+            " lease_expires=?, updated=?, model=? WHERE id=?",
+            (req.node, attempt_id, now + LEASE_TTL_S, now, chosen.model, chosen.job_id),
         )
         generation = conn.execute(
             "SELECT generation FROM jobs WHERE id=?", (chosen.job_id,)
