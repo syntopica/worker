@@ -36,7 +36,9 @@ def ack_result(  # noqa: PLR0913, PLR0917
         if result["control"] == "split_requested":
             if decline and job["state"] == "split_requested":
                 p90 = queue_p90_runtime(conn, job["queue"]) or 0.0
-                need = max(1.5 * p90, config.queues[job["queue"]].parked_min_idle_s)
+                # A queue removed from config still parks: the job waits for it.
+                policy = config.queues.get(job["queue"])
+                need = max(1.5 * p90, policy.parked_min_idle_s if policy else 0.0)
                 conn.execute(
                     "UPDATE jobs SET state='queued', parked=1, parked_min_idle_s=?, updated=? WHERE id=?",
                     (need, now, job_id),

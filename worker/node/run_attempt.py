@@ -41,31 +41,37 @@ def run_attempt(  # noqa: PLR0913, PLR0917
     call = OllamaCall.start(
         node.ollama_url, ollama_request_body(pin, lease["input"]), _CALL_TIMEOUT_S
     )
-    while not call.done():
-        sleep(_SAMPLE_S)
-        if call.done():
-            break
-        if not link.heartbeat(attempt, gen, False):
-            call.cancel()
-            quiet = drain_backend(node.ollama_url, pin, node.ollama_launchd_label, lambda: True)
-            return "fenced" if quiet else "drain_failed"
-        if call.done():
-            break
-        state = sample()
-        pressed = pressed + 1 if state.pressure in ("warn", "critical") else 0
-        reason = sustained_release_reason(state, lease["run_when"], pressed)
-        if reason is not None and not call.done():
-            call.cancel()
-            quiet = drain_backend(
-                node.ollama_url,
-                pin,
-                node.ollama_launchd_label,
-                lambda: link.heartbeat(attempt, gen, True),
-            )
-            report = attempt_report("preempted", executor, clock() - started, error_code=reason)
-            link.complete(attempt, gen, report)
-            note(reason)
-            return "preempted" if quiet else "drain_failed"
+    try:
+        while not call.done():
+            sleep(_SAMPLE_S)
+            if call.done():
+                break
+            if not link.heartbeat(attempt, gen, False):
+                call.cancel()
+                quiet = drain_backend(node.ollama_url, pin, node.ollama_launchd_label, lambda: True)
+                return "fenced" if quiet else "drain_failed"
+            if call.done():
+                break
+            state = sample()
+            pressed = pressed + 1 if state.pressure in ("warn", "critical") else 0
+            reason = sustained_release_reason(state, lease["run_when"], pressed)
+            if reason is not None and not call.done():
+                call.cancel()
+                quiet = drain_backend(
+                    node.ollama_url,
+                    pin,
+                    node.ollama_launchd_label,
+                    lambda: link.heartbeat(attempt, gen, True),
+                )
+                report = attempt_report("preempted", executor, clock() - started, error_code=reason)
+                link.complete(attempt, gen, report)
+                note(reason)
+                return "preempted" if quiet else "drain_failed"
+    except BaseException:
+        # The call runs in its own thread; left alone it would hold the backend
+        # and the next lease would queue behind it.
+        call.cancel()
+        raise
     answer, error = call.outcome()
     if answer is None:
         report = attempt_report("failed", executor, clock() - started, error_code=error)

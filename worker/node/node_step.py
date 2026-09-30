@@ -10,6 +10,7 @@ from worker.node.node_memory import NodeMemory
 from worker.node.observe_host_state import observe_host_state
 from worker.node.relieve_pressure import relieve_pressure
 from worker.node.resident_models import resident_models
+from worker.node.retry_failed_drain import retry_failed_drain
 from worker.node.run_leased import run_leased
 
 
@@ -25,7 +26,8 @@ def node_step(  # noqa: PLR0913, PLR0917
     """Return True when the loop should rest before the next iteration.
 
     A failed drain clears once /api/ps no longer lists its model, checked
-    only while pressure is normal; no chat probe is ever sent for it.
+    only while pressure is normal; no chat probe is ever sent for it. While
+    it is still listed, its unload is retried on a slow timer.
     """
     node = config.nodes[node_name]
     state, now = sample(), clock()
@@ -36,6 +38,7 @@ def node_step(  # noqa: PLR0913, PLR0917
         memory.owned.intersection_update(resident)
         if state.pressure == "normal" and memory.failed_model not in resident:
             memory.failed_model = None
+        retry_failed_drain(node.ollama_url, memory, resident, now)
     relieve_pressure(node.ollama_url, memory, resident)
     block = node_block(memory, state, now, answer is None)
     link.report(

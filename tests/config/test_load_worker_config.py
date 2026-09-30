@@ -57,3 +57,26 @@ def test_unknown_run_when_is_refused(tmp_path):
     data = {**CONFIG, "queues": {"q": {"run_when": "sometimes"}}}
     with pytest.raises(ValueError, match="run_when"):
         load_worker_config(write(tmp_path, data))
+
+
+@pytest.mark.parametrize(
+    "listen", ["0.0.0.0:8765", "[::]:8765", "192.0.2.10:8765", "example.test:8765"]
+)
+def test_a_non_loopback_listen_host_is_refused(tmp_path, listen):
+    with pytest.raises(ValueError, match="loopback"):
+        load_worker_config(write(tmp_path, {**CONFIG, "listen": listen}))
+
+
+@pytest.mark.parametrize("listen", ["localhost:8765", "[::1]:8765", "127.0.0.2:8765"])
+def test_a_loopback_listen_host_is_accepted(tmp_path, listen):
+    config = load_worker_config(write(tmp_path, {**CONFIG, "listen": listen}))
+    assert config.listen_port == 8765
+
+
+@pytest.mark.parametrize(
+    "queue", [{"retention_days": 0}, {"retention_days": 2, "unacked_ttl_hours": 72}]
+)
+def test_retention_shorter_than_the_unacked_ttl_is_refused(tmp_path, queue):
+    data = {**CONFIG, "queues": {"q": queue}}
+    with pytest.raises(ValueError, match="retention_days"):
+        load_worker_config(write(tmp_path, data))

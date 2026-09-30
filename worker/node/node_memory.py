@@ -18,3 +18,6 @@ class NodeMemory:
     owned: set[str] = field(default_factory=set)
     backoff_until: float = 0.0
     backoff_s: float = 900.0
+    transport_failures: int = 0
+    transport_until: float = 0.0
+    drain_retry_at: float = 0.0

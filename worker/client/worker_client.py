@@ -55,7 +55,9 @@ class WorkerClient:
         query = urllib.parse.urlencode(
             {"queue": queue, "after": after, "limit": limit, "wait": wait}
         )
-        return list(self._call("GET", f"/v1/results?{query}")["results"])
+        # The socket outlives the long poll by a margin, whatever the server's cap.
+        timeout = max(0.0, wait) + 10.0
+        return list(self._call("GET", f"/v1/results?{query}", timeout=timeout)["results"])
 
     def ack(self, job_id: str, result_id: str, decline: bool = False) -> None:
         """Acknowledge, or decline a ``split_requested`` control result."""

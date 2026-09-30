@@ -31,3 +31,16 @@
   (default 15); critical always counts; an unreadable value still blocks.
   Spec amendment 2026-09-30. Verified: `uv run codeality-py gate` (all
   passed), `tests/node/test_memory_check.py`.
+
+- 2026-09-30 [-] Backblaze exclusion of the worker state: owner decision, the
+  Backblaze backup is the owner's own private copy, so payloads there are
+  accepted.
+- 2026-09-30 [x] Ten phase 1a engine defects closed (spec amendment
+  "phase 1a backlog fixes"): loopback-only `listen`, `results()` timeout
+  derived from `wait`, transport-failure backoff, failed-drain unload retry,
+  per-queue candidate cap that ignores removed queues, cancel of the backend
+  call on an attempt exception, `retention_days` validated against the unacked
+  TTL, split decline on a removed queue, Time Machine exclusion retried after a
+  failure, host reader failures logged by name. CI fixed as well: gitleaks CLI
+  instead of the licensed action, actionlint and zizmor added, mypy no longer
+  host-dependent. Verified: `uv run codeality-py gate` all passed.

@@ -6,10 +6,6 @@ Active backlog. Closed items move to `TODO_LOG.md` with date and evidence.
 
 Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
-- [ ] Owner: exclude `$SYNTOPICA_DATA/worker/state` from Backblaze. Time
-      Machine exclusion is set by the engine; Backblaze needs its own rule, and
-      until then personal payloads reach that backup.
-
 ## Phase 1b - Vexa producer (plan written when 1a lands)
 
 - [ ] Rust client crate against `contract/fixtures/`.
@@ -66,34 +62,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Found during phase 1a execution
 
-- [ ] `load_worker_config` accepts any `listen_host`, but spec says phase 1
-      binds loopback only; a non-loopback value would expose the API and send
-      bearer tokens in plaintext. Next step: reject non-loopback hosts in
-      `load_worker_config` until phase 4's Tailscale binding.
-- [ ] Client `results()` uses a fixed 40 s timeout against the server's 30 s
-      `wait` cap; derive it from `wait` so a cap change cannot break it.
-- [ ] If `/api/ps` answers but chat keeps failing with `transport_error`, the
-      node leases again every rest and charges an attempt each time. Next step:
-      back off per consecutive node-side transport failure.
-- [ ] `drain_failed` clears only when the model leaves `/api/ps`; if unload and
-      restart both failed, nothing retries. Next step: retry the unload on a
-      slow timer while blocked.
-- [ ] `load_candidates` applies `LIMIT 500` before eligibility, so more than
-      500 top-priority jobs from a removed queue starve the rest.
-- [ ] An exception inside `run_attempt` leaves the Ollama call running; the
-      next lease queues behind it. Cancel the call in the `node_error` path.
-- [ ] `release_jobs_batch` deletes unfetched `failed` control results when
-      `retention_days` is shorter than `unacked_ttl`; validate
-      `retention_days >= 1` and >= the unacked TTL in `parse_queue_policy`.
-- [ ] Declining a split on a queue no longer in config raises inside
-      `ack_result` (400 `bad_request`).
-- [ ] The Time Machine exclusion failure is cached per inode and never
-      retried until the file is recreated.
-- [ ] `host_state_unreadable` flaps with every reader healthy. Seen
-      2026-09-30 03:48: two consecutive `worker nodes` reports (`idle=None`)
-      while `sample_host_state()` run by hand returned all three fields five
-      times in a row, then the node recovered on its own. Next step: log which
-      of ioreg/pmset/sysctl returned None (allowlisted field name only).
 - [ ] Deferred for later phases: `split_requested` timeout, `check_fence`
       node match and lease privacy re-check (before guest nodes), completion
       spool (spec 10), status gaps (spec 13, reload counter needed by 1c),

@@ -664,3 +664,24 @@ write files (synthesis) need `needs_reconciliation` and stay for phase 2b.
    `quota_wall`, `timeout`, `runner_failed`, `no_output`.
 7. **Privacy.** Runners are the `runner` executor of section 8, so by default
    only `public` and `internal` jobs reach them, on `owner` or `server` nodes.
+
+### 2026-09-30 - phase 1a backlog fixes
+
+1. **Loopback only.** `listen` must name `localhost` or a loopback address;
+   any other host, wildcards included, refuses to load the configuration
+   until phase 4 binds Tailscale.
+2. **Retention covers the unacked TTL.** A queue's `retention_days` must be at
+   least 1 and at least `unacked_ttl_hours / 24`.
+3. **Candidates per queue.** A lease considers at most 200 queued jobs per
+   configured queue; jobs in a queue no longer configured are never
+   candidates, and declining a split on such a queue still parks the job.
+4. **Transport backoff.** Consecutive `transport_error` attempts hold the node
+   back 30 s, doubling to 30 minutes; any other outcome resets it. The node
+   reports `transport_backoff` meanwhile.
+5. **Failed drain retry.** While a drain-failed model is still listed by
+   `/api/ps`, the node sends another unload every 5 minutes.
+6. **Attempt errors cancel the call.** An exception inside an attempt cancels
+   its backend call before the `node_error` report.
+7. **Host readers.** A failed or unparsable host reader is logged by its fixed
+   name (`ioreg`, `pmset`, `pressure_level`, with `_parse` for a parse
+   failure). The Time Machine exclusion is remembered only when it succeeded.

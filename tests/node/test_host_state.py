@@ -42,3 +42,14 @@ def test_admission_waits_for_pressure_recovery():
     normal = HostState(900, True, "normal")
     assert admission_block(normal, normal_since=100.0, now=150.0) == "pressure_recovering"
     assert admission_block(normal, normal_since=100.0, now=230.0) is None
+
+
+def test_a_failed_reader_is_logged_by_name_only(capsys):
+    sample_host_state(lambda args: None)
+    err = capsys.readouterr().err
+    assert err == "worker: host readers failed: ioreg,pmset,pressure_level\n"
+
+
+def test_an_unparsable_reading_is_logged_as_a_parse_failure(capsys):
+    sample_host_state(lambda args: "garbage")
+    assert "ioreg_parse" in capsys.readouterr().err

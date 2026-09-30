@@ -6,6 +6,7 @@ from pathlib import Path
 from worker.config.default_min_free_pct import DEFAULT_MIN_FREE_PCT
 from worker.config.default_privacy import DEFAULT_PRIVACY
 from worker.config.default_trust import DEFAULT_TRUST
+from worker.config.is_loopback_host import is_loopback_host
 from worker.config.model_pin import ModelPin
 from worker.config.node_policy import NodePolicy
 from worker.config.parse_queue_policy import parse_queue_policy
@@ -17,6 +18,9 @@ def load_worker_config(path: Path) -> WorkerConfig:
     """Return the parsed configuration; raise ValueError on an invalid value."""
     raw = json.loads(path.read_text())
     host, port = str(raw.get("listen", "127.0.0.1:8765")).rsplit(":", 1)
+    if not is_loopback_host(host):
+        # Tokens travel in plaintext; only a loopback bind keeps them on the host.
+        raise ValueError(f"listen: {host} is not a loopback address")
     privacy = dict(DEFAULT_PRIVACY)
     trust = dict(DEFAULT_TRUST)
     for name, override in (raw.get("privacy") or {}).items():

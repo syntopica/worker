@@ -106,7 +106,9 @@ def test_drain_failed_node_readmits_once_ps_drops_the_model_without_probing(
         run_node(
             config, "node-a", link, sample=lambda: IDLE, sleep=sleep, clock=lambda: next(ticks)
         )
-    assert link.reasons == ["pressure_recovering", None, "drain_failed", "drain_failed", None]
+    # The blocked step retries the unload; the next step sees /api/ps empty.
+    assert link.reasons == ["pressure_recovering", None, "drain_failed", None, None]
+    assert [b for b in fake.bodies if b.get("keep_alive") == 0]
     assert not [b for b in fake.bodies if b.get("options", {}).get("num_predict") == 1]
 
 

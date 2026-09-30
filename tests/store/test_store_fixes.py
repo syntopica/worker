@@ -102,3 +102,19 @@ def test_a_failing_exclusion_logs_one_line_and_never_raises(tmp_path, monkeypatc
     assert err.count("\n") == 1
     assert "OSError" in err
     assert "no xattr here" not in err
+
+
+def test_a_failed_backup_exclusion_is_retried_and_a_success_is_not(monkeypatch, tmp_path):
+    calls = []
+
+    def flaky(*_args, **_kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise OSError("first try fails")
+        return subprocess.CompletedProcess([], 0)
+
+    monkeypatch.setattr(mark_module.subprocess, "run", flaky)
+    path = str(tmp_path / "payloads.sqlite3")
+    for _ in range(3):
+        mark_module.mark_backup_excluded(path, 42)
+    assert len(calls) == 2

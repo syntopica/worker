@@ -6,7 +6,7 @@ from worker.node.node_memory import NodeMemory
 
 
 def node_block(memory: NodeMemory, state: HostState, now: float, backend_down: bool) -> str | None:
-    """A failed drain first, then host state, the backend, and the pressure backoff."""
+    """A failed drain first, then host state, the backend, then the pressure and transport backoffs."""
     if memory.failed_model is not None:
         return "drain_failed"
     reason = admission_block(state, memory.normal_since, now)
@@ -16,4 +16,6 @@ def node_block(memory: NodeMemory, state: HostState, now: float, backend_down: b
         return "backend_down"
     if now < memory.backoff_until:
         return "pressure_backoff"
+    if now < memory.transport_until:
+        return "transport_backoff"
     return None
