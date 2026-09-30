@@ -29,7 +29,7 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
         job = check_fence(conn, attempt_id, generation)
         conn.execute(
             "UPDATE attempts SET ended=?, outcome=?, error=?, wall_s=?, tokens_in=?, tokens_out=?,"
-            " provider=?, cost_usd=? WHERE id=?",
+            " provider=?, cost_usd=?, model=? WHERE id=?",
             (
                 now,
                 report.outcome,
@@ -39,6 +39,7 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
                 report.usage.get("tokens_out"),
                 report.executor.get("provider"),
                 report.usage.get("cost_usd"),
+                report.executor.get("model") or None,
                 attempt_id,
             ),
         )

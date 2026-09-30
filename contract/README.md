@@ -9,15 +9,21 @@ Producers talk to the coordinator over HTTP with JSON bodies and a bearer token.
 | POST | `/v1/jobs` | producer | Submit a job. 201 when new, 200 when the idempotency key matched. |
 | GET | `/v1/jobs/{id}` | producer | Job state and its latest unacknowledged result. |
 | POST | `/v1/jobs/{id}/cancel` | producer | Cancel a job. |
-| POST | `/v1/jobs/{id}/ack` | producer | Acknowledge a result, or decline a `split_requested`. |
+| POST | `/v1/jobs/{id}/ack` | producer | Acknowledge a result, or decline a `split_requested`. May carry `rating`. |
 | GET | `/v1/results` | producer | Unacknowledged results of a queue (`queue`, `after`, `limit`, `wait`). |
 | POST | `/v1/leases` | node | Ask for work. 200 with a lease, 204 when nothing is eligible. |
 | POST | `/v1/attempts/{id}/heartbeat` | node | Extend a lease. |
 | POST | `/v1/attempts/{id}/complete` | node | Report the outcome of an attempt. |
 | POST | `/v1/nodes/{name}/report` | node | Report host state. |
 | GET | `/v1/status` | admin | Queue and node status. |
+| GET | `/v1/costs` | admin | Attempts, tokens, cost and wall time by day, provider and queue (`days`). |
+| GET | `/v1/quality` | admin | Outcomes and producer ratings by queue, tier, provider and model (`days`). |
 
 Errors are `{"error": "<code>"}` with the HTTP status. `error_stale_attempt.json` is an example.
+
+## Quality tier and rating
+
+A submit may carry `tier`: `basic` (the default) or `strong`; anything else is `unknown_tier`. The queue's configuration decides what a strong job runs on (models tried before your own list, or a stronger task profile); a queue that maps no tier runs it as `basic`. The tier never changes the privacy rules. When you ack a result you may add `rating`: `good`, `edited` (used after correction) or `discarded` (unusable); anything else is `unknown_rating`. A later ack of the same result may change it. Ratings are how the owner learns whether a cheap model is good enough for your queue, so rate when you can.
 
 ## Lifecycle
 

@@ -59,9 +59,16 @@ class WorkerClient:
         timeout = max(0.0, wait) + 10.0
         return list(self._call("GET", f"/v1/results?{query}", timeout=timeout)["results"])
 
-    def ack(self, job_id: str, result_id: str, decline: bool = False) -> None:
-        """Acknowledge, or decline a ``split_requested`` control result."""
-        payload = {"result_id": result_id, "decline": decline}
+    def ack(
+        self, job_id: str, result_id: str, decline: bool = False, rating: str | None = None
+    ) -> None:
+        """Acknowledge, or decline a ``split_requested`` control result.
+
+        ``rating`` is ``good``, ``edited`` or ``discarded``: how the output fared.
+        """
+        payload: dict[str, Any] = {"result_id": result_id, "decline": decline}
+        if rating is not None:
+            payload["rating"] = rating
         self._call("POST", f"/v1/jobs/{quote_job_id(job_id)}/ack", payload)
 
     def cancel(self, job_id: str) -> str:

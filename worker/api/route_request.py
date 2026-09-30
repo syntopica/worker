@@ -11,6 +11,7 @@ from worker.api.handle_get_job import handle_get_job
 from worker.api.handle_heartbeat import handle_heartbeat
 from worker.api.handle_lease import handle_lease
 from worker.api.handle_node_report import handle_node_report
+from worker.api.handle_quality import handle_quality
 from worker.api.handle_results import handle_results
 from worker.api.handle_runner_walls import handle_runner_walls
 from worker.api.handle_status import handle_status
@@ -33,6 +34,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "v1/nodes/*/walls"): handle_runner_walls,
     ("GET", "v1/status"): handle_status,
     ("GET", "v1/costs"): handle_costs,
+    ("GET", "v1/quality"): handle_quality,
 }
 
 

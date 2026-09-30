@@ -47,6 +47,13 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       group's CPU time. Write tasks and `needs_reconciliation` are no longer needed for
       clips synthesis: clips moves it through inference jobs whose page writes
       clips applies itself (`src/worker-synthesis`, another session, 2026-09-30).
+- [~] Quality tiers and model quality (amendment 2026-09-30): `tier`
+      (basic/strong) on submit mapped per queue, attempts record the executor
+      model, `rating` on ack, `GET /v1/quality` and `worker quality` done
+      2026-09-30. Open: producers do not rate yet (vexa, atrium, clips, brain
+      should pass `rating` when the owner keeps, edits or drops an output);
+      no queue maps `tiers.strong` yet; shadow sampling with a judge model is
+      deferred until there is a strong executor allowed for the class.
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
       Started 2026-09-30 ahead of phase 2 where no `task` is needed: clips
       newsletter triage runs as inference on queue `clips.triage`

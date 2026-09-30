@@ -6,7 +6,7 @@ from worker.jobs.api_error import ApiError
 from worker.jobs.check_inference_input import check_inference_input
 from worker.jobs.check_task_input import check_task_input
 from worker.jobs.coerce_number import coerce_number
-from worker.jobs.states import PRIVACY_CLASSES
+from worker.jobs.states import PRIVACY_CLASSES, TIERS
 from worker.jobs.submit_request import SubmitRequest
 
 _MAX_KEY_LENGTH = 256
@@ -23,6 +23,9 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         raise ApiError(400, "unsupported_kind")
     if body.get("privacy") not in PRIVACY_CLASSES:
         raise ApiError(400, "unknown_privacy")
+    tier = body.get("tier", "basic")
+    if tier not in TIERS:
+        raise ApiError(400, "unknown_tier")
     requirements = body.get("requirements")
     models = requirements.get("models") if isinstance(requirements, dict) else None
     if kind == "task":
@@ -57,4 +60,5 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         input=body["input"],
         parent_id=parent_id,
         kind=kind,
+        tier=tier,
     )

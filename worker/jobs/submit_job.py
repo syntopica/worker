@@ -12,6 +12,7 @@ from worker.jobs.check_task_grant import check_task_grant
 from worker.jobs.decode_body import decode_body
 from worker.jobs.parse_submit_request import parse_submit_request
 from worker.jobs.payload_hash import payload_hash
+from worker.jobs.tier_route_for import tier_route_for
 from worker.store.transaction import transaction
 
 
@@ -28,10 +29,13 @@ def submit_job(
         or req.queue not in config.queues
     ):
         raise ApiError(403, "queue_not_granted")
+    route = tier_route_for(config.queues[req.queue], req.tier)
     if req.kind == "task":
-        model: str | None = check_task_grant(config, req)
+        granted = check_task_grant(config, req)
+        model: str | None = dict(route.profiles).get(granted, granted)
     else:
-        model = next((m for m in req.models if m in config.models), None)
+        preference = (*route.models, *req.models)
+        model = next((m for m in preference if m in config.models), None)
     if model is None:
         raise ApiError(400, "unknown_model")
     digest = payload_hash(body)
@@ -51,8 +55,8 @@ def submit_job(
         job_id = uuid.uuid4().hex
         conn.execute(
             "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority, privacy, model,"
-            " state, max_attempts, not_before, deadline, parent_id, created, updated)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?)",
+            " state, max_attempts, not_before, deadline, parent_id, created, updated, tier)"
+            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?)",
             (
                 job_id,
                 producer,
@@ -69,6 +73,7 @@ def submit_job(
                 req.parent_id,
                 now,
                 now,
+                req.tier,
             ),
         )
         conn.execute(

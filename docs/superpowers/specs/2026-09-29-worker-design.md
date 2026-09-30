@@ -758,3 +758,33 @@ coordinator rests that runner until the reset, never shortening a cooldown and
 refusing a reset more than 40 days out. Unknown usage is no evidence either
 way here: the reactive wall remains the backstop. This is the headroom check
 before dispatch that `drip-loop.sh` did with `drip-quota.py`.
+
+### 2026-09-30 - quality tiers and model quality
+
+A producer may say how much a job needs, and the owner must be able to see
+whether cheap models are good enough.
+
+1. **Tier.** A submit may carry `tier`: `basic` (the default) or `strong`.
+   A queue maps a tier in `tiers.<tier>`: `models`, local models tried before
+   the producer's own preference list, and `profiles`, a map from a granted
+   profile to the profile a task of that tier runs under instead. A mapped
+   profile must be granted by the queue, accept every privacy class of the
+   profile it replaces and share its `input_root`, checked at load like a
+   fallback. A tier the queue does not map behaves as `basic`, so a producer
+   can state intent before the owner configures it. The tier never relaxes
+   privacy: it only reorders what the queue already grants. OpenRouter
+   escalation keys on the job's model as before, so a strong model is
+   escalated only where the queue routes it.
+2. **Quality signals.** Jobs record `tier`; attempts record the executor's
+   `model` (store version 6). `GET /v1/quality?days=N` (admin) and
+   `worker quality` report, per queue, tier, provider and model: attempts,
+   successes, schema violations, other failures, preemptions and mean wall
+   time. These cost nothing to collect and catch a model that cannot follow
+   the schema.
+3. **Producer rating.** An ack may carry `rating`: `good`, `edited` (used
+   after correction) or `discarded` (unusable). It is stored on the result,
+   never required, and reported next to the signals above grouped by the
+   result's executor model.
+4. **Later.** Shadow sampling - re-running a fraction of results on a strong
+   model and scoring agreement with a judge - is deferred; when it comes it is
+   only for privacy classes already allowed on the executors it uses.

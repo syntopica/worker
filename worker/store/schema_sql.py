@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   finished REAL,
   acked REAL,
   payloads_deleted INTEGER NOT NULL DEFAULT 0,
+  tier TEXT NOT NULL DEFAULT 'basic',
   UNIQUE (producer, queue, idempotency_key)
 );
 CREATE INDEX IF NOT EXISTS jobs_ready ON jobs (state, not_before);
@@ -49,7 +50,8 @@ CREATE TABLE IF NOT EXISTS attempts (
   tokens_in INTEGER,
   tokens_out INTEGER,
   provider TEXT,
-  cost_usd REAL
+  cost_usd REAL,
+  model TEXT
 );
 CREATE INDEX IF NOT EXISTS attempts_started ON attempts (started);
 CREATE TABLE IF NOT EXISTS results (
@@ -63,7 +65,8 @@ CREATE TABLE IF NOT EXISTS results (
   executor TEXT,
   usage TEXT,
   created REAL NOT NULL,
-  acked REAL
+  acked REAL,
+  rating TEXT
 );
 CREATE TABLE IF NOT EXISTS nodes (name TEXT PRIMARY KEY, report TEXT NOT NULL, updated REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS cooldowns (runner TEXT PRIMARY KEY, until REAL NOT NULL);

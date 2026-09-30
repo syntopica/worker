@@ -41,3 +41,11 @@ def test_nodes_table_lists_each_reporting_node(seeded, run):
     assert "node-a" in out
     assert "user_active" in out
     assert "resident=['model-a']" in out
+
+
+def test_quality_and_costs_print_once_there_are_attempts(seeded, run):
+    assert run("quality")[0] == 0
+    code, out, _ = run("quality", "--json")
+    assert code == 0
+    assert json.loads(out) == {"attempts": [], "ratings": []}
+    assert run("costs", "--json")[0] == 0

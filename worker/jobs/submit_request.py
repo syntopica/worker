@@ -6,7 +6,10 @@ from typing import Any
 
 @dataclass(frozen=True)
 class SubmitRequest:
-    """``models`` is the ordered preference list from ``requirements``; empty for a task."""
+    """``models`` is the ordered preference list from ``requirements``; empty for a task.
+
+    ``tier`` is ``basic`` or ``strong``; the queue decides what each runs on.
+    """
 
     queue: str
     idempotency_key: str
@@ -18,3 +21,4 @@ class SubmitRequest:
     input: dict[str, Any]
     parent_id: str | None
     kind: str = "inference"
+    tier: str = "basic"

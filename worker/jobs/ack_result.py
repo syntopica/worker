@@ -18,8 +18,13 @@ def ack_result(  # noqa: PLR0913, PLR0917
     result_id: str,
     decline: bool,
     now: float,
+    rating: str | None = None,
 ) -> None:
-    """Record the ack; raise ApiError(404) when the result is not this producer's."""
+    """Record the ack and any rating; raise ApiError(404) when the result is not this producer's.
+
+    A later ack may add or change the rating: the producer learns late that
+    a result it kept needed editing.
+    """
     with transaction(conn):
         result = conn.execute(
             "SELECT control FROM results WHERE result_id=? AND job_id=? AND producer=?",
@@ -33,6 +38,8 @@ def ack_result(  # noqa: PLR0913, PLR0917
         conn.execute(
             "UPDATE results SET acked=? WHERE result_id=? AND acked IS NULL", (now, result_id)
         )
+        if rating is not None:
+            conn.execute("UPDATE results SET rating=? WHERE result_id=?", (rating, result_id))
         if result["control"] == "split_requested":
             if decline and job["state"] == "split_requested":
                 p90 = queue_p90_runtime(conn, job["queue"]) or 0.0
