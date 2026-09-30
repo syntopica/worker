@@ -38,9 +38,13 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       retire `drip-loop.sh`. 2b (OpenRouter free rung, ledger and `costs`,
       queue fallback profiles) done 2026-09-30. 2a done 2026-09-30: read-only tasks (codex, agy,
       cursor) with profiles, workspaces, timeouts and quota-wall cooldowns
-      (amendment 2026-09-30). Open: CodexBar headroom before dispatch, paid
-      rung with budget reservations, and a progress guard beyond the hard
-      timeout. Write tasks and `needs_reconciliation` are no longer needed for
+      (amendment 2026-09-30). CodexBar headroom before dispatch done
+      2026-09-30 (cursor rested until its 10-Oct reset on the first probe).
+      Open: paid rung with budget reservations (budget is $0 by default, so
+      nothing needs it yet), and a progress guard beyond the hard timeout:
+      codex, agy and cursor in JSON mode write their stdout only at the end,
+      so no artifact moves mid-run; a guard would have to read the process
+      group's CPU time. Write tasks and `needs_reconciliation` are no longer needed for
       clips synthesis: clips moves it through inference jobs whose page writes
       clips applies itself (`src/worker-synthesis`, another session, 2026-09-30).
 - [ ] Phase 3: absorb loose batch scripts from other repositories.
