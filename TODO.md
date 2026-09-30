@@ -29,7 +29,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 ## Later phases (see roadmap)
 
 - [~] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
-      retire `drip-loop.sh`. 2b (OpenRouter free rung, ledger and `costs`,
+      `drip-loop.sh` retired 2026-10-01: Atrium's synthesis runs as `task`
+      jobs on `atrium.tasks` (profile `atrium.agy` only, cursor dropped by the
+      owner's routing rule) plus its local inference lane, produced by
+      `com.cristian.atrium-synthesis` (atrium d2453c1, dotfiles b061818).
+      2b (OpenRouter free rung, ledger and `costs`,
       queue fallback profiles) done 2026-09-30. 2a done 2026-09-30: read-only tasks (codex, agy,
       cursor) with profiles, workspaces, timeouts and quota-wall cooldowns
       (amendment 2026-09-30). CodexBar headroom before dispatch done
