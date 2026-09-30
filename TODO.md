@@ -53,7 +53,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       model, via `worker run`). Left: clips synthesis (in progress in clips
       through inference, another session), the weekly-actions review (owner
       chose 2026-09-30 a local-model rewrite over a precomputed manifest; in
-      progress), agents library-loop and transcription.
+      progress). Done 2026-09-30: agents library-loop classify stage on queue
+      `agents.classify` (wiki `tools/agents/worker-classifier.sh`; its old agy
+      classifier path had been failing every run), and queue `clips.synthesis`
+      declared for the clips engine. Transcription: no scheduled job exists
+      (only an unscheduled prototype), nothing to absorb.
 - [!] Phase 4: coordinator on the always-on server, Tailscale binding, more
       nodes; HID idle test under fast user switching before any guest node.
       Blocked on the owner's gate (2026-09-29): the coordinator moves to the
