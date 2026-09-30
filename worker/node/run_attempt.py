@@ -1,5 +1,6 @@
 """Execute one leased inference job, releasing it the moment the host says so."""
 
+import sys
 from collections.abc import Callable
 from typing import Any
 
@@ -58,11 +59,17 @@ def run_attempt(  # noqa: PLR0913, PLR0917
             reason = sustained_release_reason(state, lease["run_when"], pressed)
             if reason is not None and not call.done():
                 call.cancel()
+                cancelled = clock()
                 quiet = drain_backend(
                     node.ollama_url,
                     pin,
                     node.ollama_launchd_label,
                     lambda: link.heartbeat(attempt, gen, True),
+                )
+                # The phase 1c cancel-to-quiet measurement, taken from real preemptions.
+                print(
+                    f"worker: drain {'quiet' if quiet else 'failed'} in {clock() - cancelled:.1f}s",
+                    file=sys.stderr,
                 )
                 report = attempt_report("preempted", executor, clock() - started, error_code=reason)
                 link.complete(attempt, gen, report)

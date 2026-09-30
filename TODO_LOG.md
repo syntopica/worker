@@ -51,3 +51,17 @@
   tasks, worker state refused as a task input (`input_denied`, closes the
   `clips.grade` broad `input_root` exposure of tokens), `cooldowns` and
   per-node `last_release` in status. Verified: `uv run codeality-py gate`.
+- 2026-09-30 [x] Quality tiers and model quality: `tier` on submit, executor
+  model per attempt, `rating` on ack, `GET /v1/quality` and `worker quality`
+  (34ae695, 468c887). Verified: gate green, live report after restart.
+- 2026-09-30 [x] Clean shutdown and pmset hold (a907eef): SIGTERM hands the
+  running attempt back as `node_shutdown` (no attempt or preemption charged);
+  a failed pmset read reuses a reading up to two minutes old. Cause of the
+  weekly review's `lease_lost`: service restarts. Verified: gate green on a
+  clean export of HEAD.
+- 2026-09-30 [x] Deferred engine items (cb27f0f): fence by node, node privacy
+  re-check (`privacy_refused`), unanswered `split_requested` parked after the
+  unacked TTL, memory-only completion spool. Verified: gate green.
+- 2026-09-30 [-] Memory-pressure dispatch source: dropped, same kernel level
+  as the sysctl already read (amendment "phase 1c decisions"). CPU-time
+  progress guard for tasks: dropped, runners idle on network by design.

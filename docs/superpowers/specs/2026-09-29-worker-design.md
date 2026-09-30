@@ -825,3 +825,25 @@ whether cheap models are good enough.
    new work. Nothing is written to disk, content-bearing or not, which is
    stricter than section 10 allows; a node restart loses held completions and
    lease expiry reclaims them, as before.
+
+### 2026-09-30 - phase 1c decisions
+
+1. **Keep-alive.** The pinned model's `keep_alive` is 30 minutes (instance
+   config), not 5: a 5-minute gap between producers' bursts was enough to
+   unload it. Keeping it forever (`-1`, a second opinion's choice) was
+   rejected: 30 GB permanently resident on the owner's workstation, whose
+   swap was already near full on 2026-09-30, contradicts idle-only work. The
+   1c criterion reads "zero reloads while work is queued"; an unload after 30
+   idle minutes is expected, and a pressure unload is counted and reported.
+2. **Cancel-to-quiet** is measured from real preemptions: the node logs
+   `drain quiet in <s>` (or `drain failed`) for each one, and 1c reads the
+   distribution from `node.err.log` instead of a synthetic probe run.
+3. **Memory-pressure dispatch source dropped.** A dispatch memory-pressure
+   source reports the same kernel pressure level the node already reads
+   (`kern.memorystatus_vm_pressure_level`), the one found misleading on its
+   own (memory check amendment). It would add a native helper for no new
+   signal; the level plus free percentage stays the source.
+4. **No CPU-time progress guard for tasks.** Runners (codex, agy, cursor)
+   wait on a remote model, so near-zero CPU is normal progress and a CPU guard
+   would kill healthy runs; they write their answer only at the end, so no
+   artifact moves either. The profile's hard `timeout_s` remains the guard.

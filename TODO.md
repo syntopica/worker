@@ -18,23 +18,14 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Phase 1c - acceptance on the workstation
 
-- [ ] Cancel-to-quiet latency on Ollama 0.34.4 (probe method, amendment 2).
-- [ ] Zero model reloads across the three producers. Measure with
-      `loads_1h`/`unloads_1h` in `worker nodes` (2026-09-30). Note the pinned
-      `keep_alive` of 5m unloads the model after any 5-minute gap, which alone
-      breaks this criterion between bursts; decide the keep-alive with it.
-      Risk seen 2026-09-29: at warn the node unloads the 22 GB model, pressure
-      clears, the next lease reloads it (cold 30 GB) and warn returns - a
-      reload loop. Count unloads per hour in 1c before accepting.
+- [~] Cancel-to-quiet latency: the node now logs `drain quiet in <s>` for every
+      preemption (amendment "phase 1c decisions", 2026-09-30). Next: read the
+      distribution from node.err.log after a day of preemptions.
+- [~] Zero model reloads while work is queued: keep-alive raised to 30m
+      (wiki 2fe0d1dc); measure `loads_1h`/`unloads_1h` in `worker nodes`
+      over a day of mixed producers.
 - [ ] Useful work under repeated interruptions; 1000 translated texts;
-      `worker status` shows progress.
-- [~] Memory-pressure source: dispatch source vs sysctl (amendment 5).
-      2026-09-30: warn now counts only below the node's `min_free_pct`
-      (amendment 2026-09-30); the dispatch-source reader is still open.
-      Observed 2026-09-29 on the workstation: `kern.memorystatus_vm_pressure_level`
-      read 2 (warn) with `memory_pressure` reporting 72% free, and the node
-      unloaded the resident qwen3.6:35b at that moment. Measure how often warn
-      fires at rest before trusting it as an unload trigger.
+      `worker status` shows progress. Needs Vexa's worker path enabled.
 
 ## Later phases (see roadmap)
 
@@ -83,14 +74,9 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       and Tailscale. Smallest unblock: a week of mini uptime without a
       watchdog panic, then a `server` node there for small models.
 
-- [ ] pmset still fails after the one retry (9 `host readers failed: pmset`
-      in node.err.log by 2026-09-30 19:10), each preempting the running
-      attempt as `host_state_unreadable`. Next: keep the last good pmset
-      reading for a short grace instead of blocking admission at once.
-- [ ] Weekly review map-timeline and chunk-06 were preempted repeatedly;
-      chunk-06 ended `failed lease_lost`, so the collector wrote no report
-      (reviews/launchd.log, 2026-09-30). Next: rerun `weekly-actions.sh` when
-      idle and find why a preempted attempt ends as `lease_lost`.
+- [~] Weekly review chunk-06 ended `failed lease_lost`: service restarts lost
+      the lease (fixed in a907eef, clean shutdown). Rerun in progress
+      (wiki-side agent, 2026-09-30).
 
 ## Known gaps accepted in the plan
 
@@ -100,11 +86,10 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Found during phase 1a execution
 
-- [ ] Deferred for later phases: `split_requested` timeout, `check_fence`
-      node match and lease privacy re-check (before guest nodes), completion
-      spool (spec 10), status gaps (spec 13; reload counter done 2026-09-30),
-      sleep assertion for laptop nodes, remaining test-gap minors listed in
-      the phase 1a final review.
+- [ ] Deferred for later phases: sleep assertion for laptop nodes, remaining
+      test-gap minors listed in the phase 1a final review. (Closed
+      2026-09-30: split_requested timeout, fence by node, node privacy
+      re-check, memory-only completion spool; status reload counter.)
 
 ## Found 2026-09-30 moving brain jobs onto the worker
 
