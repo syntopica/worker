@@ -44,7 +44,7 @@ def test_post_maps_answers_and_refusals_to_allowlisted_codes(fake):
     assert error is None
     assert answer["choices"]
     fake.status = 429
-    assert post_openrouter("k", {"model": "m"}, 5, api=fake.api) == (None, "http_429")
+    assert post_openrouter("k", {"model": "m"}, 5, api=fake.api) == (None, "rate_limited")
     fake.status, fake.answer = 200, {"error": {"message": "provider text"}}
     assert post_openrouter("k", {"model": "m"}, 5, api=fake.api) == (None, "bad_response")
     assert post_openrouter("k", {}, 1, api="http://127.0.0.1:1") == (None, "transport_error")

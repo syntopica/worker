@@ -11,6 +11,7 @@ from worker.remote.run_remote_attempt import run_remote_attempt
 _NO_HEADROOM_REST_S = 900.0
 _IDLE_REST_S = 30.0
 _MIN_GAP_S = 3.1  # 20 requests per minute on free endpoints
+_RATE_LIMITED_REST_S = 300.0
 
 
 def remote_step(  # noqa: PLR0913, PLR0917
@@ -32,7 +33,9 @@ def remote_step(  # noqa: PLR0913, PLR0917
     lease = link.lease_remote()
     if lease is None:
         return _IDLE_REST_S
-    outcome = run_remote_attempt(lease, link, node_name, key, config, clock)
+    codes: list[str | None] = []
+    outcome = run_remote_attempt(lease, link, node_name, key, config, clock, on_code=codes.append)
+    code = codes[-1] if codes else None
     if outcome != "succeeded":
-        print(f"worker: remote {outcome} job={lease.get('job_id')}", file=sys.stderr)
-    return _MIN_GAP_S
+        print(f"worker: remote {outcome}: {code} job={lease.get('job_id')}", file=sys.stderr)
+    return _RATE_LIMITED_REST_S if code == "rate_limited" else _MIN_GAP_S

@@ -736,3 +736,6 @@ choice that `drip-loop.sh` makes today.
 3. **Ledger.** Attempts record `provider` and `cost_usd` (store version 5);
    `GET /v1/costs?days=N` (admin) and `worker costs` show attempts, tokens,
    cost and wall time by UTC day, provider and queue.
+4. **Rate limits.** A 429 from a free endpoint is `rate_limited`: the job is
+   requeued at once without charging an attempt (it may run locally next),
+   and the remote loop rests 5 minutes. Seen on the first live call, 2026-09-30.

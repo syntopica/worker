@@ -22,6 +22,7 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     config: WorkerConfig,
     clock: Callable[[], float],
     post: Callable[..., tuple[dict[str, Any] | None, str | None]] = post_openrouter,
+    on_code: Callable[[str | None], None] | None = None,
 ) -> str:
     """Return the outcome; a fenced attempt is abandoned without completing.
 
@@ -49,6 +50,8 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
             return "fenced"
     answer, error = holder.get("r", (None, "node_error"))
     if answer is None:
+        if on_code is not None:
+            on_code(error)
         report = attempt_report("failed", executor, clock() - started, error_code=error)
         link.complete(attempt, gen, report)
         return "failed"

@@ -81,3 +81,18 @@ def test_the_ledger_records_provider_and_cost_per_day(tmp_path):
             "wall_s": 2.0,
         }
     ]
+
+
+def test_a_rate_limited_remote_attempt_is_not_charged(tmp_path):
+    config = make_config(tmp_path)
+    conn = fresh_store(tmp_path / "state")
+    submit_job(conn, config, "pa", body(privacy="public"), 0.0)
+    lease = remote(conn, config, 200.0)
+    executor = {"node": "node-a", "provider": "openrouter", "model": "vendor/model:free"}
+    report = CompletionReport("failed", None, {}, executor, "rate_limited", 0.3)
+    assert (
+        complete_attempt(conn, config, lease.attempt_id, lease.generation, report, 201.0)
+        == "queued"
+    )
+    row = conn.execute("SELECT attempts, not_before, error FROM jobs").fetchone()
+    assert (row["attempts"], row["not_before"], row["error"]) == (0, 201.0, "rate_limited")

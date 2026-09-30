@@ -7,13 +7,15 @@ from typing import Any
 
 from worker.remote.openrouter_endpoint import OPENROUTER_API
 
+_TOO_MANY = 429
+
 
 def post_openrouter(
     key: str, body: dict[str, Any], timeout: float, api: str = OPENROUTER_API
 ) -> tuple[dict[str, Any] | None, str | None]:
     """(answer, None) on success, (None, code) otherwise; codes are allowlisted.
 
-    ``http_<status>`` for a refusal, ``transport_error`` when unreachable,
+    ``rate_limited`` for a 429, ``http_<status>`` for another refusal, ``transport_error`` when unreachable,
     ``bad_response`` for a body that is not a completion.
     """
     request = urllib.request.Request(
@@ -26,7 +28,7 @@ def post_openrouter(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             answer = json.loads(response.read())
     except urllib.error.HTTPError as error:
-        return None, f"http_{error.code}"
+        return None, "rate_limited" if error.code == _TOO_MANY else f"http_{error.code}"
     except (urllib.error.URLError, TimeoutError, OSError):
         return None, "transport_error"
     except ValueError:

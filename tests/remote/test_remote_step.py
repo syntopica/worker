@@ -1,6 +1,7 @@
 import time
 
 from tests.remote.fake_openrouter import FakeOpenRouter
+from worker.remote import remote_step as step_module
 from worker.remote import run_remote_attempt as attempt_module
 from worker.remote.remote_step import remote_step
 from worker.remote.run_remote_attempt import run_remote_attempt
@@ -71,3 +72,16 @@ def test_a_fenced_remote_attempt_is_abandoned(config, monkeypatch):
 
     assert run_remote_attempt(LEASE, link, "node-a", "k", config, lambda: 0.0, slow) == "fenced"
     assert link.completed == []
+
+
+def test_a_rate_limited_call_rests_the_loop_five_minutes(config, monkeypatch):
+    monkeypatch.setattr(attempt_module, "_BEAT_S", 0.01)
+    real = attempt_module.run_remote_attempt
+
+    def limited(*args, **kwargs):
+        return real(*args, post=lambda *_a: (None, "rate_limited"), **kwargs)
+
+    monkeypatch.setattr(step_module, "run_remote_attempt", limited)
+    link = Link(LEASE)
+    assert remote_step(config, "node-a", link, "k", lambda: 0.0, headroom=lambda _k: 3) == 300.0
+    assert link.completed[0]["error_code"] == "rate_limited"
