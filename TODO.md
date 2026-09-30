@@ -15,7 +15,10 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 ## Phase 1c - acceptance on the workstation
 
 - [ ] Cancel-to-quiet latency on Ollama 0.34.4 (probe method, amendment 2).
-- [ ] Zero model reloads across the three producers.
+- [ ] Zero model reloads across the three producers. Measure with
+      `loads_1h`/`unloads_1h` in `worker nodes` (2026-09-30). Note the pinned
+      `keep_alive` of 5m unloads the model after any 5-minute gap, which alone
+      breaks this criterion between bursts; decide the keep-alive with it.
       Risk seen 2026-09-29: at warn the node unloads the 22 GB model, pressure
       clears, the next lease reloads it (cold 30 GB) and warn returns - a
       reload loop. Count unloads per hour in 1c before accepting.
@@ -63,7 +66,7 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 - [ ] Deferred for later phases: `split_requested` timeout, `check_fence`
       node match and lease privacy re-check (before guest nodes), completion
-      spool (spec 10), status gaps (spec 13, reload counter needed by 1c),
+      spool (spec 10), status gaps (spec 13; reload counter done 2026-09-30),
       sleep assertion for laptop nodes, remaining test-gap minors listed in
       the phase 1a final review.
 

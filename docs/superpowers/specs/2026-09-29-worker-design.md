@@ -739,3 +739,11 @@ choice that `drip-loop.sh` makes today.
 4. **Rate limits.** A 429 from a free endpoint is `rate_limited`: the job is
    requeued at once without charging an attempt (it may run locally next),
    and the remote loop rests 5 minutes. Seen on the first live call, 2026-09-30.
+
+### 2026-09-30 - reload counter
+
+The node report adds `loads_1h` and `unloads_1h`: residency changes of any
+model seen in `/api/ps` over the last hour, whatever caused them (lease,
+pressure unload, keep-alive expiry, another application). This is the
+measurement behind the 1c criterion "zero model reloads"; `worker nodes`
+prints it.

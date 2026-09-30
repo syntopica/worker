@@ -22,6 +22,8 @@ def cmd_status(args: argparse.Namespace) -> int:
             reason = node.get("reason") or "working/ready"
             last = node.get("last_release")
             released = f" last_release={last['code']}@{last['age_s']:.0f}s" if last else ""
+            if "loads_1h" in node:
+                released += f" loads_1h={node['loads_1h']} unloads_1h={node['unloads_1h']}"
             print(
                 f"{name:20} {reason:22} idle={node.get('idle_s')} "
                 f"resident={node.get('resident')} age={node.get('age_s', 0):.0f}s{released}"

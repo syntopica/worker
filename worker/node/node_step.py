@@ -12,6 +12,7 @@ from worker.node.relieve_pressure import relieve_pressure
 from worker.node.resident_models import resident_models
 from worker.node.retry_failed_drain import retry_failed_drain
 from worker.node.run_leased import run_leased
+from worker.node.track_residency import track_residency
 
 
 def node_step(  # noqa: PLR0913, PLR0917
@@ -40,6 +41,7 @@ def node_step(  # noqa: PLR0913, PLR0917
             memory.failed_model = None
         retry_failed_drain(node.ollama_url, memory, resident, now)
     relieve_pressure(node.ollama_url, memory, resident)
+    counts = track_residency(memory, resident, now) if answer is not None else {}
     block = node_block(memory, state, now, answer is None)
     link.report(
         {
@@ -49,6 +51,7 @@ def node_step(  # noqa: PLR0913, PLR0917
             "pressure": state.pressure,
             "resident": resident,
             "unexpected": [m for m in resident if m not in config.models],
+            **counts,
         }
     )
     if block is not None:

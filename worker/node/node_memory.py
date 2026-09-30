@@ -21,3 +21,5 @@ class NodeMemory:
     transport_failures: int = 0
     transport_until: float = 0.0
     drain_retry_at: float = 0.0
+    last_resident: set[str] | None = None
+    residency_events: list[tuple[float, str]] = field(default_factory=list)
