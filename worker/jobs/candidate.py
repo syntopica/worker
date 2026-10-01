@@ -15,3 +15,4 @@ class Candidate:
     created: float
     parked: bool
     parked_min_idle_s: float
+    kind: str = "inference"

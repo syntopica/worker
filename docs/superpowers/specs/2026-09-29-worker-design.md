@@ -896,3 +896,28 @@ thread with its own coordinator link, leasing, heartbeating and resting on a
 429 independently; the headroom check runs before every lease as before. On
 SIGTERM the first slot stops as before and the others hand their running job
 back as `node_shutdown` at their next heartbeat, waited for up to 18 s.
+
+### Amendment 2026-10-01 - executor ladder: runner, then OpenRouter, then local
+
+Owner's routing order (2026-10-01): producers submit, the worker decides where
+work runs. Free remote quota is spent before the owner's machine: a runner
+(agy) first for every kind of work, then OpenRouter's free endpoints, then the
+local model, which is the slowest and costliest but the only executor for
+classes no remote may see (`secret`). Local still helps when work is delayed.
+
+The ladder is staggered by job age, so no executor needs to know another's
+state beyond the runner cooldowns the coordinator already keeps:
+
+- A queue's `runner` route (`{"profile": "<task profile>", "after_s": 0}`)
+  lets its inference jobs run on that task profile. The task loop leases them
+  like tasks: the coordinator renders the messages into one prompt and passes
+  the job's `schema` as the output schema; the answer is checked against that
+  schema on completion as for any inference job, and the job keeps its own
+  model for a later local attempt. The profile's own `privacy` list and the
+  class's `runner` permission both apply.
+- An `openrouter` route waits its `after_s` only while the queue's runner
+  route is usable (profile configured, runner not resting, class allowed);
+  otherwise it escalates at once.
+- `local_after_s` (default 0) holds an inference job off the local model
+  until it is that old, but only while some remote route could take it. A
+  job no remote may take runs locally at once.

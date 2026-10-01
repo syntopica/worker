@@ -26,12 +26,11 @@ def remote(conn, config, now):
     return lease_job(conn, config, LeaseRequest("node-a", None, False, 0.0, 0.0, "openrouter"), now)
 
 
-def test_a_public_job_escalates_only_after_waiting(tmp_path):
+def test_without_a_runner_route_a_public_job_escalates_at_once(tmp_path):
     config = make_config(tmp_path)
     conn = fresh_store(tmp_path / "state")
     job_id, _ = submit_job(conn, config, "pa", body(privacy="public"), 0.0)
-    assert remote(conn, config, 50.0) is None
-    lease = remote(conn, config, 150.0)
+    lease = remote(conn, config, 1.0)
     assert (lease.job_id, lease.model, lease.queue, lease.privacy) == (
         job_id,
         "vendor/model:free",

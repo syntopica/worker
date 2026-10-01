@@ -1,7 +1,7 @@
 """Choose the next inference job to escalate to OpenRouter (spec 8, rung 3)."""
 
 import dataclasses
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
@@ -12,17 +12,23 @@ def pick_remote(
     config: WorkerConfig,
     recent: Mapping[str, int],
     now: float,
+    *,
+    runner_first: Callable[[Candidate], bool] = lambda _c: False,
 ) -> Candidate | None:
     """A job whose queue routes its model to OpenRouter and that waited long enough.
 
     Same ordering as ``pick_job``: priority, then weighted share, then age.
     The pick carries the remote model id in ``model``; the job keeps its own.
+    The route's ``after_s`` applies only while ``runner_first`` says a runner
+    would take the job; otherwise it escalates at once (executor ladder).
     """
     eligible: list[tuple[Candidate, str]] = []
     for c in candidates:
         queue = config.queues.get(c.queue)
         route = queue.openrouter if queue is not None else None
-        if route is None or now - c.created < route.after_s:
+        if route is None:
+            continue
+        if runner_first(c) and now - c.created < route.after_s:
             continue
         remote = dict(route.models).get(c.model)
         if remote is not None:

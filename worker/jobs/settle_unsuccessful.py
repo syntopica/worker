@@ -29,6 +29,6 @@ def settle_unsuccessful(
         return requeue_uncharged(conn, job, report.error_code, now)
     if report.outcome == "preempted":
         return preempt_job(conn, config, job, now)
-    if report.error_code == "quota_wall" and job["kind"] == "task":
-        return requeue_after_wall(conn, config, job, now)
+    if report.error_code == "quota_wall":
+        return requeue_after_wall(conn, config, job, str(report.executor.get("provider", "")), now)
     return fail_attempt(conn, job, report.error_code or "executor_error", now)

@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 
 from worker.config.open_router_route import OpenRouterRoute
+from worker.config.runner_route import RunnerRoute
 from worker.config.tier_route import TierRoute
 
 
@@ -13,7 +14,9 @@ class QueuePolicy:
     ``fallbacks`` maps a granted profile to the profiles, in order, a task may
     run under while its own runner rests after a quota wall. ``openrouter``
     lets its inference jobs escalate to free remote endpoints. ``tiers`` maps
-    a quality tier to what it runs on.
+    a quality tier to what it runs on. ``runner`` sends its inference jobs to
+    a task profile first, and ``local_after_s`` holds them off the local model
+    until that old while a remote route could take them (executor ladder).
     """
 
     name: str
@@ -28,3 +31,5 @@ class QueuePolicy:
     fallbacks: tuple[tuple[str, tuple[str, ...]], ...] = ()
     openrouter: OpenRouterRoute | None = None
     tiers: tuple[tuple[str, TierRoute], ...] = ()
+    runner: RunnerRoute | None = None
+    local_after_s: float = 0.0

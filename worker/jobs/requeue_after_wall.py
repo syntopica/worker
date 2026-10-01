@@ -8,7 +8,7 @@ _DEFAULT_COOLDOWN_S = 3600.0
 
 
 def requeue_after_wall(
-    conn: sqlite3.Connection, config: WorkerConfig, job: sqlite3.Row, now: float
+    conn: sqlite3.Connection, config: WorkerConfig, job: sqlite3.Row, provider: str, now: float
 ) -> str:
     """Return ``queued``; the attempt is not charged and the job waits out the cooldown.
 
@@ -16,9 +16,12 @@ def requeue_after_wall(
     re-planned rather than failed (spec 8). A profile removed since the lease
     still rests the job for the default cooldown. A job whose queue names a
     fallback for its profile is due at once: the next pick runs it elsewhere.
+    An inference job sent to a runner keeps its own model, so the runner is
+    the reporting ``provider``, and it is due at once for the next rung.
     """
+    inference = job["kind"] == "inference"
     profile = config.profiles.get(job["model"])
-    runner = profile.runner if profile is not None else ""
+    runner = provider if inference else (profile.runner if profile is not None else "")
     until = now + config.runner_cooldown_s.get(runner, _DEFAULT_COOLDOWN_S)
     if runner:
         conn.execute(
@@ -27,7 +30,9 @@ def requeue_after_wall(
             (runner, until),
         )
     queue = config.queues.get(job["queue"])
-    has_fallback = queue is not None and bool(dict(queue.fallbacks).get(job["model"]))
+    has_fallback = inference or (
+        queue is not None and bool(dict(queue.fallbacks).get(job["model"]))
+    )
     conn.execute(
         "UPDATE jobs SET state='queued', error='quota_wall', not_before=?, updated=?,"
         " lease_attempt=NULL, lease_expires=NULL WHERE id=?",

@@ -7,13 +7,17 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.api_error import ApiError
 from worker.jobs.cooling_runners import cooling_runners
 from worker.jobs.fail_payload_lost import fail_payload_lost
+from worker.jobs.inference_task_input import inference_task_input
 from worker.jobs.lease import LEASE_TTL_S, Lease
 from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
+from worker.policy.held_for_remote import held_for_remote
 from worker.policy.pick_job import pick_job
 from worker.policy.pick_remote import pick_remote
 from worker.policy.pick_task import pick_task
+from worker.policy.runner_candidates import runner_candidates
+from worker.policy.runner_route_profile import runner_route_profile
 from worker.store.transaction import transaction
 
 _MAX_LOST_PER_LEASE = 16
@@ -33,6 +37,14 @@ def lease_job(
     with transaction(conn):
         candidates = load_candidates(conn, config, node.trust, now, req.kind)
         cooling = cooling_runners(conn, now)
+        if req.kind == "task":
+            candidates = runner_candidates(candidates, config, cooling, (req.node, node.trust), now)
+        elif req.kind != "openrouter":
+            candidates = [
+                c
+                for c in candidates
+                if not held_for_remote(c, config, cooling, (req.node, node.trust), now)
+            ]
         recent = {
             r[0]: r[1]
             for r in conn.execute(
@@ -44,7 +56,15 @@ def lease_job(
             if req.kind == "task":
                 chosen = pick_task(candidates, req, config, recent, cooling)
             elif req.kind == "openrouter":
-                chosen = pick_remote(candidates, config, recent, now)
+                chosen = pick_remote(
+                    candidates,
+                    config,
+                    recent,
+                    now,
+                    runner_first=lambda c: (
+                        runner_route_profile(c, config, cooling, node.trust, req.node) is not None
+                    ),
+                )
             else:
                 chosen = pick_job(candidates, req, config, recent, now)
             if chosen is None:
@@ -56,6 +76,8 @@ def lease_job(
             candidates = [c for c in candidates if c.job_id != chosen.job_id]
         else:
             return None
+        if req.kind == "task" and chosen.kind == "inference":
+            job_input = inference_task_input(job_input)
         attempt_id = uuid.uuid4().hex
         conn.execute(
             # A task picked under a fallback profile keeps it: a wall is then
