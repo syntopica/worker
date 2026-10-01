@@ -91,3 +91,14 @@ def test_a_lease_this_node_may_not_send_remote_is_refused_unrun(config):
     link = Link(LEASE)
     assert remote_step(config, "node-a", link, "k", lambda: 0.0, headroom=lambda _k: 3) == 3.1
     assert link.completed[0]["error_code"] == "privacy_refused"
+
+
+def test_a_run_reports_the_model_openrouter_actually_used(config):
+    answer = {"model": "vendor/other:free", "choices": [{"message": {"content": "{}"}}]}
+    link = Link()
+
+    def post(key, body, timeout):
+        return answer, None
+
+    run_remote_attempt(LEASE, link, "node-a", "k", config, lambda: 0.0, post)
+    assert link.completed[0]["executor"]["model"] == "vendor/other:free"

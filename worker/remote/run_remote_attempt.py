@@ -34,7 +34,8 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     queue = config.queues.get(str(lease.get("queue")))
     route = queue.openrouter if queue is not None else None
     zdr = (route.zdr if route is not None else True) and lease.get("privacy") != "public"
-    body = openrouter_request_body(str(lease["model"]), lease["input"], zdr)
+    fallbacks = route.fallbacks if route is not None else ()
+    body = openrouter_request_body(str(lease["model"]), lease["input"], zdr, fallbacks)
     executor = {"node": node_name, "provider": "openrouter", "model": str(lease["model"])}
     attempt, gen = lease["attempt_id"], lease["generation"]
     holder: dict[str, tuple[dict[str, Any] | None, str | None]] = {}
@@ -61,6 +62,7 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
         link.complete(attempt, gen, report)
         return "failed"
     output, usage = openrouter_output(answer)
+    executor["model"] = str(answer.get("model") or executor["model"])
     report = attempt_report("succeeded", executor, clock() - started, output=output, usage=usage)
     link.complete(attempt, gen, report)
     return "succeeded"

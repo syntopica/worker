@@ -18,8 +18,14 @@ def parse_openrouter_route(name: str, raw: dict[str, Any] | None) -> OpenRouterR
         raise ValueError(f"queue {name}: openrouter.models must map local to remote models")
     if not all(isinstance(v, str) and v.endswith(":free") for v in models.values()):
         raise ValueError(f"queue {name}: openrouter models must be :free endpoints")
+    fallbacks = raw.get("fallbacks", [])
+    if not isinstance(fallbacks, list) or not all(
+        isinstance(v, str) and v.endswith(":free") for v in fallbacks
+    ):
+        raise ValueError(f"queue {name}: openrouter.fallbacks must list :free endpoints")
     return OpenRouterRoute(
         models=tuple((str(k), str(v)) for k, v in models.items()),
         after_s=float(raw.get("after_s", 0)),
         zdr=bool(raw.get("zdr", True)),
+        fallbacks=tuple(fallbacks),
     )

@@ -51,6 +51,8 @@ def test_a_mail_job_never_escalates_by_default(tmp_path):
 def test_only_free_endpoints_are_accepted(tmp_path):
     with pytest.raises(ValueError, match=":free"):
         make_config(tmp_path, {"models": {"model-a": "vendor/paid"}})
+    with pytest.raises(ValueError, match=":free"):
+        make_config(tmp_path, {**ROUTE, "fallbacks": ["vendor/paid"]})
 
 
 def test_the_ledger_records_provider_and_cost_per_day(tmp_path):

@@ -27,6 +27,13 @@ def test_the_body_carries_a_strict_schema_and_zdr_when_asked():
     assert body["provider"] == {"zdr": True}
     assert body["temperature"] == 0
     assert "provider" not in openrouter_request_body("vendor/m:free", job, zdr=False)
+    assert "models" not in body
+
+
+def test_fallbacks_become_the_ordered_models_list():
+    job = {"messages": [{"role": "user", "content": "hi"}]}
+    body = openrouter_request_body("vendor/a:free", job, False, ("vendor/b:free",))
+    assert body["models"] == ["vendor/a:free", "vendor/b:free"]
 
 
 def test_output_parses_fenced_json_and_reports_cost():

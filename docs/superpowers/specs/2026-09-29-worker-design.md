@@ -865,3 +865,14 @@ whether cheap models are good enough.
    patterns err toward redacting. The stored input is untouched, so a local
    attempt still sees it whole. A task's input files are not redacted: a
    profile with an `input_root` must point at material fit to leave.
+
+### Amendment 2026-10-01 - OpenRouter fallback models
+
+Free endpoints rate limit per model upstream: about half of the escalated
+calls to one free model came back 429, and every 429 rests the remote loop
+five minutes. A queue's `openrouter` route may therefore carry `fallbacks`, an
+ordered list of further `:free` model ids. They are sent as OpenRouter's
+`models` list after the mapped model, so OpenRouter itself tries the next one
+on an error or a rate limit within the same request. The attempt records the
+model OpenRouter reports it actually used, so `worker quality` rates each
+fallback separately. Paid ids stay refused in `fallbacks` as in `models`.
