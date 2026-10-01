@@ -3,6 +3,7 @@
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
 from worker.policy.privacy_allows import privacy_allows
+from worker.policy.profile_resting import profile_resting
 
 
 def runner_route_profile(
@@ -18,7 +19,7 @@ def runner_route_profile(
     queue = config.queues.get(c.queue)
     route = queue.runner if queue is not None else None
     profile = config.profiles.get(route.profile) if route is not None else None
-    if route is None or profile is None or profile.runner in cooling:
+    if route is None or profile is None or profile_resting(profile, cooling):
         return None
     if profile.nodes is not None and node not in profile.nodes:
         return None

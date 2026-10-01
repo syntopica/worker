@@ -3,6 +3,7 @@
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
 from worker.policy.privacy_allows import privacy_allows
+from worker.policy.profile_resting import profile_resting
 
 
 def pinned_runner_profile(
@@ -21,6 +22,6 @@ def pinned_runner_profile(
         if kind != "runner":
             return None
     profile = config.profiles.get(name)
-    if profile is None or profile.runner in cooling or c.privacy not in profile.privacy:
+    if profile is None or profile_resting(profile, cooling) or c.privacy not in profile.privacy:
         return None
     return name if privacy_allows(config, c.privacy, "runner", trust) else None

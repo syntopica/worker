@@ -2,6 +2,7 @@
 
 import sqlite3
 
+from worker.config.cooldown_key import cooldown_key
 from worker.config.worker_config import WorkerConfig
 
 
@@ -22,15 +23,16 @@ def job_cooling_until(
         return None
     queue = config.queues.get(job["queue"])
     names = (job["model"], *(dict(queue.fallbacks).get(job["model"], ()) if queue else ()))
-    runners = {config.profiles[n].runner for n in names if n in config.profiles}
-    if not runners:
+    profiles = [config.profiles[n] for n in names if n in config.profiles]
+    if not profiles:
         return None
     ends = []
-    for runner in runners:
+    for profile in profiles:
+        keys = (profile.runner, cooldown_key(profile.runner, profile.model))
         row = conn.execute(
-            "SELECT until FROM cooldowns WHERE runner=? AND until>?", (runner, now)
+            "SELECT max(until) FROM cooldowns WHERE runner IN (?, ?) AND until>?", (*keys, now)
         ).fetchone()
-        if row is None:
+        if row[0] is None:
             return None
-        ends.append(float(row["until"]))
+        ends.append(float(row[0]))
     return min(ends)

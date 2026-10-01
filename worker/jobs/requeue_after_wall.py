@@ -1,14 +1,20 @@
 """Rest a runner after a quota wall and requeue its task (amendment 2026-09-30)."""
 
 import sqlite3
+from typing import Any
 
+from worker.config.cooldown_key import cooldown_key
 from worker.config.worker_config import WorkerConfig
 
 _DEFAULT_COOLDOWN_S = 3600.0
 
 
 def requeue_after_wall(
-    conn: sqlite3.Connection, config: WorkerConfig, job: sqlite3.Row, provider: str, now: float
+    conn: sqlite3.Connection,
+    config: WorkerConfig,
+    job: sqlite3.Row,
+    executor: dict[str, Any],
+    now: float,
 ) -> str:
     """Return ``queued``; the attempt is not charged and the job waits out the cooldown.
 
@@ -17,17 +23,22 @@ def requeue_after_wall(
     still rests the job for the default cooldown. A job whose queue names a
     fallback for its profile is due at once: the next pick runs it elsewhere.
     An inference job sent to a runner keeps its own model, so the runner is
-    the reporting ``provider``, and it is due at once for the next rung.
+    the reporting executor, and it is due at once for the next rung. Only the
+    model that hit the wall rests when the profile pins one.
     """
     inference = job["kind"] == "inference"
     profile = config.profiles.get(job["model"])
-    runner = provider if inference else (profile.runner if profile is not None else "")
+    if inference:
+        runner, model = str(executor.get("provider") or ""), executor.get("model") or None
+    else:
+        runner = profile.runner if profile is not None else ""
+        model = profile.model if profile is not None else None
     until = now + config.runner_cooldown_s.get(runner, _DEFAULT_COOLDOWN_S)
     if runner:
         conn.execute(
             "INSERT INTO cooldowns (runner, until) VALUES (?, ?)"
             " ON CONFLICT(runner) DO UPDATE SET until=max(until, excluded.until)",
-            (runner, until),
+            (cooldown_key(runner, model), until),
         )
     queue = config.queues.get(job["queue"])
     has_fallback = inference or (

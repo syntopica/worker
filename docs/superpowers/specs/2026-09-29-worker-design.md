@@ -960,3 +960,14 @@ preference. A queue may carry `shadow`:
   remove their payloads like any other. `worker quality` reports, per queue
   and executor, judged answers, mean score and best rate; producers' own
   rating counts exclude `_shadow` and `_judge`.
+
+### Amendment 2026-10-01 - quota walls rest one model, not the whole runner
+
+agy meters its models separately: on 2026-10-01 its default model was spent
+while `gemini-3.8-flash-medium` and `gemini-3.1-pro-high` both answered, yet
+one wall rested every agy profile for three hours. A wall now rests the
+cooldowns key `runner:model` when the profile (or, for an inference job sent
+to a runner, the reporting executor) pins a model, and the runner alone
+otherwise. A profile is resting when either its runner key or its model key
+is. A runner-wide reading (CodexBar's) still rests the runner key, which
+holds back every model of that runner.

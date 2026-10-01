@@ -2,6 +2,7 @@
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
+from worker.policy.profile_resting import profile_resting
 
 
 def runnable_profile(
@@ -18,7 +19,7 @@ def runnable_profile(
     order = (c.model,) if c.pin else (c.model, *dict(queue.fallbacks).get(c.model, ()))
     for name in order:
         profile = config.profiles.get(name)
-        if profile is None or profile.runner in cooling:
+        if profile is None or profile_resting(profile, cooling):
             continue
         if profile.nodes is None or node in profile.nodes:
             return name
