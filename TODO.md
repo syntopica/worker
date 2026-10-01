@@ -28,6 +28,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Later phases (see roadmap)
 
+- [ ] Executor preference from judged scores: after about a week of
+      `judgements` (target 20+ judged answers per queue and executor), read
+      `worker quality --days 7`, then reorder or drop rungs per queue (ladder
+      `runner`/`openrouter` routes, `local_after_s`). Not automatic yet.
+
 - [~] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
       `drip-loop.sh` retired 2026-10-01: Atrium's synthesis runs as `task`
       jobs on `atrium.tasks` (profile `atrium.agy` only, cursor dropped by the

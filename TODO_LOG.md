@@ -100,3 +100,10 @@
   the per-queue cap, node-pinned profile holding other rungs), both fixed
   before commit. Instance: `inference.agy` on all 8 inference queues,
   OpenRouter after 60 s, local after 600 s (wiki b8a8e476). Gate green.
+- 2026-10-01 [x] Judged shadow sampling (owner: "comprobar la calidad de
+  cada cosa para saber que usar y tener una preferencia"): sampled answers
+  re-run on pinned executors, judged blind by a codex task, `worker quality`
+  prints mean score and best rate per queue and executor (6a22353, store v7).
+  Codex adversarial review found 3 P1 and 2 P2, all fixed with tests.
+  Instance: `quality.judge` (codex gpt-5.5) on seven queues at 2-10% with
+  five targets (wiki 2148bc4a). Gate green.
