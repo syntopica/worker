@@ -28,12 +28,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Later phases (see roadmap)
 
-- [ ] Remote loop concurrency: `worker remote` runs one OpenRouter call at a
-      time and a free model takes 150-440 s per call (2026-10-01 attempts),
-      so the rung moves about 10-20 jobs an hour against a 20/min, 1000/day
-      allowance. Next step: N concurrent leases (config `remote_slots`), each
-      with its own heartbeat, sharing the 429 rest.
-
 - [~] Phase 2: OpenRouter free executor, ledger and costs, quotas, `task` kind,
       `drip-loop.sh` retired 2026-10-01: Atrium's synthesis runs as `task`
       jobs on `atrium.tasks` (profile `atrium.agy` only, cursor dropped by the

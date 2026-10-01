@@ -88,3 +88,6 @@
 - 2026-10-01 [x] Single unreadable idle/pressure sample no longer preempts:
   17 of 20 preemptions were `host_state_unreadable` under load 38; a reading
   at most 10 s old now stands in (f8f107e). Verified: gate green.
+- 2026-10-01 [x] Remote loop concurrency: `remote_slots` threads, each with its
+  own link and 429 rest, clean `node_shutdown` hand-back on SIGTERM (1a2f13b);
+  instance set to 4 slots (wiki ed29eb49). Verified: gate green.
