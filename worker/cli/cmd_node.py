@@ -20,7 +20,8 @@ def cmd_node(args: argparse.Namespace) -> int:
     if args.name not in config.nodes:
         print(f"worker: node {args.name} is not in the configuration", file=sys.stderr)
         return 2
-    link = CoordinatorLink(base_url(config), read_token(state, args.name), args.name)
+    url = config.nodes[args.name].coordinator_url or base_url(config)
+    link = CoordinatorLink(url, read_token(state, args.name), args.name)
     raise_on_sigterm()
     run_node(config, args.name, link, current=ConfigSource(config_path, config).current)
     return 0

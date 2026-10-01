@@ -1,16 +1,13 @@
 """The task loop: one read-only task at a time per slot, beside the inference node."""
 
-import functools
 import sys
 import time
 from collections.abc import Callable
 from typing import Any
 
 from worker.config.worker_config import WorkerConfig
-from worker.node.bridge_unreadable import BridgeUnreadable
-from worker.node.hold_power_source import HoldPowerSource
+from worker.node.default_host_sampler import default_host_sampler
 from worker.node.host_state import HostState
-from worker.node.sample_host_state import sample_host_state
 from worker.tasks.probe_runner_walls import probe_runner_walls
 from worker.tasks.task_step import task_step
 
@@ -39,13 +36,7 @@ def run_task_node(  # noqa: PLR0913, PLR0917
     """
     next_probe = 0.0
     if sample is None:
-        sample = HoldPowerSource(
-            BridgeUnreadable(
-                functools.partial(
-                    sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct
-                )
-            )
-        )
+        sample = default_host_sampler(config.nodes[node_name])
     while True:
         try:
             if current is not None:

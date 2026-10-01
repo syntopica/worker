@@ -52,6 +52,8 @@ def load_worker_config(path: Path) -> WorkerConfig:
                 v.get("openrouter_key_file"),
                 max(1, int(v.get("remote_slots", 1))),
                 max(1, int(v.get("task_slots", 1))),
+                None if v.get("max_load") is None else float(v["max_load"]),
+                v.get("coordinator_url"),
             )
             for n, v in raw["nodes"].items()
         },

@@ -982,3 +982,29 @@ stops as before; the others raise the same shutdown from their next sleep
 (within one two-second poll), so their runner's process group is killed and
 the job handed back as `node_shutdown`; all are waited for together for at
 most 12 s. The inference node keeps one job at a time.
+
+### Amendment 2026-10-01 - a headless Linux server as a node
+
+Owner, 2026-10-01: an always-on hosting server with spare CPU and memory, and
+no GPU, may run the local model at night. A probe of a 35B mixture-of-experts
+model on 12 CPU threads measured about 120 prompt and 10 generated tokens a
+second, slow but useful for batch work.
+
+- On Linux the node samples `/proc` instead of macOS readers. The server's
+  users are the services it hosts: `idle_s` is the time since the one-minute
+  load average last exceeded the node's `max_load` (unset: since the node
+  started), so a busy host blocks idle-only queues and releases their
+  attempts as a returning user does. The load includes the node's own model,
+  so `max_load` leaves room for it. `on_ac` is always true; memory is `warn`
+  below `min_free_pct` available (`MemAvailable` over `MemTotal`).
+- A node may name its own `coordinator_url`. The coordinator stays bound to
+  loopback; the server reaches it through an SSH reverse forward that the
+  coordinator's host opens to a privileged loopback port on the server, which
+  no unprivileged account there can bind first, so no hosted account can pose
+  as the coordinator and collect a node token or a payload. This stands in for
+  the Tailscale binding of section 11 for this one node.
+- The night window, CPU quota, memory ceiling and scheduling priority are the
+  server's own service limits, not engine policy. The model drain's restart
+  step uses launchd and degrades to a failed restart elsewhere.
+- Privacy is unchanged in the engine; the instance decides which classes
+  `server` trust may take.

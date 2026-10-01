@@ -15,6 +15,9 @@ class NodePolicy:
     ``remote_slots`` is how many OpenRouter calls that loop keeps in flight,
     ``task_slots`` how many runner tasks the task loop runs at once. The local
     model has no slots: it runs one job at a time to protect the machine.
+    ``max_load`` is the load average above which a Linux server counts as in
+    use; ``coordinator_url`` is how this node reaches the coordinator when
+    that is not the configured listen address (a forwarded port).
     """
 
     name: str
@@ -27,3 +30,5 @@ class NodePolicy:
     openrouter_key_file: str | None = None
     remote_slots: int = 1
     task_slots: int = 1
+    max_load: float | None = None
+    coordinator_url: str | None = None
