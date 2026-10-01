@@ -21,13 +21,17 @@ def run_remote_node(  # noqa: PLR0913, PLR0917
     *,
     forever: bool = True,
     current: Callable[[], WorkerConfig] | None = None,
+    stopping: Callable[[], bool] = lambda: False,
 ) -> None:
-    """A failing iteration logs its exception class, rests, and never stops the loop."""
-    while True:
+    """A failing iteration logs its exception class, rests, and never stops the loop.
+
+    Only ``stopping`` ends a ``forever`` loop, checked after each iteration.
+    """
+    while not stopping():
         try:
             if current is not None:
                 config = current()
-            rest = remote_step(config, node_name, link, key, clock)
+            rest = remote_step(config, node_name, link, key, clock, stopping=stopping)
         except Exception as error:
             print(f"worker: remote iteration failed: {type(error).__name__}", file=sys.stderr)
             rest = _ERROR_REST_S

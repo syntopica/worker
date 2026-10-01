@@ -23,6 +23,7 @@ def remote_step(  # noqa: PLR0913, PLR0917
     key: str,
     clock: Callable[[], float],
     headroom: Callable[[str], int | None] = openrouter_headroom,
+    stopping: Callable[[], bool] = lambda: False,
 ) -> float:
     """Return the seconds to rest before the next iteration.
 
@@ -42,7 +43,9 @@ def remote_step(  # noqa: PLR0913, PLR0917
         print(f"worker: remote failed: privacy_refused job={lease.get('job_id')}", file=sys.stderr)
         return _MIN_GAP_S
     codes: list[str | None] = []
-    outcome = run_remote_attempt(lease, link, node_name, key, config, clock, on_code=codes.append)
+    outcome = run_remote_attempt(
+        lease, link, node_name, key, config, clock, on_code=codes.append, stopping=stopping
+    )
     code = codes[-1] if codes else None
     if outcome != "succeeded":
         print(f"worker: remote {outcome}: {code} job={lease.get('job_id')}", file=sys.stderr)

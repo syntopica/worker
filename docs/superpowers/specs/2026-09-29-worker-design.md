@@ -886,3 +886,13 @@ memory-pressure read now reuses the last successful reading when it is at
 most ten seconds old; the idle time is reused as read, never advanced. Past
 ten seconds the signal is unreadable and releases work as before. The power
 source keeps its two-minute hold.
+
+### Amendment 2026-10-01 - concurrent OpenRouter slots
+
+A free model takes 150-440 s per call, so one call in flight moved 10-20 jobs
+an hour against a 20 per minute allowance. A node's `remote_slots` (default 1)
+is how many OpenRouter calls `worker remote` keeps in flight: each slot is a
+thread with its own coordinator link, leasing, heartbeating and resting on a
+429 independently; the headroom check runs before every lease as before. On
+SIGTERM the first slot stops as before and the others hand their running job
+back as `node_shutdown` at their next heartbeat, waited for up to 18 s.

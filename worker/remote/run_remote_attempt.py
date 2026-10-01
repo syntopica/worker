@@ -24,12 +24,14 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     clock: Callable[[], float],
     post: Callable[..., tuple[dict[str, Any] | None, str | None]] = post_openrouter,
     on_code: Callable[[str | None], None] | None = None,
+    stopping: Callable[[], bool] = lambda: False,
 ) -> str:
     """Return the outcome; a fenced attempt is abandoned without completing.
 
     Non-public jobs go to zero-data-retention endpoints unless the queue's
     route turns that off. The call runs in a daemon thread so the lease is
     heartbeated; a fenced call is left to finish and its answer dropped.
+    A ``stopping`` loop hands the job back as a shutdown at the next beat.
     """
     queue = config.queues.get(str(lease.get("queue")))
     route = queue.openrouter if queue is not None else None
@@ -51,6 +53,9 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
                 break
             if not link.heartbeat(attempt, gen, False):
                 return "fenced"
+            if stopping():
+                report_shutdown(link, attempt, gen, executor, clock() - started)
+                return "preempted"
     except (SystemExit, KeyboardInterrupt):
         report_shutdown(link, attempt, gen, executor, clock() - started)
         raise
