@@ -30,7 +30,7 @@ def load_candidates(
     marks = ",".join("?" * len(allowed))
     queue_marks = ",".join("?" * len(queues))
     rows = conn.execute(
-        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s, kind, pin FROM ("  # noqa: S608
+        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s, kind, pin, error FROM ("  # noqa: S608
         " SELECT *, row_number() OVER (PARTITION BY queue, kind ORDER BY priority DESC, created) AS rank"
         " FROM jobs WHERE state='queued' AND kind IN (?, ?) AND not_before<=?"
         f" AND (deadline IS NULL OR deadline>?) AND privacy IN ({marks}) AND queue IN ({queue_marks})"
@@ -49,6 +49,7 @@ def load_candidates(
             r["parked_min_idle_s"],
             r["kind"],
             r["pin"],
+            r["error"],
         )
         for r in rows
         if privacy_allows(config, r["privacy"], executor, trust)

@@ -14,8 +14,11 @@ def runner_route_profile(
     Usable means configured, allowed on ``node``, its runner not resting
     after a quota wall, and the job's class allowed both by the profile and
     for ``runner`` executors. Other rungs ask with their own node: a profile
-    pinned elsewhere does not hold them back.
+    pinned elsewhere does not hold them back. A job a runner answered
+    with nothing skips the rung: the next executor takes it.
     """
+    if c.error == "no_output":
+        return None
     queue = config.queues.get(c.queue)
     route = queue.runner if queue is not None else None
     profile = config.profiles.get(route.profile) if route is not None else None

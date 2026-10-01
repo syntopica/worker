@@ -1008,3 +1008,14 @@ second, slow but useful for batch work.
   step uses launchd and degrades to a failed restart elsewhere.
 - Privacy is unchanged in the engine; the instance decides which classes
   `server` trust may take.
+
+### Amendment 2026-10-01 - an empty runner answer moves an inference job on
+
+Owner, 2026-10-01: agy exists only for this work, so it stays first for every
+queue and its quota is spent in full. What must not happen is losing jobs to
+it: on 2026-10-01 agy answered inference jobs with nothing 28 times in an
+hour, and 15 jobs failed after spending every attempt on it. A runner's empty
+answer (`no_output`) to an inference job is now handed back uncharged, and
+the runner rung skips a job last handed back that way, so OpenRouter or the
+local model answers it next without waiting for the route's `after_s`. A task
+job's empty answer is still charged.

@@ -92,3 +92,18 @@ def test_a_runner_pinned_to_another_node_holds_no_other_rung_back(tmp_path):
     submit_job(conn, config, "pa", body(), 0.0)
     assert lease(conn, config, "task", 1.0) is None
     assert lease(conn, config, "openrouter", 1.0) is not None
+
+
+def test_an_empty_runner_answer_is_uncharged_and_skips_the_runner_rung(tmp_path):
+    config = make_config(tmp_path)
+    conn = fresh_store(tmp_path / "state")
+    submit_job(conn, config, "pa", body(), 0.0)
+    got = lease(conn, config, "task", 150.0)
+    executor = {"node": "node-a", "provider": "agy", "model": ""}
+    report = CompletionReport("failed", None, {}, executor, "no_output", 1.0)
+    complete_attempt(conn, config, got.attempt_id, got.generation, report, 151.0, node="node-a")
+    state, attempts = conn.execute("SELECT state, attempts FROM jobs").fetchone()
+    assert (state, attempts) == ("queued", 0)
+    assert conn.execute("SELECT count(*) FROM cooldowns").fetchone()[0] == 0
+    assert lease(conn, config, "task", 152.0) is None
+    assert lease(conn, config, "openrouter", 152.0) is not None
