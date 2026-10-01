@@ -90,13 +90,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       in 120 s; shutdown handed the next one back as `node_shutdown`.
       Verify after the first full night: jobs done, no `user_active`
       preemptions from the node's own load (raise `max_load` if there are).
-- [ ] agy-first spent the Gemini weekly quota in about a day: CodexBar
-      reported 98.8% of the weekly window used on 2026-10-01 and the runner
-      rests until 2026-10-07 02:31 UTC, so inference falls to OpenRouter and
-      the local nodes until then. Owner decision: ration agy (fewer queues,
-      or a share of the weekly window) rather than first for everything.
-      Before the wall, flash returned 28 empty answers (`no_output`) in one
-      hour; an empty agy answer could count as a wall signal.
 - [ ] Codex judges still fail in bursts: five `runner_failed` within 30 s at
       2026-10-01 13:35 UTC with codex quota at 67%, then sequential ones
       succeeded. The runner's stderr is not kept, so the cause is unknown;

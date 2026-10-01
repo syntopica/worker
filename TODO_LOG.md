@@ -151,3 +151,10 @@
   empty answer when headless mode denied a tool). First judged scores on
   vexa.translate: nemotron 3.89 (9), agy flash 3.67 (6, best 3), ollama 3.4
   (5), dots 2.8 (5).
+- 2026-10-01: agy stays first for every queue and its quota is spent in full
+  (owner: "lo que quiero es aprovecharlo 100% porque solo lo usamos para
+  esto"). The Gemini weekly wall (98.8%, rests until 2026-10-07 02:31 UTC)
+  is the expected outcome. The loss it exposed is fixed in 2c45e3a: a
+  runner's empty answer to an inference job is uncharged and the job skips
+  the runner rung (15 jobs had failed that way). Verified: `uv run
+  codeality-py gate` green, coordinator restarted.
