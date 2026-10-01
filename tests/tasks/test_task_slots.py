@@ -2,8 +2,10 @@ import threading
 
 import pytest
 
+from worker.tasks.judge_run import judge_run
 from worker.tasks.run_task_slots import run_task_slots
 from worker.tasks.stoppable_sleep import stoppable_sleep
+from worker.tasks.task_output import task_output
 
 
 def test_a_stopped_slot_sleep_raises_at_once():
@@ -34,3 +36,8 @@ def test_every_slot_runs_only_the_first_probes_and_all_stop_together():
         run_task_slots(None, "node-a", ["l0", "l1", "l2"], run=run)
     assert sorted(seen) == [("l0", True), ("l1", False), ("l2", False)]
     assert sorted(ended) == ["l1", "l2"]
+
+
+def test_a_fenced_runner_answer_parses_and_an_empty_one_fails():
+    assert task_output('```json\n{"a": 1}\n```')["json"] == {"a": 1}
+    assert judge_run("agy", 0, "", "  ")[:2] == ("failed", "no_output")

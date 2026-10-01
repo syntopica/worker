@@ -16,6 +16,8 @@ def judge_run(
     """
     if is_quota_wall(runner, exit_code, output, answer):
         return "failed", "quota_wall", None
-    if answer is None:
+    if answer is None or not answer.strip():
+        # An empty answer is no answer: agy returns one when a tool it wanted
+        # was denied in headless mode.
         return "failed", "no_output" if exit_code == 0 else "runner_failed", None
     return "succeeded", None, task_output(answer)

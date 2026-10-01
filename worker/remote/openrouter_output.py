@@ -1,7 +1,8 @@
 """Turn a chat-completions answer into the contract's output and usage."""
 
-import json
 from typing import Any
+
+from worker.node.parse_json_answer import parse_json_answer
 
 
 def openrouter_output(answer: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -12,13 +13,7 @@ def openrouter_output(answer: dict[str, Any]) -> tuple[dict[str, Any], dict[str,
     """
     choices = answer.get("choices") or [{}]
     text = str(((choices[0] or {}).get("message") or {}).get("content") or "")
-    body = text.strip()
-    if body.startswith("```") and body.endswith("```"):
-        body = body.strip("`").removeprefix("json").strip()
-    try:
-        parsed: Any = json.loads(body)
-    except ValueError:
-        parsed = None
+    parsed = parse_json_answer(text)
     usage = answer.get("usage") or {}
     return {"text": text, "json": parsed}, {
         "tokens_in": usage.get("prompt_tokens", 0),
