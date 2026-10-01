@@ -12,6 +12,7 @@ from worker.remote.openrouter_request_body import openrouter_request_body
 from worker.remote.post_openrouter import post_openrouter
 
 _BEAT_S = 15.0
+_STOP_CHECK_S = 1.0
 _CALL_TIMEOUT_S = 600.0
 
 
@@ -31,7 +32,7 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     Non-public jobs go to zero-data-retention endpoints unless the queue's
     route turns that off. The call runs in a daemon thread so the lease is
     heartbeated; a fenced call is left to finish and its answer dropped.
-    A ``stopping`` loop hands the job back as a shutdown at the next beat.
+    A ``stopping`` loop hands the job back as a shutdown within a second.
     """
     queue = config.queues.get(str(lease.get("queue")))
     route = queue.openrouter if queue is not None else None
@@ -46,16 +47,21 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     )
     started = clock()
     thread.start()
+    step = min(_STOP_CHECK_S, _BEAT_S)
+    waited = 0.0
     try:
         while True:
-            thread.join(_BEAT_S)
+            thread.join(step)
             if not thread.is_alive():
                 break
-            if not link.heartbeat(attempt, gen, False):
-                return "fenced"
             if stopping():
                 report_shutdown(link, attempt, gen, executor, clock() - started)
                 return "preempted"
+            waited += step
+            if waited >= _BEAT_S:
+                waited = 0.0
+                if not link.heartbeat(attempt, gen, False):
+                    return "fenced"
     except (SystemExit, KeyboardInterrupt):
         report_shutdown(link, attempt, gen, executor, clock() - started)
         raise

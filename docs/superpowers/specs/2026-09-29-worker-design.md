@@ -895,7 +895,10 @@ is how many OpenRouter calls `worker remote` keeps in flight: each slot is a
 thread with its own coordinator link, leasing, heartbeating and resting on a
 429 independently; the headroom check runs before every lease as before. On
 SIGTERM the first slot stops as before and the others hand their running job
-back as `node_shutdown` at their next heartbeat, waited for up to 18 s.
+back as `node_shutdown` within a second (the stop flag is checked every
+second, the heartbeat stays every 15 s), all waited for together for at most
+12 s, inside launchd's 20 s exit timeout: waiting 18 s per slot in turn
+overran it and launchd killed the loop (exit -9, leases lost).
 
 ### Amendment 2026-10-01 - executor ladder: runner, then OpenRouter, then local
 
