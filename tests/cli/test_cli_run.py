@@ -39,9 +39,10 @@ def test_run_prints_the_output_and_acknowledges_it(served, run):
         target=_complete_next, args=(served, {"text": '{"a": 1}', "json": {"a": 1}})
     )
     node.start()
-    code, out, _ = run("run", "--producer", "pa", "--poll", "0.05", str(served / "job.json"))
+    code, out, err = run("run", "--producer", "pa", "--poll", "0.05", str(served / "job.json"))
     node.join()
     assert (code, json.loads(out)) == (0, {"a": 1})
+    assert "executor unknown unknown" in err
     code, out, _ = run("jobs", "--producer", "pa", "--queue", "pa.bulk", "--json")
     assert json.loads(out) == []
 
