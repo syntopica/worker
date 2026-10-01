@@ -85,3 +85,6 @@
   agents.classify, atrium.synthesis (wiki 7231b04c). Ordered free fallback
   models per route (e0c4f0f, wiki e14de422) after ~50% of calls to one free
   model hit 429. Verified: gate green, services restarted.
+- 2026-10-01 [x] Single unreadable idle/pressure sample no longer preempts:
+  17 of 20 preemptions were `host_state_unreadable` under load 38; a reading
+  at most 10 s old now stands in (f8f107e). Verified: gate green.
