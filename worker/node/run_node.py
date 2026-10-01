@@ -7,6 +7,7 @@ from collections.abc import Callable
 from typing import Any
 
 from worker.config.worker_config import WorkerConfig
+from worker.node.bridge_unreadable import BridgeUnreadable
 from worker.node.hold_power_source import HoldPowerSource
 from worker.node.host_state import HostState
 from worker.node.node_memory import NodeMemory
@@ -33,7 +34,11 @@ def run_node(  # noqa: PLR0913, PLR0917
     """
     if sample is None:
         sample = HoldPowerSource(
-            functools.partial(sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct)
+            BridgeUnreadable(
+                functools.partial(
+                    sample_host_state, min_free_pct=config.nodes[node_name].min_free_pct
+                )
+            )
         )
     memory = NodeMemory()
     while True:

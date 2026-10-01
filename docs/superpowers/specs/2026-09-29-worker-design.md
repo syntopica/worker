@@ -876,3 +876,13 @@ ordered list of further `:free` model ids. They are sent as OpenRouter's
 on an error or a rate limit within the same request. The attempt records the
 model OpenRouter reports it actually used, so `worker quality` rates each
 fallback separately. Paid ids stay refused in `fallbacks` as in `models`.
+
+### Amendment 2026-10-01 - bridging an unreadable idle or pressure sample
+
+Section 7 treats an unreadable signal as busy. Under load `ioreg` and
+`sysctl` occasionally fail a single two-second sample, and on 2026-10-01 that
+caused 17 of 20 preemptions (`host_state_unreadable`). A failed idle or
+memory-pressure read now reuses the last successful reading when it is at
+most ten seconds old; the idle time is reused as read, never advanced. Past
+ten seconds the signal is unreadable and releases work as before. The power
+source keeps its two-minute hold.
