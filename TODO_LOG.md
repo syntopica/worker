@@ -114,3 +114,20 @@
   every result a record already holds. Atrium f72cdc9; crash-window test
   `tests/test_worker_ack_after_registry_write.py` shows one record and the
   result acked on the next pass, and fails with the old ordering.
+
+### October
+
+- 2026-10-01 [x] clips.grade off codex (routing rule 2026-09-30). Grade is a
+  tool-less inference job on `clips.grade` with the page and its evidence
+  inlined (evidence capped at 512 KB, the agy argv size measured working; the
+  whole job checked against `max_payload_bytes`, 1 MiB by default), the codex
+  grader's instructions and output schema unchanged. Ladder: profile
+  `clips.grade` on agy pinned to gemini-3.1-pro-high, OpenRouter free models
+  after 60 s, local after 600 s. clips checks the author/verifier split against
+  the reported executor and discards a local answer to a prompt over its
+  window. clips 2ddeb91 (pnpm check: 1264 tests), wiki 3aa85bae (config loads).
+  Live: grade of `topics/contrastive-learning.md` succeeded through job
+  b0da6b6c on openrouter nvidia/nemotron-3-super-120b-a12b:free (26 s, 9087
+  tokens in; agy was in a quota cooldown). Closes the grade half of "Refine
+  and grade lost their agy fallback": inference jobs never park on a runner
+  wall.

@@ -89,13 +89,12 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       that were already done. The quality follow-up lives in the wiki
       `TODO.md`. A strong tier for `personal` would be the engine-side lever.
 
-- [!] Routing rule 2026-09-30: codex only for adversarial review and
+- [~] Routing rule 2026-09-30: codex only for adversarial review and
       consultation, cursor cancelled; bulk AI goes through the worker on agy or
-      local models. Done: clips.refine runs on agy (wiki e470c8d8). Atrium lane
-      agy-only: in progress (Atrium agent). Blocked: clips.grade still runs on
-      codex because clips' `workerGradeTier` accepts only codex or cursor (agy
-      takes no input files). Smallest unblock, in clips: grade on agy with the
-      evidence inlined in the prompt, or on a local inference job.
+      local models. Done: clips.refine on agy (wiki e470c8d8); clips.grade on
+      the executor ladder (2026-10-01, see TODO_LOG). Remaining: Atrium lane
+      agy-only, in progress (Atrium agent). The only codex left on the worker
+      is the `quality.judge` profile, which is review and allowed.
 
 ## Found during phase 1a execution
 
@@ -106,9 +105,11 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
 
 ## Found 2026-09-30 moving brain jobs onto the worker
 
-- [ ] Refine and grade lost their agy fallback on a codex wall: the job now
-      parks for the runner's cooldown (3600 s), and clips returns the page
-      ungraded or the batch unrefined at once (`cooling_until`). Next step,
-      if walls become frequent: a fallback profile per queue (e.g. agy for
-      refine, which takes no inputs) chosen by the coordinator while a runner
-      cools.
+- [ ] Refine has no fallback on an agy wall: `clips.refine` is a task on the
+      agy profile, so a wall parks it for agy's cooldown (10800 s) and clips
+      keeps the first-pass verdict at once (`cooling_until`). Grade no longer
+      has this problem (inference on the ladder since 2026-10-01). Not a plain
+      move to the ladder: `clips.triage` already runs agy first, so refine on
+      the same ladder would mostly ask the first pass's own model again. Next
+      step, if walls become frequent: a `fallbacks` profile for `clips.refine`
+      on a different model than triage's first rung (not codex).
