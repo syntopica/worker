@@ -16,9 +16,10 @@ def insert_shadow_job(  # noqa: PLR0913
     model: str,
     kind: str = "inference",
     producer: str = "_shadow",
+    max_attempts: int = 1,
     now: float,
 ) -> str:
-    """Return the member's id; priority 0 and one attempt, so it never crowds real work.
+    """Return the member's id; priority 0 and one attempt by default, never crowding real work.
 
     ``original`` supplies queue, class and tier; ``group`` is the shadowed job's id.
     """
@@ -26,7 +27,7 @@ def insert_shadow_job(  # noqa: PLR0913
     conn.execute(
         "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority, privacy,"
         " model, state, max_attempts, not_before, created, updated, tier, shadow_of, pin)"
-        " VALUES (?, ?, ?, ?, ?, '', 0, ?, ?, 'queued', 1, ?, ?, ?, ?, ?, ?)",
+        " VALUES (?, ?, ?, ?, ?, '', 0, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?)",
         (
             job_id,
             producer,
@@ -35,6 +36,7 @@ def insert_shadow_job(  # noqa: PLR0913
             f"{pin}:{group}",
             original["privacy"],
             model,
+            max_attempts,
             now,
             now,
             now,

@@ -69,6 +69,7 @@ def submit_judges_batch(
             model=queue.shadow.judge,
             kind="task",
             producer="_judge",
+            max_attempts=2,
             now=now,
         )
     return len(groups)

@@ -67,6 +67,7 @@ def test_an_answer_is_shadowed_judged_blind_and_scored_per_executor(tmp_path):
     advance_shadow_groups(conn, config, 7.0)
     judge = lease(conn, config, "task", 8.0)
     assert judge.model == "judge.codex"
+    assert conn.execute("SELECT max_attempts FROM jobs WHERE pin='judge'").fetchone()[0] == 2
     assert "=== Answer C ===" in judge.input["prompt"]
     labels = judge.input["labels"]
     best = next(k for k, v in labels.items() if v["provider"] == "agy")
