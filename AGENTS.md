@@ -35,3 +35,9 @@ Maintain `TODO.md` as the active backlog and `TODO_LOG.md` as the record of
 closed work. States: `[ ]` pending, `[~]` partial, `[!]` blocked, `[x]` verified
 complete, `[-]` obsolete. Closed items move to `TODO_LOG.md` with date and
 evidence.
+
+Both files, the spec and commit messages are public: write engine behaviour
+and engine commits only. Instance operations - machines, queue names and
+contents, live results, quota readings, other repositories' commits, owner
+quotes - go to the private instance's `worker/TODO.md` and
+`worker/TODO_LOG.md` under `SYNTOPICA_DATA`.
