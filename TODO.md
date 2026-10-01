@@ -82,6 +82,14 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       reboot); the two M1 laptops need their users' agreement, Remote Login
       and Tailscale. Smallest unblock: a week of mini uptime without a
       watchdog panic, then a `server` node there for small models.
+- [~] Night node on the hosting server (CPU only, 32 threads, ~76 GB free,
+      load 1-4 through the night). 2026-10-01 probe: Ollama 0.35 in an
+      isolated dir, transient systemd unit capped at CPUQuota 1200%,
+      MemoryMax 40G, nice 19, idle IO. `qwen3.6:35b` warm, 12 threads:
+      prompt ~120 tok/s, generation 9-11 tok/s, ~55 s for a 1.5k-token
+      prompt; 16 threads under the same quota halves generation. Unit
+      stopped, model kept. Next: a node there needs Tailscale (absent) and
+      a night window plus host-load gate instead of the HID idle check.
 
 - [~] Weekly review on `review.weekly` writes a report (wiki eb5aef4d; a
       failed job is resubmitted along a `:r1`..`:r3` key walk). The 35B
