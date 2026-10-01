@@ -51,6 +51,7 @@ def load_worker_config(path: Path) -> WorkerConfig:
                 float(v.get("min_free_pct", DEFAULT_MIN_FREE_PCT)),
                 v.get("openrouter_key_file"),
                 max(1, int(v.get("remote_slots", 1))),
+                max(1, int(v.get("task_slots", 1))),
             )
             for n, v in raw["nodes"].items()
         },

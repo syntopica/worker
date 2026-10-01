@@ -971,3 +971,14 @@ to a runner, the reporting executor) pins a model, and the runner alone
 otherwise. A profile is resting when either its runner key or its model key
 is. A runner-wide reading (CodexBar's) still rests the runner key, which
 holds back every model of that runner.
+
+### Amendment 2026-10-01 - concurrent task slots; the local model stays single
+
+Owner, 2026-10-01: parallelise everything except the local model, which
+overloads the machine. A node's `task_slots` (default 1) is how many runner
+tasks the task loop runs at once, each slot a thread with its own coordinator
+link. Only the first slot probes runner quotas. On SIGTERM the first slot
+stops as before; the others raise the same shutdown from their next sleep
+(within one two-second poll), so their runner's process group is killed and
+the job handed back as `node_shutdown`; all are waited for together for at
+most 12 s. The inference node keeps one job at a time.

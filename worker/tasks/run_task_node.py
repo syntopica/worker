@@ -1,4 +1,4 @@
-"""The task loop: one read-only task at a time, beside the inference node."""
+"""The task loop: one read-only task at a time per slot, beside the inference node."""
 
 import functools
 import sys
@@ -27,12 +27,15 @@ def run_task_node(  # noqa: PLR0913, PLR0917
     clock: Callable[[], float] = time.time,
     forever: bool = True,
     current: Callable[[], WorkerConfig] | None = None,
+    *,
+    probe: bool = True,
 ) -> None:
     """A failing iteration logs its exception class, rests, and never stops the loop.
 
     Every ten minutes the runners' quotas are read through CodexBar and any
     spent one is reported, so the coordinator rests it (and uses a queue
-    fallback) without first spending a call against its wall.
+    fallback) without first spending a call against its wall; with several
+    slots only the first one probes.
     """
     next_probe = 0.0
     if sample is None:
@@ -47,7 +50,7 @@ def run_task_node(  # noqa: PLR0913, PLR0917
         try:
             if current is not None:
                 config = current()
-            if config.runner_quota and clock() >= next_probe:
+            if probe and config.runner_quota and clock() >= next_probe:
                 next_probe = clock() + _PROBE_S
                 walls = probe_runner_walls(config, clock())
                 if walls:
