@@ -5,7 +5,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Candidate:
-    """``parked_min_idle_s`` is the current idle a parked job needs before it runs."""
+    """``parked_min_idle_s`` is the current idle a parked job needs before it runs.
+
+    ``pin`` names the only executor a shadow member may run on.
+    """
 
     job_id: str
     queue: str
@@ -16,3 +19,4 @@ class Candidate:
     parked: bool
     parked_min_idle_s: float
     kind: str = "inference"
+    pin: str | None = None

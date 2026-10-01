@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 from worker.config.worker_config import WorkerConfig
+from worker.jobs.advance_shadow_groups import advance_shadow_groups
 from worker.jobs.expire_leases import expire_leases
 from worker.jobs.sweep_retention import sweep_retention
 from worker.store.open_store import open_store
@@ -31,6 +32,7 @@ def run_sweeper(  # noqa: PLR0913
             conn = open_store(state)
             try:
                 expire_leases(conn, now)
+                advance_shadow_groups(conn, config, now)
                 sweep_retention(conn, config, now)
             finally:
                 conn.close()

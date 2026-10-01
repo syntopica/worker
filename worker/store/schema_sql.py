@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   acked REAL,
   payloads_deleted INTEGER NOT NULL DEFAULT 0,
   tier TEXT NOT NULL DEFAULT 'basic',
+  shadow_of TEXT,
+  pin TEXT,
   UNIQUE (producer, queue, idempotency_key)
 );
 CREATE INDEX IF NOT EXISTS jobs_ready ON jobs (state, not_before);
@@ -69,6 +71,15 @@ CREATE TABLE IF NOT EXISTS results (
   rating TEXT
 );
 CREATE TABLE IF NOT EXISTS nodes (name TEXT PRIMARY KEY, report TEXT NOT NULL, updated REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS judgements (
+  group_id TEXT NOT NULL,
+  queue TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  model TEXT NOT NULL,
+  score INTEGER NOT NULL,
+  best INTEGER NOT NULL,
+  created REAL NOT NULL
+);
 CREATE TABLE IF NOT EXISTS cooldowns (runner TEXT PRIMARY KEY, until REAL NOT NULL);
 CREATE TABLE IF NOT EXISTS p.inputs (job_id TEXT PRIMARY KEY, body TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS p.outputs (result_id TEXT PRIMARY KEY, body TEXT NOT NULL);

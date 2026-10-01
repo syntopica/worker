@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from worker.config.open_router_route import OpenRouterRoute
 from worker.config.runner_route import RunnerRoute
+from worker.config.shadow_policy import ShadowPolicy
 from worker.config.tier_route import TierRoute
 
 
@@ -17,6 +18,7 @@ class QueuePolicy:
     a quality tier to what it runs on. ``runner`` sends its inference jobs to
     a task profile first, and ``local_after_s`` holds them off the local model
     until that old while a remote route could take them (executor ladder).
+    ``shadow`` samples answers for judged comparison across executors.
     """
 
     name: str
@@ -33,3 +35,4 @@ class QueuePolicy:
     tiers: tuple[tuple[str, TierRoute], ...] = ()
     runner: RunnerRoute | None = None
     local_after_s: float = 0.0
+    shadow: ShadowPolicy | None = None

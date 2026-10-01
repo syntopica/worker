@@ -10,6 +10,7 @@ from worker.jobs.completion_report import CompletionReport
 from worker.jobs.fail_attempt import fail_attempt
 from worker.jobs.fail_payload_lost import fail_payload_lost
 from worker.jobs.load_job_input import load_job_input
+from worker.jobs.open_shadow_group import open_shadow_group
 from worker.jobs.output_matches_schema import output_matches_schema
 from worker.jobs.schema_violation_path import schema_violation_path
 from worker.jobs.settle_unsuccessful import settle_unsuccessful
@@ -81,4 +82,5 @@ def complete_attempt(  # noqa: PLR0913, PLR0917
             " lease_attempt=NULL, lease_expires=NULL WHERE id=?",
             (now, now, job["id"]),
         )
+        open_shadow_group(conn, config, job, job_input, report, now)
         return "succeeded"

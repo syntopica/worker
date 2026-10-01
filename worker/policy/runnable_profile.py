@@ -10,12 +10,12 @@ def runnable_profile(
     """The task's own profile, else its queue's first usable fallback, else None.
 
     Usable means configured, allowed on ``node`` and with a runner that is not
-    resting after a quota wall.
+    resting after a quota wall. A pinned job never runs under a fallback.
     """
     queue = config.queues.get(c.queue)
     if queue is None:
         return None
-    order = (c.model, *dict(queue.fallbacks).get(c.model, ()))
+    order = (c.model,) if c.pin else (c.model, *dict(queue.fallbacks).get(c.model, ()))
     for name in order:
         profile = config.profiles.get(name)
         if profile is None or profile.runner in cooling:

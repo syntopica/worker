@@ -47,5 +47,5 @@ def test_quality_and_costs_print_once_there_are_attempts(seeded, run):
     assert run("quality")[0] == 0
     code, out, _ = run("quality", "--json")
     assert code == 0
-    assert json.loads(out) == {"attempts": [], "ratings": []}
+    assert json.loads(out) == {"attempts": [], "ratings": [], "judged": []}
     assert run("costs", "--json")[0] == 0

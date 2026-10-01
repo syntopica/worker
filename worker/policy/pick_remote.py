@@ -20,10 +20,16 @@ def pick_remote(
     Same ordering as ``pick_job``: priority, then weighted share, then age.
     The pick carries the remote model id in ``model``; the job keeps its own.
     The route's ``after_s`` applies only while ``runner_first`` says a runner
-    would take the job; otherwise it escalates at once (executor ladder).
+    would take the job; otherwise it escalates at once (executor ladder). A
+    job pinned to an OpenRouter model goes there at once; other pins never.
     """
     eligible: list[tuple[Candidate, str]] = []
     for c in candidates:
+        if c.pin is not None:
+            kind, _, pinned = c.pin.partition(":")
+            if kind == "openrouter":
+                eligible.append((c, pinned))
+            continue
         queue = config.queues.get(c.queue)
         route = queue.openrouter if queue is not None else None
         if route is None:

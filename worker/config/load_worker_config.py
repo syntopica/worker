@@ -5,6 +5,7 @@ from pathlib import Path
 
 from worker.config.check_queue_fallbacks import check_queue_fallbacks
 from worker.config.check_queue_runners import check_queue_runners
+from worker.config.check_queue_shadows import check_queue_shadows
 from worker.config.check_queue_tiers import check_queue_tiers
 from worker.config.default_min_free_pct import DEFAULT_MIN_FREE_PCT
 from worker.config.default_privacy import DEFAULT_PRIVACY
@@ -75,4 +76,5 @@ def load_worker_config(path: Path) -> WorkerConfig:
     check_queue_fallbacks(config.queues, config.profiles)
     check_queue_tiers(config.queues, config.models, config.profiles)
     check_queue_runners(config.queues, config.profiles)
+    check_queue_shadows(config.queues, config.models, config.profiles)
     return config

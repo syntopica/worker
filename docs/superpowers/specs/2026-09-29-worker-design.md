@@ -921,3 +921,39 @@ state beyond the runner cooldowns the coordinator already keeps:
 - `local_after_s` (default 0) holds an inference job off the local model
   until it is that old, but only while some remote route could take it. A
   job no remote may take runs locally at once.
+
+### Amendment 2026-10-01 - judged shadow sampling
+
+Reliability counts and sparse producer ratings cannot say which executor
+answers best. The owner asked to measure each executor's quality to set a
+preference. A queue may carry `shadow`:
+`{"rate": 0.05, "targets": ["ollama:<model>", "openrouter:<model>", "runner:<profile>"], "judge": "<task profile>", "max_pending": 20}`.
+
+- When an inference job of that queue succeeds and its id hashes under
+  `rate`, the coordinator opens a shadow group in the same transaction: one
+  member per target other than the executor that just answered, each a copy
+  of the job (producer `_shadow`, priority 0, one attempt, `shadow_of` the
+  original, `pin` the target), plus an already succeeded member holding the
+  original answer, so the original's ack cannot remove it. Targets the job's
+  class may not use are skipped; a class the judge may not see is not
+  shadowed at all. No group opens while the queue has `max_pending` unfinished
+  members.
+- A pinned job is leased only by its target: `ollama:` by the local model
+  (never held for remote), `openrouter:` by the remote loop with no wait,
+  `runner:` by the task loop under that profile. Unpinned jobs are untouched.
+- The sweeper submits a judge task (producer `_judge`, pin `judge`, the
+  queue's `judge` profile) once every member has finished. The prompt holds
+  the job's messages and the answers under shuffled letters, so the judge
+  never sees which executor wrote which; the output schema asks for a 1-5
+  score per letter and the best letter. When the judge succeeds the sweeper
+  maps the letters back and stores one `judgements` row per answer (queue,
+  provider, model, score, best).
+- A pinned job never runs under a queue fallback, and a judge's profile is
+  re-checked against the class at lease time. Shadow members and judges no
+  executor took within a day are cancelled, so an unreachable target cannot
+  hold a group open; `max_pending` counts the members a new group would add.
+  The sweeper advances groups before applying retention.
+- Shadow and judge results are never acked; the unacked TTL and retention
+  remove their payloads like any other. `worker quality` reports, per queue
+  and executor, judged answers, mean score and best rate; producers' own
+  rating counts exclude `_shadow` and `_judge`.

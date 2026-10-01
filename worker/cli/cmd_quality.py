@@ -11,7 +11,7 @@ from worker.config.load_worker_config import load_worker_config
 
 
 def cmd_quality(args: argparse.Namespace) -> int:
-    """Print attempt outcomes, then producer ratings, by queue, tier, provider and model."""
+    """Print attempt outcomes, producer ratings, then judged scores, by queue and executor."""
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
     token = read_token(state, "admin")
@@ -30,5 +30,10 @@ def cmd_quality(args: argparse.Namespace) -> int:
             f"{r['queue']:22} {r['tier']:6} {r['provider']:10} {r['model']:32} "
             f"results={r['results']} rated={r['rated']} good={r['good']} "
             f"edited={r['edited']} discarded={r['discarded']}"
+        )
+    for r in report.get("judged", []):
+        print(
+            f"{r['queue']:22} judged {r['provider']:10} {r['model']:32} "
+            f"answers={r['judged']} mean={r['mean_score']} best={r['best']}"
         )
     return 0

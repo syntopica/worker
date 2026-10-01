@@ -15,9 +15,12 @@ def held_for_remote(
 ) -> bool:
     """Younger than the queue's ``local_after_s`` while a remote route could take it.
 
-    ``node`` is the asking node's name and trust class.
+    ``node`` is the asking node's name and trust class. A shadow member is
+    left alone unless it is pinned to the local model, which takes it at once.
     """
     queue = config.queues.get(c.queue)
+    if c.pin is not None:
+        return not c.pin.startswith("ollama:")
     if queue is None or now - c.created >= queue.local_after_s:
         return False
     name, trust = node
