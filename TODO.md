@@ -82,14 +82,26 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       reboot); the two M1 laptops need their users' agreement, Remote Login
       and Tailscale. Smallest unblock: a week of mini uptime without a
       watchdog panic, then a `server` node there for small models.
-- [~] Night node on the hosting server (CPU only, 32 threads, ~76 GB free,
-      load 1-4 through the night). 2026-10-01 probe: Ollama 0.35 in an
-      isolated dir, transient systemd unit capped at CPUQuota 1200%,
-      MemoryMax 40G, nice 19, idle IO. `qwen3.6:35b` warm, 12 threads:
-      prompt ~120 tok/s, generation 9-11 tok/s, ~55 s for a 1.5k-token
-      prompt; 16 threads under the same quota halves generation. Unit
-      stopped, model kept. Next: a node there needs Tailscale (absent) and
-      a night window plus host-load gate instead of the HID idle check.
+- [~] Night node on the hosting server: live since 2026-10-01 (engine
+      33e3cb2: Linux `/proc` sampler with a `max_load` gate, per-node
+      `coordinator_url`). Reached over an SSH reverse forward to a privileged
+      loopback port; the night window, CPU quota and memory ceiling are the
+      server's systemd units. First job (`vexa.translate`, mail) succeeded
+      in 120 s; shutdown handed the next one back as `node_shutdown`.
+      Verify after the first full night: jobs done, no `user_active`
+      preemptions from the node's own load (raise `max_load` if there are).
+- [ ] agy-first spent the Gemini weekly quota in about a day: CodexBar
+      reported 98.8% of the weekly window used on 2026-10-01 and the runner
+      rests until 2026-10-07 02:31 UTC, so inference falls to OpenRouter and
+      the local nodes until then. Owner decision: ration agy (fewer queues,
+      or a share of the weekly window) rather than first for everything.
+      Before the wall, flash returned 28 empty answers (`no_output`) in one
+      hour; an empty agy answer could count as a wall signal.
+- [ ] Codex judges still fail in bursts: five `runner_failed` within 30 s at
+      2026-10-01 13:35 UTC with codex quota at 67%, then sequential ones
+      succeeded. The runner's stderr is not kept, so the cause is unknown;
+      smallest step: keep the last lines of a failed runner's stderr in an
+      allowlisted, content-free form, or cap judges to one at a time.
 
 - [~] Weekly review on `review.weekly` writes a report (wiki eb5aef4d; a
       failed job is resubmitted along a `:r1`..`:r3` key walk). The 35B
