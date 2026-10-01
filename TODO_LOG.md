@@ -139,3 +139,7 @@
   (9865198): agy's default model was spent while gemini-3.8-flash-medium and
   gemini-3.1-pro-high both answered a probe. Instance pins inference.agy to
   flash-medium and atrium.agy to pro-high (wiki 8422ac19).
+- 2026-10-01 [x] Runner task slots (owner: parallelise all but local):
+  `task_slots` threads with their own link, stoppable sleep hands jobs back
+  as node_shutdown (0ad1d58); instance 4 task slots and 4 remote slots, local
+  model stays one job at a time (wiki 3c412280).
