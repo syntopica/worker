@@ -91,3 +91,12 @@
 - 2026-10-01 [x] Remote loop concurrency: `remote_slots` threads, each with its
   own link and 429 rest, clean `node_shutdown` hand-back on SIGTERM (1a2f13b);
   instance set to 4 slots (wiki ed29eb49). Verified: gate green.
+- 2026-10-01 [x] Executor ladder (owner order: agy first for all work, then
+  OpenRouter, then local; local helps when delayed; `secret` local only):
+  queue `runner` route renders inference into an agy task, OpenRouter waits
+  `after_s` only while that route is usable, `local_after_s` holds local while
+  a remote could take the job, an agy wall on inference frees the job at once
+  (82598f1). Codex adversarial review found two P1s (task starvation behind
+  the per-queue cap, node-pinned profile holding other rungs), both fixed
+  before commit. Instance: `inference.agy` on all 8 inference queues,
+  OpenRouter after 60 s, local after 600 s (wiki b8a8e476). Gate green.
