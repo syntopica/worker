@@ -131,3 +131,11 @@
   tokens in; agy was in a quota cooldown). Closes the grade half of "Refine
   and grade lost their agy fallback": inference jobs never park on a runner
   wall.
+- 2026-10-01 [x] Lost leases on remote restart: slots joined 18 s each in
+  turn past launchd's 20 s exit timeout (exit -9); stop flag now checked every
+  second, one shared 12 s join (7f14272). Live restart under load: exit 0 in
+  2.6 s, node_shutdown reported, no lost attempts.
+- 2026-10-01 [x] Quota walls rest `runner:model`, not the whole runner
+  (9865198): agy's default model was spent while gemini-3.8-flash-medium and
+  gemini-3.1-pro-high both answered a probe. Instance pins inference.agy to
+  flash-medium and atrium.agy to pro-high (wiki 8422ac19).
