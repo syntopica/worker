@@ -77,3 +77,11 @@
 - 2026-10-01 [x] OpenRouter credit: owner bought $10; `/api/v1/key` now reports
   `is_free_tier: false` and free-model daily requests limit 1000 (was 50).
   Credits may expire 365 days after purchase (OpenRouter terms).
+- 2026-10-01 [x] Remote for every class but `secret` (owner: "no me importa
+  mandar cosas mientras no mandemos passwords"): credentials redacted from
+  every remote prompt (e74e62b; task input files are not redacted), `mail` and
+  `internal` opened to runner and OpenRouter, OpenRouter routes on
+  vexa.enrich/translate, clips.triage/synthesis, offers.classify,
+  agents.classify, atrium.synthesis (wiki 7231b04c). Ordered free fallback
+  models per route (e0c4f0f, wiki e14de422) after ~50% of calls to one free
+  model hit 429. Verified: gate green, services restarted.
