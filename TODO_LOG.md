@@ -143,3 +143,11 @@
   `task_slots` threads with their own link, stoppable sleep hands jobs back
   as node_shutdown (0ad1d58); instance 4 task slots and 4 remote slots, local
   model stays one job at a time (wiki 3c412280).
+- 2026-10-01 [x] Live-test fixes: a judge gets two attempts (a6c3928; codex
+  judges failed 12 of 13 between 02:40 and 03:05 UTC as runner_failed, the
+  same prompts answered by hand and in the live service after 03:10, so an
+  upstream transient); runner answers parse one code fence and an empty
+  answer fails as no_output (6e9f506; agy fenced some JSON and returned an
+  empty answer when headless mode denied a tool). First judged scores on
+  vexa.translate: nemotron 3.89 (9), agy flash 3.67 (6, best 3), ollama 3.4
+  (5), dots 2.8 (5).
