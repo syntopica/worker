@@ -2,13 +2,19 @@
 
 from typing import Any
 
+from worker.node.redact_credentials import redact_credentials
+
 
 def openrouter_request_body(model: str, job_input: dict[str, Any], zdr: bool) -> dict[str, Any]:
-    """Messages as submitted; the job's schema becomes a strict ``json_schema`` format.
+    """Messages with credentials redacted; the job's schema becomes a strict ``json_schema`` format.
 
     ``zdr`` restricts routing to zero-data-retention endpoints.
     """
-    body: dict[str, Any] = {"model": model, "messages": job_input["messages"]}
+    messages = [
+        {**m, "content": redact_credentials(str(m.get("content", "")))}
+        for m in job_input["messages"]
+    ]
+    body: dict[str, Any] = {"model": model, "messages": messages}
     options = job_input.get("options") or {}
     if "temperature" in options:
         body["temperature"] = options["temperature"]

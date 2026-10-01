@@ -53,3 +53,10 @@ def test_post_maps_answers_and_refusals_to_allowlisted_codes(fake):
 def test_headroom_reads_the_free_daily_counter_and_unknown_is_none(fake):
     assert openrouter_headroom("k", api=fake.api) == 5
     assert openrouter_headroom("k", api="http://127.0.0.1:1", timeout=1) is None
+
+
+def test_credentials_never_leave_in_the_remote_body():
+    job_input = {"messages": [{"role": "user", "content": "Your code is 482913"}]}
+    body = openrouter_request_body("vendor/model:free", job_input, False)
+    assert body["messages"][0]["content"] == "Your code is [REDACTED]"
+    assert job_input["messages"][0]["content"] == "Your code is 482913"

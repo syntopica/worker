@@ -9,6 +9,7 @@ from typing import Any
 
 from worker.config.task_profile import TaskProfile
 from worker.node.attempt_report import attempt_report
+from worker.node.redact_credentials import redact_credentials
 from worker.tasks.build_workspace import build_workspace
 from worker.tasks.judge_run import judge_run
 from worker.tasks.read_answer import read_answer
@@ -29,7 +30,9 @@ def run_task(  # noqa: PLR0913, PLR0917
     """The report to complete with, or None when the attempt was fenced out.
 
     The scratch directory (workspace, schema, streams) is removed however the
-    run ends, so no task input outlives its attempt on disk.
+    run ends, so no task input outlives its attempt on disk. Every runner is a
+    remote model, so credentials are redacted from the prompt first; input
+    files are passed as they are.
     """
     task = lease["input"]
     executor = {"node": node, "provider": profile.runner, "model": profile.model or ""}
@@ -47,7 +50,8 @@ def run_task(  # noqa: PLR0913, PLR0917
         if task.get("output_schema") is not None:
             schema = scratch / "output-schema.json"
             schema.write_text(json.dumps(task["output_schema"]))
-        invocation = task_invocation(profile, task["prompt"], workspace, schema, scratch)
+        prompt = redact_credentials(str(task["prompt"]))
+        invocation = task_invocation(profile, prompt, workspace, schema, scratch)
         with (scratch / "stdout").open("wb") as out, (scratch / "stderr").open("wb") as err:
             try:
                 proc = start_runner(profile, invocation, workspace, (out, err))

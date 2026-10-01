@@ -847,3 +847,21 @@ whether cheap models are good enough.
    wait on a remote model, so near-zero CPU is normal progress and a CPU guard
    would kill healthy runs; they write their answer only at the end, so no
    artifact moves either. The profile's hard `timeout_s` remains the guard.
+
+### 2026-10-01 - remote executors and credential redaction
+
+1. **Owner policy.** The owner accepts content of any class going to remote
+   models (OpenRouter free models, Chinese models included; subscription
+   runners) as long as no credential is sent. The instance policy may
+   therefore list `runner` and `openrouter` for `personal` and `mail`;
+   `secret` stays local-only.
+2. **Redaction at the edge.** The node removes credentials from everything
+   it sends to a remote executor: the messages of an OpenRouter call and the
+   prompt of a runner task (every runner is a remote model). Private keys,
+   known token formats (OpenAI, Anthropic, GitHub, GitLab, Slack, AWS,
+   Google, Stripe, JWT), bearer tokens, URL passwords, labelled secrets
+   (`password:`, `contraseña`, `token=`, `api key` ...), one-time codes near
+   a code word, and secret-looking query parameters become `[REDACTED]`. The
+   patterns err toward redacting. The stored input is untouched, so a local
+   attempt still sees it whole. A task's input files are not redacted: a
+   profile with an `input_root` must point at material fit to leave.
