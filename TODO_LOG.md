@@ -107,3 +107,10 @@
   Codex adversarial review found 3 P1 and 2 P2, all fixed with tests.
   Instance: `quality.judge` (codex gpt-5.5) on seven queues at 2-10% with
   five targets (wiki 2148bc4a). Gate green.
+- 2026-10-01 [x] Atrium lane acks after its own registry write (was a known
+  gap, recovered only by the retry-key walk at the cost of a rerun). Both
+  lanes return the result unacked; the record carries its `result_id` and the
+  ack follows the write; each pass first drains `GET /v1/results` and acks
+  every result a record already holds. Atrium f72cdc9; crash-window test
+  `tests/test_worker_ack_after_registry_write.py` shows one record and the
+  result acked on the next pass, and fails with the old ordering.

@@ -97,12 +97,6 @@ Closed 2026-09-30; see `TODO_LOG.md`. Live on the workstation since then.
       takes no input files). Smallest unblock, in clips: grade on agy with the
       evidence inlined in the prompt, or on a local inference job.
 
-## Known gaps accepted in the plan
-
-- [ ] Atrium lane acks before its own registry write; a crash between them is
-      recovered by the retry-key walk (`:r1`..`:r3`, atrium 0a48096) at the cost
-      of one rerun. Record in 1c if observed.
-
 ## Found during phase 1a execution
 
 - [ ] Deferred for later phases: sleep assertion for laptop nodes, remaining
