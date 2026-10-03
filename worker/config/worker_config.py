@@ -15,7 +15,8 @@ class WorkerConfig:
 
     ``runner_cooldown_s`` is how long a runner rests after a quota wall.
     ``runner_quota`` maps a runner to its CodexBar provider and the window
-    names to read (empty: every unlabelled window).
+    names to read (empty: every unlabelled window). ``runner_model_windows``
+    maps a runner to window labels and the model-name fragments each meters.
     """
 
     listen_host: str
@@ -33,3 +34,4 @@ class WorkerConfig:
     profiles: Mapping[str, TaskProfile] = field(default_factory=dict)
     runner_cooldown_s: Mapping[str, float] = field(default_factory=dict)
     runner_quota: Mapping[str, tuple[str, tuple[str, ...]]] = field(default_factory=dict)
+    runner_model_windows: Mapping[str, Mapping[str, tuple[str, ...]]] = field(default_factory=dict)

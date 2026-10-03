@@ -1026,3 +1026,15 @@ answer (`no_output`) to an inference job is now handed back uncharged, and
 the runner rung skips a job last handed back that way, so OpenRouter or the
 local model answers it next without waiting for the route's `after_s`. A task
 job's empty answer is still charged.
+
+### Amendment 2026-10-03 - quota windows rest the models they meter
+
+A provider can meter model families apart: Antigravity reports a Gemini
+weekly window and a separate Claude/GPT one, yet a spent Gemini window rested
+every agy profile through the runner-wide key. `runners.<name>.model_windows`
+maps a window label (a substring of the labelled window's id or title) to the
+model-name fragments it meters, for example
+`{"gemini": ["gemini"], "3p": ["claude", "gpt"]}`. For such a runner the
+quota probe reads each window on its own and rests `runner:model` for every
+profile model on that runner that a spent window meters, never the runner key;
+`quota_windows` is then unused. A malformed `model_windows` is refused at load.

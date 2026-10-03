@@ -2,6 +2,7 @@ import dataclasses
 import time
 
 from tests.api.test_api_roundtrip import api, call  # noqa: F401
+from worker.config.task_profile import TaskProfile
 from worker.tasks.probe_runner_walls import probe_runner_walls
 from worker.tasks.spent_until import spent_until
 
@@ -48,3 +49,24 @@ def test_a_node_reported_wall_rests_the_runner(api):  # noqa: F811
     assert status == 400
     status, body = call(base, t["admin"], "GET", "/v1/status")
     assert round(body["cooldowns"]["cursor"]) in (3599, 3600)
+
+
+def test_model_windows_rest_only_the_profiles_whose_model_the_spent_window_meters(config):
+    profiles = {
+        name: TaskProfile(name, "runner-a", model, None, frozenset(), 60.0, None, None)
+        for name, model in (("p.gemini", "gemini-pro"), ("p.claude", "claude-sonnet"))
+    }
+    wired = dataclasses.replace(
+        config,
+        profiles=profiles,
+        runner_quota={"runner-a": ("provider-a", ())},
+        runner_model_windows={"runner-a": {"gemini": ("gemini",), "3p": ("claude", "gpt")}},
+    )
+    usage = {
+        "primary": {"usedPercent": 100, "resetsAt": LATER},
+        "extraRateWindows": [
+            {"id": "quota-gemini-weekly", "window": {"usedPercent": 98, "resetsAt": LATER}},
+            {"id": "quota-3p-weekly", "window": {"usedPercent": 0, "resetsAt": LATER}},
+        ],
+    }
+    assert probe_runner_walls(wired, 0.0, read=lambda _: usage) == {"runner-a:gemini-pro": LATER_TS}

@@ -13,6 +13,7 @@ from worker.config.default_trust import DEFAULT_TRUST
 from worker.config.is_loopback_host import is_loopback_host
 from worker.config.model_pin import ModelPin
 from worker.config.node_policy import NodePolicy
+from worker.config.parse_model_windows import parse_model_windows
 from worker.config.parse_queue_policy import parse_queue_policy
 from worker.config.parse_task_profile import parse_task_profile
 from worker.config.worker_config import WorkerConfig
@@ -74,6 +75,11 @@ def load_worker_config(path: Path) -> WorkerConfig:
             n: (str(r["quota_provider"]), tuple(str(w) for w in r.get("quota_windows", ())))
             for n, r in (raw.get("runners") or {}).items()
             if r.get("quota_provider")
+        },
+        runner_model_windows={
+            n: parse_model_windows(n, r["model_windows"])
+            for n, r in (raw.get("runners") or {}).items()
+            if "model_windows" in r
         },
     )
     check_queue_fallbacks(config.queues, config.profiles)

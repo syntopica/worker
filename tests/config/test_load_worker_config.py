@@ -80,3 +80,16 @@ def test_retention_shorter_than_the_unacked_ttl_is_refused(tmp_path, queue):
     data = {**CONFIG, "queues": {"q": queue}}
     with pytest.raises(ValueError, match="retention_days"):
         load_worker_config(write(tmp_path, data))
+
+
+def test_model_windows_are_read_per_runner(tmp_path):
+    runners = {"runner-a": {"quota_provider": "p", "model_windows": {"gemini": ["gemini"]}}}
+    config = load_worker_config(write(tmp_path, {**CONFIG, "runners": runners}))
+    assert config.runner_model_windows == {"runner-a": {"gemini": ("gemini",)}}
+
+
+@pytest.mark.parametrize("windows", [["gemini"], {"gemini": "gemini"}, {"gemini": []}])
+def test_malformed_model_windows_are_refused(tmp_path, windows):
+    runners = {"runner-a": {"quota_provider": "p", "model_windows": windows}}
+    with pytest.raises(ValueError, match="model_windows"):
+        load_worker_config(write(tmp_path, {**CONFIG, "runners": runners}))
