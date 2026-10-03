@@ -1038,3 +1038,21 @@ model-name fragments it meters, for example
 quota probe reads each window on its own and rests `runner:model` for every
 profile model on that runner that a spent window meters, never the runner key;
 `quota_windows` is then unused. A malformed `model_windows` is refused at load.
+
+### Amendment 2026-10-03 - fixed error codes, runner caps, named runner failures
+
+1. **Fixed codes.** A completion's `error_code` must be one of the fixed
+   vocabulary (`worker/jobs/error_codes.py`) or `http_###`. Anything else is
+   settled as `executor_error` after the fence check, so a valid completion is
+   never lost and the reported text is never stored; the coordinator logs only
+   that a code was replaced. A task's workspace refusal is held to the same
+   list before the node logs it.
+2. **Runner caps.** `runners.<name>.max_concurrent` caps a runner's live
+   attempts across every node: live tasks count by their profile, pinned
+   inference by its `runner:` pin. A runner at its cap is passed over at lease
+   like a resting one.
+3. **Named runner failures.** A runner that exits non-zero without an answer
+   is classified from the last 2 KiB of its own stderr, never stdout, into
+   `runner_auth`, `rate_limited` or `runner_unavailable`, else
+   `runner_failed`. Only the code is kept; the stderr text is discarded with
+   the scratch directory as before.

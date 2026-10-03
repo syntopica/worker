@@ -81,6 +81,11 @@ def load_worker_config(path: Path) -> WorkerConfig:
             for n, r in (raw.get("runners") or {}).items()
             if "model_windows" in r
         },
+        runner_max_concurrent={
+            n: int(r["max_concurrent"])
+            for n, r in (raw.get("runners") or {}).items()
+            if "max_concurrent" in r
+        },
     )
     check_queue_fallbacks(config.queues, config.profiles)
     check_queue_tiers(config.queues, config.models, config.profiles)

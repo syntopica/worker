@@ -12,6 +12,7 @@ from worker.jobs.lease import LEASE_TTL_S, Lease
 from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
+from worker.jobs.saturated_runners import saturated_runners
 from worker.policy.held_for_remote import held_for_remote
 from worker.policy.pick_job import pick_job
 from worker.policy.pick_remote import pick_remote
@@ -36,7 +37,8 @@ def lease_job(
         raise ApiError(403, "unknown_node")
     with transaction(conn):
         candidates = load_candidates(conn, config, node.trust, now, req.kind)
-        cooling = cooling_runners(conn, now)
+        # A runner at its concurrency cap is passed over like a resting one.
+        cooling = cooling_runners(conn, now) | saturated_runners(conn, config)
         if req.kind == "task":
             candidates = runner_candidates(candidates, config, cooling, (req.node, node.trust), now)
         elif req.kind != "openrouter":

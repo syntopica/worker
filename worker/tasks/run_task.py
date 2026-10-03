@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from worker.config.task_profile import TaskProfile
+from worker.jobs.known_error_code import known_error_code
 from worker.node.attempt_report import attempt_report
 from worker.node.redact_credentials import redact_credentials
 from worker.tasks.build_workspace import build_workspace
 from worker.tasks.judge_run import judge_run
 from worker.tasks.read_answer import read_answer
+from worker.tasks.runner_failure_code import runner_failure_code
 from worker.tasks.start_runner import start_runner
 from worker.tasks.supervise_process import supervise_process
 from worker.tasks.task_invocation import task_invocation
@@ -45,7 +47,7 @@ def run_task(  # noqa: PLR0913, PLR0917
             inputs = list(task.get("inputs") or [])
             build_workspace(profile.input_root, inputs, workspace, profile.denied_root)
         except WorkspaceError as error:
-            return attempt_report("failed", executor, 0.0, error_code=str(error))
+            return attempt_report("failed", executor, 0.0, error_code=known_error_code(str(error)))
         schema = None
         if task.get("output_schema") is not None:
             schema = scratch / "output-schema.json"
@@ -69,6 +71,8 @@ def run_task(  # noqa: PLR0913, PLR0917
         outcome, code, output = judge_run(
             profile.runner, proc.returncode or 0, stdout + stderr, answer
         )
+        if code == "runner_failed":
+            code = runner_failure_code(stderr)
         return attempt_report(outcome, executor, wall_s, output=output, error_code=code)
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
