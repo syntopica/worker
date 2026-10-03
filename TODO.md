@@ -39,6 +39,10 @@ the private instance, never here.
 - [ ] A task profile on a runner wall waits out the cooldown when its queue
       names no fallback. Inference jobs move on at once; tasks need a
       `fallbacks` profile on a different model.
+- [ ] A task failure can carry free text as its error code: `run_task`
+      passes `str(WorkspaceError)` and `handle_complete` accepts any string.
+      Validate `error_code` against the fixed code list at the coordinator
+      boundary (spec 9).
 
 ## Found during phase 1a execution
 
