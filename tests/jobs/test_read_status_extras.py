@@ -26,3 +26,12 @@ def test_recent_failures_leave_out_shadow_and_judge_jobs(conn, config):
         )
     failures = read_status(conn, 20.0)["recent_failures"]
     assert [f["id"] for f in failures] == [ids[0]]
+
+
+def test_each_queue_counts_its_failed_sampling_jobs(conn, config):
+    ids = [submit_job(conn, config, "pa", body(key=f"k{i}"), float(i))[0] for i in range(3)]
+    for job_id, producer in zip(ids, ["pa", "_shadow", "_judge"], strict=True):
+        conn.execute("UPDATE jobs SET state='failed', producer=? WHERE id=?", (producer, job_id))
+    queue = read_status(conn, 20.0)["queues"]["pa.bulk"]
+    assert queue["states"]["failed"] == 3
+    assert queue["sampling_failed"] == 2
