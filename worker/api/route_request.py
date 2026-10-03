@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from worker.api.handle_ack import handle_ack
+from worker.api.handle_activity import handle_activity
 from worker.api.handle_cancel import handle_cancel
 from worker.api.handle_complete import handle_complete
 from worker.api.handle_costs import handle_costs
@@ -34,6 +35,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "v1/nodes/*/walls"): handle_runner_walls,
     ("GET", "v1/status"): handle_status,
     ("GET", "v1/costs"): handle_costs,
+    ("GET", "v1/activity"): handle_activity,
     ("GET", "v1/quality"): handle_quality,
 }
 

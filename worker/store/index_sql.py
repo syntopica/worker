@@ -4,6 +4,7 @@ INDEXES = (
     "CREATE INDEX IF NOT EXISTS results_job ON results (job_id)",
     "CREATE INDEX IF NOT EXISTS results_feed ON results (producer, queue, acked, seq)",
     "CREATE INDEX IF NOT EXISTS attempts_job ON attempts (job_id)",
+    "CREATE INDEX IF NOT EXISTS attempts_ended ON attempts (ended)",
     "CREATE INDEX IF NOT EXISTS jobs_queue ON jobs (queue)",
     "CREATE INDEX IF NOT EXISTS jobs_outstanding ON jobs (producer, queue, state)",
     "CREATE INDEX IF NOT EXISTS jobs_candidates ON jobs (state, priority DESC, created)",

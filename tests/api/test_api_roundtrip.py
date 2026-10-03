@@ -109,3 +109,13 @@ def test_status_needs_admin(api):
     base, t = api
     assert call(base, t["pa"], "GET", "/v1/status")[0] == 403
     assert call(base, t["admin"], "GET", "/v1/status")[0] == 200
+
+
+def test_activity_needs_admin_and_a_numeric_span(api):
+    base, t = api
+    assert call(base, t["pa"], "GET", "/v1/activity")[0] == 403
+    status, data = call(base, t["admin"], "GET", "/v1/activity?hours=168")
+    assert status == 200
+    assert data["bucket_s"] == 21600.0
+    assert data["rows"] == []
+    assert call(base, t["admin"], "GET", "/v1/activity?hours=lots")[0] == 400

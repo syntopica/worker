@@ -486,6 +486,10 @@ The CLI supports `--json` everywhere.
 - `queue <name>` shows backlog, throughput, ETA and progress per producer
   batch.
 - `costs --since` shows the ledger by provider, queue and day.
+- `GET /v1/activity?hours=N` (admin, N clamped to 1..168) aggregates finished
+  attempts by time bucket (an hour up to 48 hours, six hours beyond), queue,
+  provider, sampling (shadow copies and judges), outcome and error code:
+  counts, wall seconds and tokens only, never a job id or content.
 
 ## 14. Testing
 
