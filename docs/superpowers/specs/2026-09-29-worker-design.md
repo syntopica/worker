@@ -475,7 +475,9 @@ The CLI supports `--json` everywhere.
   - wasted preemption time;
   - lease expiries;
   - database busy time and WAL size;
-  - quota headroom per account.
+  - quota headroom per account;
+  - recent failures of production jobs; shadow copies and their judges are
+    sampling, so their failures are left out.
 - `nodes` shows each node's state and the reason it is not taking work, for
   example `user active 12s`, `on battery`, `pressure warn`, `budget` or
   `draining`. It also shows the resident model and any unexpected runner or

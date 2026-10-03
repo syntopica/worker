@@ -9,7 +9,8 @@ def read_status(conn: sqlite3.Connection, now: float) -> dict[str, Any]:
     """Counts per queue and state, useful and wasted seconds in the last hour, node reports.
 
     Each node also carries its last release in a day (preemption code and age), and
-    ``cooldowns`` maps each resting runner to the seconds left.
+    ``cooldowns`` maps each resting runner to the seconds left. Recent failures are
+    production jobs only: shadow copies and their judges are sampling, not lost work.
     """
     queues: dict[str, Any] = {}
     for r in conn.execute(
@@ -51,7 +52,8 @@ def read_status(conn: sqlite3.Connection, now: float) -> dict[str, Any]:
     failures = [
         dict(r)
         for r in conn.execute(
-            "SELECT id, queue, error, finished FROM jobs WHERE state='failed' ORDER BY finished DESC LIMIT 10"
+            "SELECT id, queue, error, finished FROM jobs WHERE state='failed'"
+            " AND producer NOT IN ('_shadow', '_judge') ORDER BY finished DESC LIMIT 10"
         )
     ]
     return {

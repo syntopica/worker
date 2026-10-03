@@ -1,4 +1,6 @@
+from tests.conftest import body
 from worker.jobs.read_status import read_status
+from worker.jobs.submit_job import submit_job
 
 
 def test_status_shows_runner_cooldowns_and_each_node_last_release(conn):
@@ -12,3 +14,15 @@ def test_status_shows_runner_cooldowns_and_each_node_last_release(conn):
     status = read_status(conn, 100.0)
     assert status["nodes"]["node-a"]["last_release"] == {"code": "memory_pressure", "age_s": 60.0}
     assert status["cooldowns"] == {"codex": 600.0}
+
+
+def test_recent_failures_leave_out_shadow_and_judge_jobs(conn, config):
+    ids = [submit_job(conn, config, "pa", body(key=f"k{i}"), float(i))[0] for i in range(3)]
+    for job_id, producer in zip(ids, ["pa", "_shadow", "_judge"], strict=True):
+        conn.execute(
+            "UPDATE jobs SET state='failed', producer=?, error='no_output', finished=10.0"
+            " WHERE id=?",
+            (producer, job_id),
+        )
+    failures = read_status(conn, 20.0)["recent_failures"]
+    assert [f["id"] for f in failures] == [ids[0]]
