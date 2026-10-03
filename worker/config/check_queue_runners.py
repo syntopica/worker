@@ -9,7 +9,8 @@ from worker.config.task_profile import TaskProfile
 def check_queue_runners(
     queues: Mapping[str, QueuePolicy], profiles: Mapping[str, TaskProfile]
 ) -> None:
-    """Raise ValueError when a queue's runner route points at a missing profile."""
+    """Raise ValueError when a queue's runner route or a fallback points at a missing profile."""
     for queue in queues.values():
-        if queue.runner is not None and queue.runner.profile not in profiles:
-            raise ValueError(f"queue {queue.name}: runner.profile must be a configured profile")
+        route = queue.runner
+        if route is not None and any(p not in profiles for p in (route.profile, *route.fallbacks)):
+            raise ValueError(f"queue {queue.name}: runner profiles must be configured profiles")

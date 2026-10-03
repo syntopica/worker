@@ -12,4 +12,7 @@ def parse_runner_route(name: str, raw: dict[str, Any] | None) -> RunnerRoute | N
     profile = raw.get("profile")
     if not isinstance(profile, str) or not profile:
         raise ValueError(f"queue {name}: runner.profile must name a task profile")
-    return RunnerRoute(profile, float(raw.get("after_s", 0)))
+    fallbacks = raw.get("fallbacks", [])
+    if not isinstance(fallbacks, list) or not all(isinstance(f, str) and f for f in fallbacks):
+        raise ValueError(f"queue {name}: runner.fallbacks must list task profiles")
+    return RunnerRoute(profile, float(raw.get("after_s", 0)), tuple(fallbacks))

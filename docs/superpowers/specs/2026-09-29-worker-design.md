@@ -1056,3 +1056,9 @@ profile model on that runner that a spent window meters, never the runner key;
    `runner_auth`, `rate_limited` or `runner_unavailable`, else
    `runner_failed`. Only the code is kept; the stderr text is discarded with
    the scratch directory as before.
+4. **Runner route fallbacks.** A queue's `runner` route may list
+   `fallbacks`, task profiles tried in order when the route's `profile`
+   cannot take the job now (resting, not on this node, or the class not
+   allowed). With `model_windows` this keeps inference on the same runner's
+   other model family while one family's allowance is spent, before the
+   ladder moves on to OpenRouter and local.
