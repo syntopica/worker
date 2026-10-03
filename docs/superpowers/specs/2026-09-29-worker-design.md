@@ -470,7 +470,10 @@ preempt an idle-only job that is in flight; they run next.
 The CLI supports `--json` everywhere.
 
 - `status` shows:
-  - queue depth and age per queue;
+  - queue depth and age per queue; the age is the oldest queued production
+    job, since a shadow copy pinned to a resting executor may wait for days,
+    and each queue reports how many queued jobs are sampling
+    (`sampling_queued`);
   - useful completed work per hour;
   - wasted preemption time;
   - lease expiries;

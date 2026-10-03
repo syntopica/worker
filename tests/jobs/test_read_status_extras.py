@@ -35,3 +35,21 @@ def test_each_queue_counts_its_failed_sampling_jobs(conn, config):
     queue = read_status(conn, 20.0)["queues"]["pa.bulk"]
     assert queue["states"]["failed"] == 3
     assert queue["sampling_failed"] == 2
+
+
+def test_queue_age_counts_production_jobs_and_sampling_is_reported_apart(conn, config):
+    ids = [submit_job(conn, config, "pa", body(key=f"k{i}"), float(i))[0] for i in range(3)]
+    for job_id, producer in zip(ids, ["_shadow", "pa", "_judge"], strict=True):
+        conn.execute("UPDATE jobs SET producer=? WHERE id=?", (producer, job_id))
+    queue = read_status(conn, 20.0)["queues"]["pa.bulk"]
+    assert queue["states"]["queued"] == 3
+    assert queue["sampling_queued"] == 2
+    assert queue["oldest_queued_s"] == 19.0
+
+
+def test_a_queue_with_only_sampling_jobs_queued_has_no_age(conn, config):
+    job_id = submit_job(conn, config, "pa", body(key="k"), 1.0)[0]
+    conn.execute("UPDATE jobs SET producer='_shadow' WHERE id=?", (job_id,))
+    queue = read_status(conn, 20.0)["queues"]["pa.bulk"]
+    assert queue["sampling_queued"] == 1
+    assert queue["oldest_queued_s"] is None
