@@ -13,6 +13,7 @@ from worker.jobs.submit_job import submit_job
         (None, None),
         ("runner_failed", "runner_failed"),
         ("http_503", "http_503"),
+        ("unknown_profile", "unknown_profile"),
         ("http_5030", "executor_error"),
         ("input missing at /home/someone/notes.md", "executor_error"),
         ("made_up_code", "executor_error"),

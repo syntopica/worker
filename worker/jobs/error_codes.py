@@ -27,6 +27,7 @@ ERROR_CODES = frozenset(
         "timeout",
         "transport_error",
         "unknown_model",
+        "unknown_profile",
         "user_active",
     }
 )
