@@ -63,3 +63,13 @@ Closed engine work. Public repository: engine commits and behaviour only.
   `max_load` gate and per-node `coordinator_url` (33e3cb2).
 - 2026-10-01 [x] A runner's empty answer to an inference job is uncharged and
   the job skips the runner rung (2c45e3a). Verified: gate green.
+- 2026-10-03 [x] Status and activity: recent failures and a queue's
+  `sampling_failed` leave shadow and judge jobs out (83378bd, 91ed492);
+  `GET /v1/activity` aggregates finished attempts by hour with an
+  `attempts(ended)` index (9b037e6). Verified: gate green, live 40 ms.
+- 2026-10-03 [x] A spent quota window rests only the models it meters
+  (`model_windows`, 737ee2f), so a task profile on another model family of
+  the same runner can serve as its queue's fallback.
+- 2026-10-03 [x] Fixed error-code vocabulary at completion, per-runner
+  `max_concurrent` across nodes, and failed runners named from their stderr
+  tail without keeping text (6883061). Verified: gate green.

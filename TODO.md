@@ -33,16 +33,6 @@ the private instance, never here.
 - [~] Linux server node (33e3cb2): confirm over a full night window that the
       node's own model load does not trip `max_load` and release idle-only
       work as `user_active`.
-- [ ] Runner failures leave no evidence: a failed runner's stderr is not
-      kept, so bursts of `runner_failed` cannot be diagnosed. Keep a
-      content-free, allowlisted tail, or cap concurrent runs per runner.
-- [ ] A task profile on a runner wall waits out the cooldown when its queue
-      names no fallback. Inference jobs move on at once; tasks need a
-      `fallbacks` profile on a different model.
-- [ ] A task failure can carry free text as its error code: `run_task`
-      passes `str(WorkspaceError)` and `handle_complete` accepts any string.
-      Validate `error_code` against the fixed code list at the coordinator
-      boundary (spec 9).
 
 ## Found during phase 1a execution
 
