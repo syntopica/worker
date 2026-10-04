@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   tier TEXT NOT NULL DEFAULT 'basic',
   shadow_of TEXT,
   pin TEXT,
+  retry_of TEXT,
   UNIQUE (producer, queue, idempotency_key)
 );
 CREATE INDEX IF NOT EXISTS jobs_ready ON jobs (state, not_before);
@@ -81,6 +82,14 @@ CREATE TABLE IF NOT EXISTS judgements (
   created REAL NOT NULL
 );
 CREATE TABLE IF NOT EXISTS cooldowns (runner TEXT PRIMARY KEY, until REAL NOT NULL);
+CREATE TABLE IF NOT EXISTS audit (
+  seq INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  privacy TEXT NOT NULL,
+  principal TEXT NOT NULL,
+  created REAL NOT NULL
+);
 CREATE TABLE IF NOT EXISTS p.inputs (job_id TEXT PRIMARY KEY, body TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS p.outputs (result_id TEXT PRIMARY KEY, body TEXT NOT NULL);
 """

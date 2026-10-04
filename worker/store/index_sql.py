@@ -13,4 +13,6 @@ INDEXES = (
     "CREATE INDEX IF NOT EXISTS jobs_release ON jobs (payloads_deleted, queue, updated)",
     "CREATE INDEX IF NOT EXISTS jobs_shadow ON jobs (shadow_of)",
     "CREATE INDEX IF NOT EXISTS judgements_feed ON judgements (queue, created)",
+    "CREATE INDEX IF NOT EXISTS jobs_newest ON jobs (created, id)",
+    "CREATE INDEX IF NOT EXISTS audit_created ON audit (created)",
 )

@@ -8,4 +8,5 @@ ADDED_COLUMNS = (
     ("results", "rating", "TEXT"),
     ("jobs", "shadow_of", "TEXT"),
     ("jobs", "pin", "TEXT"),
+    ("jobs", "retry_of", "TEXT"),
 )
