@@ -15,6 +15,16 @@ the private instance, never here.
 - [ ] Useful work under repeated interruptions: a large translation backlog
       completed with `worker status` showing progress.
 
+## Node
+
+- [ ] `host_state_unreadable` is still the most frequent preemption on a
+      macOS node even with the pmset retry, the 10 s idle/pressure bridge and
+      the 2 min power-source hold; the remaining cases coincide with very high
+      load. `run_command` returns None for timeout, non-zero exit and OSError
+      alike, so the log cannot tell which. Next: log the failure kind with the
+      reader name, then decide between a longer bridge and accepting the
+      release under load (spec 7: failure = busy).
+
 ## Later phases (see roadmap)
 
 - [ ] Executor preference from judged scores: once each executor has about 20
