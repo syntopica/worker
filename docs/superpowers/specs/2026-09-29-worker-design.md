@@ -493,6 +493,17 @@ The CLI supports `--json` everywhere.
   attempts by time bucket (an hour up to 48 hours, six hours beyond), queue,
   provider, sampling (shadow copies and judges), outcome and error code:
   counts, wall seconds and tokens only, never a job id or content.
+- Admin job routes (amendment 2026-10-04), all `admin` only:
+  - `GET /v1/admin/jobs?queue=&state=&producer=&before=&limit=` lists jobs
+    newest first, never a payload or a result;
+  - `GET /v1/admin/jobs/{id}` adds the attempts and whether an input and an
+    output are still stored;
+  - `GET /v1/admin/jobs/{id}/content` returns the stored input and output,
+    behind `X-Worker-Reveal` for a sensitive class;
+  - `POST /v1/admin/jobs/{id}/cancel`, `/retry` and `/ack` act on any
+    producer's job;
+  - `GET /v1/admin/audit?days=N` (and `worker audit --days N`) lists the
+    audit rows: sensitive reveals and admin actions, never content.
 
 ## 14. Testing
 
@@ -1065,3 +1076,60 @@ profile model on that runner that a spent window meters, never the runner key;
    allowed). With `model_windows` this keeps inference on the same runner's
    other model family while one family's allowance is spent, before the
    ladder moves on to OpenRouter and local.
+
+### Amendment 2026-10-04 - admin job browser, content reveal and actions
+
+An operator console needs to browse jobs, read a job's content and act on a
+job of any producer. Every route below is `admin` only (`403 forbidden`
+otherwise) and answers errors as `{"error": <code>}` with codes only.
+
+1. **List.** `GET /v1/admin/jobs` filters by `queue` (a configured queue,
+   else `400 unknown_queue`), `state` (a job state, else `400
+   unknown_state`) and `producer`, newest first by `(created, id)`. `limit`
+   defaults to 50 and is clamped to 1..100. `before` is the opaque `next`
+   cursor of the previous page (`400 bad_cursor` when malformed); `next` is
+   null on the last page. A row carries `id, queue, producer, state,
+   privacy, tier, created, updated, attempts` (the count of attempt rows),
+   `last_error, acked` (epoch seconds or null), `retry_of` and `sampling`
+   (the producer is `_shadow` or `_judge`). Never a payload or a result.
+2. **Detail.** `GET /v1/admin/jobs/{id}` is the same row plus
+   `attempt_details` (`node, provider, model, outcome, error, started, ended,
+   tokens_in, tokens_out`, oldest first) and `has_input` / `has_output`, whether
+   the payload file still holds them. `404 not_found` for an unknown id.
+3. **Content.** `GET /v1/admin/jobs/{id}/content` returns `{input, output}`:
+   the stored input object and the job's latest stored output, each null
+   once deleted; both gone is `410 content_gone`. A `public` or `internal`
+   job is served as is. A `personal`, `mail` or `secret` job needs the
+   request header `X-Worker-Reveal` naming exactly the job's class, else
+   `403 reveal_required`, and every such read appends an audit row.
+4. **Audit.** A metadata table `audit` (store version 8) holds `action`
+   (`reveal`, `cancel`, `retry`, `ack`), the job id, its privacy class, the
+   principal name and the time. It never holds content, so it lives in the
+   metadata file and is backed up with it. `GET /v1/admin/audit?days=N`
+   (default 7, clamped to 1..365) lists it newest first as `{time, action,
+   job_id, class, principal}`, and `worker audit --days N [--json]` prints it.
+5. **Cancel.** `POST /v1/admin/jobs/{id}/cancel` is the producer cancel
+   without the ownership check: a terminal job keeps its state.
+6. **Retry.** `POST /v1/admin/jobs/{id}/retry` takes a `failed`, `expired` or
+   `cancelled` job (else `409 not_retryable`) whose input is still stored
+   (else `410 content_gone`). It admits a new job exactly as a submit would:
+   the producer must still be granted the queue, task grants and privacy
+   ceilings are re-checked, the model is resolved from the queue's tier
+   route with the original model as the request, and the outstanding limit
+   applies (`429 outstanding_limit`). The new job copies queue, producer,
+   kind, privacy, tier, priority, max attempts and input, has no deadline,
+   carries `retry_of` (a new `jobs` column) and the idempotency key
+   `retry:<original id>`, so a repeated retry returns the same new job. In
+   the same transaction the original and its unacknowledged results are
+   acknowledged, and a sensitive original's payloads are deleted, so the
+   original no longer counts against the limit the new job is checked
+   against. Shadow and judge jobs have no granted queue and are refused
+   with `403 queue_not_granted`.
+7. **Ack.** `POST /v1/admin/jobs/{id}/ack` acknowledges every unacknowledged
+   control result of the job as the producer ack would (no decline, no
+   rating). A job with an unacknowledged output, or with nothing to
+   acknowledge, is `409 not_ackable`: an output is the producer's to collect.
+8. Cancel and ack answer `{id, state}`; retry answers the new job's
+   `{id, state, retry_of}`. Each appends an audit row.
+9. **Routing.** A route pattern's `*` segments match any one path segment;
+   `/v1/admin/jobs/{id}` carries its id in the fourth segment.
