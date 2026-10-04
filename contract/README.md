@@ -18,8 +18,8 @@ Producers talk to the coordinator over HTTP with JSON bodies and a bearer token.
 | GET | `/v1/status` | admin | Queue and node status. |
 | GET | `/v1/costs` | admin | Attempts, tokens, cost and wall time by day, provider and queue (`days`). |
 | GET | `/v1/quality` | admin | Outcomes and producer ratings by queue, tier, provider and model (`days`). |
-| GET | `/v1/admin/jobs` | admin | Jobs of every producer, newest first (`queue`, `state`, `producer`, `before`, `limit` up to 100); `{jobs, next}`, metadata only. |
-| GET | `/v1/admin/jobs/{id}` | admin | One job's metadata, `attempt_details`, `has_input` and `has_output`. |
+| GET | `/v1/admin/jobs` | admin | Jobs of every producer, newest first (`queue`, `state` - one or a comma-separated list, `producer`, `before`, `limit` up to 100); `{jobs, next}`, metadata with attempt token, cost and wall totals and the newest attempt's model. |
+| GET | `/v1/admin/jobs/{id}` | admin | One job's metadata, `attempt_details` (with `wall_s` and `cost_usd`), `results` (control, detail, executor, usage, rating; never the output), `has_input` and `has_output`. |
 | GET | `/v1/admin/jobs/{id}/content` | admin | `{input, output}`; a `personal`, `mail` or `secret` job needs `X-Worker-Reveal: <class>`, and the read is audited. |
 | POST | `/v1/admin/jobs/{id}/cancel` | admin | Cancel any producer's job; `{id, state}`. |
 | POST | `/v1/admin/jobs/{id}/retry` | admin | Admit a copy of a `failed`, `expired` or `cancelled` job as a submit would and acknowledge the original; `{id, state, retry_of}`. |

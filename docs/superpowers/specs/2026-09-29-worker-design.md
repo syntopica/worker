@@ -1133,3 +1133,28 @@ otherwise) and answers errors as `{"error": <code>}` with codes only.
    `{id, state, retry_of}`. Each appends an audit row.
 9. **Routing.** A route pattern's `*` segments match any one path segment;
    `/v1/admin/jobs/{id}` carries its id in the fourth segment.
+
+### Amendment 2026-10-04 - admin job metrics and running-now filter
+
+An operator needs to see what is being processed now and what each job cost,
+without opening its content. All additions are metadata; no route returns a
+payload or an output body that it did not return before.
+
+1. **Several states.** `state` on `GET /v1/admin/jobs` is one state or a
+   comma-separated list, matching any of them; every listed state must be
+   known, else `400 unknown_state`. `state=leased,running,draining` is what
+   is running now.
+2. **Row fields.** A row also carries the job's `kind`, requested `model`,
+   `priority`, `finished`, `deadline`, `lease_node`, `lease_expires`,
+   `parent_id` and `preemptions`; the sums over its attempts of `tokens_in`,
+   `tokens_out`, `cost_usd` and `wall_s` (null when no attempt reported one,
+   so a running attempt adds nothing until it settles); and `last_model`,
+   `last_provider`, `last_started` and `last_outcome` of the newest attempt
+   by `(started, id)`, running or not.
+3. **Detail.** Each of `attempt_details` also carries `wall_s` and
+   `cost_usd`. The detail adds `results`, oldest first: `result_id, control,
+   detail` (the allowlisted control detail), `executor, usage, rating,
+   created, acked`. Never the output body.
+4. OpenRouter usage accounting is returned with every completion, and its
+   `usage.cost` is already recorded as `cost_usd`. Routes accept `:free`
+   endpoints only, so the recorded cost is 0 until a paid rung exists.
