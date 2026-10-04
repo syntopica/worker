@@ -46,7 +46,15 @@ def make_handler(
                 query = dict(urllib.parse.parse_qsl(url.query))
                 parts = [p for p in url.path.split("/") if p]
                 ctx = RequestContext(
-                    principal, self.command, parts, query, raw, live, conn, time.time()
+                    principal,
+                    self.command,
+                    parts,
+                    query,
+                    raw,
+                    live,
+                    conn,
+                    time.time(),
+                    self.headers.get("X-Worker-Reveal"),
                 )
                 return route_request(ctx)
             finally:

@@ -10,13 +10,16 @@ from worker.store.transaction import transaction
 _CANCELLABLE = ("queued", "split_requested", "leased", "running", "draining")
 
 
-def cancel_job(conn: sqlite3.Connection, producer: str, job_id: str, now: float) -> str:
-    """Return the resulting state; terminal jobs are left as they are."""
+def cancel_job(conn: sqlite3.Connection, producer: str | None, job_id: str, now: float) -> str:
+    """Return the resulting state; terminal jobs are left as they are.
+
+    ``producer`` None is the admin cancel: any producer's job.
+    """
     with transaction(conn):
         job = conn.execute(
             "SELECT producer, state, privacy FROM jobs WHERE id=?", (job_id,)
         ).fetchone()
-        if job is None or job["producer"] != producer:
+        if job is None or producer not in (None, job["producer"]):
             raise ApiError(404, "not_found")
         if job["state"] not in _CANCELLABLE:
             return str(job["state"])

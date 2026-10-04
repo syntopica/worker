@@ -26,7 +26,7 @@ def api(config, tmp_path):
     server.shutdown()
 
 
-def call(base, token, method, path, payload=None):
+def call(base, token, method, path, payload=None, *, headers=None):
     data = (
         payload
         if isinstance(payload, bytes)
@@ -36,7 +36,11 @@ def call(base, token, method, path, payload=None):
         base + path,
         data=data,
         method=method,
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            **(headers or {}),
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=40) as response:

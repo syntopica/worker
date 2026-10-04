@@ -5,6 +5,13 @@ from typing import Any
 
 from worker.api.handle_ack import handle_ack
 from worker.api.handle_activity import handle_activity
+from worker.api.handle_admin_ack import handle_admin_ack
+from worker.api.handle_admin_audit import handle_admin_audit
+from worker.api.handle_admin_cancel import handle_admin_cancel
+from worker.api.handle_admin_content import handle_admin_content
+from worker.api.handle_admin_job import handle_admin_job
+from worker.api.handle_admin_jobs import handle_admin_jobs
+from worker.api.handle_admin_retry import handle_admin_retry
 from worker.api.handle_cancel import handle_cancel
 from worker.api.handle_complete import handle_complete
 from worker.api.handle_costs import handle_costs
@@ -17,10 +24,10 @@ from worker.api.handle_results import handle_results
 from worker.api.handle_runner_walls import handle_runner_walls
 from worker.api.handle_status import handle_status
 from worker.api.handle_submit import handle_submit
+from worker.api.path_matches import path_matches
 from worker.api.request_context import RequestContext
 from worker.jobs.api_error import ApiError
 
-_WILDCARD_INDEX = 2
 Handler = Callable[[RequestContext], tuple[int, dict[str, Any]]]
 ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "v1/jobs"): handle_submit,
@@ -37,13 +44,22 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "v1/costs"): handle_costs,
     ("GET", "v1/activity"): handle_activity,
     ("GET", "v1/quality"): handle_quality,
+    ("GET", "v1/admin/jobs"): handle_admin_jobs,
+    ("GET", "v1/admin/jobs/*"): handle_admin_job,
+    ("GET", "v1/admin/jobs/*/content"): handle_admin_content,
+    ("POST", "v1/admin/jobs/*/cancel"): handle_admin_cancel,
+    ("POST", "v1/admin/jobs/*/retry"): handle_admin_retry,
+    ("POST", "v1/admin/jobs/*/ack"): handle_admin_ack,
+    ("GET", "v1/admin/audit"): handle_admin_audit,
 }
 
 
 def route_request(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
-    """The third path segment is the wildcard; anything unmatched is 404."""
-    shape = "/".join("*" if i == _WILDCARD_INDEX else p for i, p in enumerate(ctx.parts))
-    handler = ROUTES.get((ctx.method, shape))
-    if handler is None:
-        raise ApiError(404, "no_route")
-    return handler(ctx)
+    """A ``*`` in a pattern is one id segment; anything unmatched is 404.
+
+    No two patterns of one method match the same path, so the first match is the only one.
+    """
+    for (method, pattern), handler in ROUTES.items():
+        if method == ctx.method and path_matches(pattern.split("/"), ctx.parts):
+            return handler(ctx)
+    raise ApiError(404, "no_route")

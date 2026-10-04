@@ -1,6 +1,5 @@
 """Admit one job: validate, deduplicate, bound, and store it (spec 6)."""
 
-import json
 import sqlite3
 import uuid
 
@@ -8,11 +7,12 @@ from worker.config.worker_config import WorkerConfig
 from worker.jobs.admit_split_child import admit_split_child
 from worker.jobs.api_error import ApiError
 from worker.jobs.check_outstanding import check_outstanding
-from worker.jobs.check_task_grant import check_task_grant
+from worker.jobs.check_queue_grant import check_queue_grant
 from worker.jobs.decode_body import decode_body
+from worker.jobs.insert_job import insert_job
 from worker.jobs.parse_submit_request import parse_submit_request
 from worker.jobs.payload_hash import payload_hash
-from worker.jobs.tier_route_for import tier_route_for
+from worker.jobs.resolve_job_model import resolve_job_model
 from worker.store.transaction import transaction
 
 
@@ -24,20 +24,8 @@ def submit_job(
         raise ApiError(413, "payload_too_large")
     body = decode_body(raw)
     req = parse_submit_request(body)
-    if (
-        req.queue not in config.producers.get(producer, frozenset())
-        or req.queue not in config.queues
-    ):
-        raise ApiError(403, "queue_not_granted")
-    route = tier_route_for(config.queues[req.queue], req.tier)
-    if req.kind == "task":
-        granted = check_task_grant(config, req)
-        model: str | None = dict(route.profiles).get(granted, granted)
-    else:
-        preference = (*route.models, *req.models)
-        model = next((m for m in preference if m in config.models), None)
-    if model is None:
-        raise ApiError(400, "unknown_model")
+    check_queue_grant(config, producer, req.queue)
+    model = resolve_job_model(config, req)
     digest = payload_hash(body)
     with transaction(conn):
         existing = conn.execute(
@@ -53,31 +41,5 @@ def submit_job(
         else:
             check_outstanding(conn, config, producer, req.queue)
         job_id = uuid.uuid4().hex
-        conn.execute(
-            "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority, privacy, model,"
-            " state, max_attempts, not_before, deadline, parent_id, created, updated, tier)"
-            " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?)",
-            (
-                job_id,
-                producer,
-                req.queue,
-                req.kind,
-                req.idempotency_key,
-                digest,
-                req.priority,
-                req.privacy,
-                model,
-                req.max_attempts,
-                now,
-                req.deadline,
-                req.parent_id,
-                now,
-                now,
-                req.tier,
-            ),
-        )
-        conn.execute(
-            "INSERT INTO p.inputs (job_id, body) VALUES (?, ?)",
-            (job_id, json.dumps({"input": req.input})),
-        )
+        insert_job(conn, job_id, producer, req, digest, model, now)
     return job_id, True

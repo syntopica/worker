@@ -9,7 +9,11 @@ from worker.config.worker_config import WorkerConfig
 
 @dataclass(frozen=True)
 class RequestContext:
-    """``parts`` is the path split on ``/`` without empty segments."""
+    """``parts`` is the path split on ``/`` without empty segments.
+
+    ``reveal`` is the ``X-Worker-Reveal`` header, the privacy class an admin
+    names to read a sensitive job's content.
+    """
 
     principal: Principal
     method: str
@@ -19,3 +23,4 @@ class RequestContext:
     config: WorkerConfig
     conn: sqlite3.Connection
     now: float
+    reveal: str | None = None

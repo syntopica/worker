@@ -4,6 +4,7 @@ import argparse
 
 from worker.cli.add_rate_parser import add_rate_parser
 from worker.cli.add_run_parser import add_run_parser
+from worker.cli.cmd_audit import cmd_audit
 from worker.cli.cmd_backup import cmd_backup
 from worker.cli.cmd_cancel import cmd_cancel
 from worker.cli.cmd_costs import cmd_costs
@@ -44,6 +45,10 @@ def build_parser() -> argparse.ArgumentParser:
     quality.add_argument("--days", type=float, default=7.0)
     quality.add_argument("--json", action="store_true")
     quality.set_defaults(run=cmd_quality)
+    audit = sub.add_parser("audit")
+    audit.add_argument("--days", type=float, default=7.0)
+    audit.add_argument("--json", action="store_true")
+    audit.set_defaults(run=cmd_audit)
     jobs = sub.add_parser("jobs")
     jobs.add_argument("--producer", required=True)
     jobs.add_argument("--queue", required=True)

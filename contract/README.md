@@ -18,8 +18,17 @@ Producers talk to the coordinator over HTTP with JSON bodies and a bearer token.
 | GET | `/v1/status` | admin | Queue and node status. |
 | GET | `/v1/costs` | admin | Attempts, tokens, cost and wall time by day, provider and queue (`days`). |
 | GET | `/v1/quality` | admin | Outcomes and producer ratings by queue, tier, provider and model (`days`). |
+| GET | `/v1/admin/jobs` | admin | Jobs of every producer, newest first (`queue`, `state`, `producer`, `before`, `limit` up to 100); `{jobs, next}`, metadata only. |
+| GET | `/v1/admin/jobs/{id}` | admin | One job's metadata, `attempt_details`, `has_input` and `has_output`. |
+| GET | `/v1/admin/jobs/{id}/content` | admin | `{input, output}`; a `personal`, `mail` or `secret` job needs `X-Worker-Reveal: <class>`, and the read is audited. |
+| POST | `/v1/admin/jobs/{id}/cancel` | admin | Cancel any producer's job; `{id, state}`. |
+| POST | `/v1/admin/jobs/{id}/retry` | admin | Admit a copy of a `failed`, `expired` or `cancelled` job as a submit would and acknowledge the original; `{id, state, retry_of}`. |
+| POST | `/v1/admin/jobs/{id}/ack` | admin | Acknowledge a job's open control results for its producer; `{id, state}`. |
+| GET | `/v1/admin/audit` | admin | Reveals and admin actions (`days`), never content. |
 
 Errors are `{"error": "<code>"}` with the HTTP status. `error_stale_attempt.json` is an example.
+
+The admin job routes add `400 unknown_queue`, `400 unknown_state`, `400 bad_cursor`, `403 reveal_required` (a sensitive class without the matching `X-Worker-Reveal`), `409 not_retryable`, `409 not_ackable` (nothing open, or an open output the producer has to collect) and `410 content_gone` (the payloads were deleted).
 
 ## Quality tier and rating
 
