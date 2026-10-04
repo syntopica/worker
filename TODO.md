@@ -17,13 +17,13 @@ the private instance, never here.
 
 ## Node
 
-- [ ] `host_state_unreadable` is still the most frequent preemption on a
+- [~] `host_state_unreadable` is still the most frequent preemption on a
       macOS node even with the pmset retry, the 10 s idle/pressure bridge and
       the 2 min power-source hold; the remaining cases coincide with very high
-      load. `run_command` returns None for timeout, non-zero exit and OSError
-      alike, so the log cannot tell which. Next: log the failure kind with the
-      reader name, then decide between a longer bridge and accepting the
-      release under load (spec 7: failure = busy).
+      load. `run_command` now logs each failure's kind (timeout, exit status,
+      OS error name). Next: read a day of `command failed` lines, then decide
+      between a longer bridge, a longer timeout and accepting the release
+      under load (spec 7: failure = busy).
 
 ## Later phases (see roadmap)
 
