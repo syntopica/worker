@@ -73,3 +73,9 @@ Closed engine work. Public repository: engine commits and behaviour only.
 - 2026-10-03 [x] Fixed error-code vocabulary at completion, per-runner
   `max_concurrent` across nodes, and failed runners named from their stderr
   tail without keeping text (6883061). Verified: gate green.
+- 2026-10-04 [x] Admin job browser, content reveal and actions (amendment
+  2026-10-04, 5c0c177..3701c5c): `GET /v1/admin/jobs` (cursor-paged), job
+  detail with attempts, `/content` behind `X-Worker-Reveal` for sensitive
+  classes, admin cancel, retry (`retry_of`, admitted as a submit) and ack,
+  an `audit` table at store version 8 and `worker audit`. Verified: gate
+  green.
