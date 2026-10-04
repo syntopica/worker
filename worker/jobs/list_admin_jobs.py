@@ -16,12 +16,14 @@ def list_admin_jobs(conn: sqlite3.Connection, wanted: JobsFilter) -> dict[str, A
     params: list[Any] = []
     for column, value in (
         ("queue", wanted.queue),
-        ("state", wanted.state),
         ("producer", wanted.producer),
     ):
         if value is not None:
             clauses.append(f"j.{column}=?")
             params.append(value)
+    if wanted.states is not None:
+        clauses.append(f"j.state IN ({', '.join('?' for _ in wanted.states)})")
+        params.extend(wanted.states)
     if wanted.before is not None:
         clauses.append("(j.created, j.id) < (?, ?)")
         params.extend(decode_jobs_cursor(wanted.before))

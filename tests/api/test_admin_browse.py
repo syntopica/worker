@@ -25,6 +25,23 @@ LIST_FIELDS = {
     "acked",
     "retry_of",
     "sampling",
+    "kind",
+    "model",
+    "priority",
+    "finished",
+    "deadline",
+    "lease_node",
+    "lease_expires",
+    "parent_id",
+    "preemptions",
+    "tokens_in",
+    "tokens_out",
+    "cost_usd",
+    "wall_s",
+    "last_model",
+    "last_provider",
+    "last_started",
+    "last_outcome",
 }
 ATTEMPT_FIELDS = {
     "node",
@@ -36,6 +53,8 @@ ATTEMPT_FIELDS = {
     "ended",
     "tokens_in",
     "tokens_out",
+    "wall_s",
+    "cost_usd",
 }
 
 
@@ -137,7 +156,7 @@ def test_the_detail_adds_attempts_and_stored_payload_flags(admin):
     )
     status, detail = call(base, t["admin"], "GET", f"/v1/admin/jobs/{job}")
     assert status == 200
-    assert set(detail) == LIST_FIELDS | {"attempt_details", "has_input", "has_output"}
+    assert set(detail) == LIST_FIELDS | {"attempt_details", "results", "has_input", "has_output"}
     assert (detail["has_input"], detail["has_output"], detail["attempts"]) == (True, False, 1)
     [attempt] = detail["attempt_details"]
     assert set(attempt) == ATTEMPT_FIELDS
