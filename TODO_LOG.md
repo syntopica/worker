@@ -79,3 +79,12 @@ Closed engine work. Public repository: engine commits and behaviour only.
   classes, admin cancel, retry (`retry_of`, admitted as a submit) and ack,
   an `audit` table at store version 8 and `worker audit`. Verified: gate
   green.
+- 2026-10-04 [x] Admin job metrics (amendment "admin job metrics and
+  running-now filter"): comma-separated `state` filter, job rows with kind,
+  requested model, lease, attempt token/cost/wall totals and the newest
+  attempt's model, per-attempt `wall_s` and `cost_usd`, and content-free
+  `results` metadata on the detail. Verified: gate green.
+- 2026-10-04 [-] OpenRouter `cost_usd` always 0 is not a bug:
+  `openrouter_output` already records `usage.cost`, which OpenRouter returns
+  with every response, and routes accept `:free` endpoints only, whose cost
+  is 0. Revisit with the paid rung.

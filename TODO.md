@@ -44,6 +44,17 @@ the private instance, never here.
       node's own model load does not trip `max_load` and release idle-only
       work as `user_active`.
 
+## Usage ledger
+
+- [ ] Task runners record no tokens and no cost: `run_task` builds its report
+      without `usage`, so every codex, agy and cursor attempt stores null
+      `tokens_in`, `tokens_out` and `cost_usd`, and the admin job totals and
+      `worker costs` undercount. Codex prints a total in its human stderr
+      footer; agy's and cursor's JSON envelopes may carry usage fields, but
+      none is parsed or pinned by a fixture. Next: capture one real envelope
+      (and codex's stderr footer) per runner into a placeholder fixture, then
+      map the fields each one carries into `usage` in `run_task`.
+
 ## Found during phase 1a execution
 
 - [ ] Sleep assertion for laptop nodes; remaining minor test gaps listed in
