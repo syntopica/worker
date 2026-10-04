@@ -1,9 +1,9 @@
 """Run a read-only system command; None on any failure (spec 7: failure = busy)."""
 
 import errno
-import os
 import subprocess
 import sys
+from pathlib import Path
 
 
 def run_command(args: list[str], timeout: float = 5.0) -> str | None:
@@ -13,7 +13,7 @@ def run_command(args: list[str], timeout: float = 5.0) -> str | None:
     (timeout, exit status or OS error name) and nothing else, so a flapping
     host reader can be told apart from a slow one.
     """
-    name = os.path.basename(args[0])
+    name = Path(args[0]).name
     try:
         done = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired:
