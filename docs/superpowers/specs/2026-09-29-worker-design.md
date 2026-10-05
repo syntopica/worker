@@ -1158,3 +1158,18 @@ payload or an output body that it did not return before.
 4. OpenRouter usage accounting is returned with every completion, and its
    `usage.cost` is already recorded as `cost_usd`. Routes accept `:free`
    endpoints only, so the recorded cost is 0 until a paid rung exists.
+
+### Amendment 2026-10-05 - per-queue daily OpenRouter cap
+
+The free tier's daily request allowance is one number for the whole key, and
+the weighted share in `pick_remote` only arbitrates between jobs that are
+waiting at the same moment. A queue that submits in bulk therefore spends the
+allowance before a queue that submits one job at a time gets a turn.
+
+1. **Cap.** A queue's `openrouter` route may set `daily_cap`, a positive
+   integer. Once the queue's attempts recorded with provider `openrouter`
+   since 00:00 UTC reach it, its jobs are not leased to the OpenRouter rung for
+   the rest of that UTC day; they keep the rest of the ladder. No `daily_cap`
+   means no per-queue limit.
+2. **Counting.** Only attempts whose provider is recorded count, so up to the
+   node's `remote_slots` attempts in flight may overshoot the cap.

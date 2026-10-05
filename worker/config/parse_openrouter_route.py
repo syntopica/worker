@@ -23,9 +23,13 @@ def parse_openrouter_route(name: str, raw: dict[str, Any] | None) -> OpenRouterR
         isinstance(v, str) and v.endswith(":free") for v in fallbacks
     ):
         raise ValueError(f"queue {name}: openrouter.fallbacks must list :free endpoints")
+    cap = raw.get("daily_cap")
+    if cap is not None and (isinstance(cap, bool) or not isinstance(cap, int) or cap < 1):
+        raise ValueError(f"queue {name}: openrouter.daily_cap must be a positive integer")
     return OpenRouterRoute(
         models=tuple((str(k), str(v)) for k, v in models.items()),
         after_s=float(raw.get("after_s", 0)),
         zdr=bool(raw.get("zdr", True)),
         fallbacks=tuple(fallbacks),
+        daily_cap=cap,
     )

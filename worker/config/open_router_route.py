@@ -11,10 +11,12 @@ class OpenRouterRoute:
     ``zdr`` (the default) a non-public job is sent only to zero-data-retention
     endpoints; turning it off is an explicit owner decision for the queue.
     ``fallbacks`` are further free models OpenRouter tries, in order, when
-    the mapped one errors or is rate limited.
+    the mapped one errors or is rate limited. ``daily_cap`` bounds the
+    queue's OpenRouter attempts per UTC day; None leaves it unbounded.
     """
 
     models: tuple[tuple[str, str], ...]
     after_s: float
     zdr: bool = True
     fallbacks: tuple[str, ...] = ()
+    daily_cap: int | None = None
