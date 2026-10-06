@@ -22,6 +22,8 @@ def pinned_runner_profile(
         if kind != "runner":
             return None
     profile = config.profiles.get(name)
-    if profile is None or profile_resting(profile, cooling) or c.privacy not in profile.privacy:
+    if profile is None or profile.on_demand or profile_resting(profile, cooling):
+        return None
+    if c.privacy not in profile.privacy:
         return None
     return name if privacy_allows(config, c.privacy, "runner", trust) else None

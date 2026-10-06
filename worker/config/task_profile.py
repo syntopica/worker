@@ -12,7 +12,9 @@ class TaskProfile:
     ``env_unset`` the variables removed from its environment, such as an API
     key that would bill a call the subscription login should carry.
     ``denied_root`` is never copied into a workspace, even inside ``input_root``:
-    the worker's own state, which holds the bearer tokens.
+    the worker's own state, which holds the bearer tokens. An ``on_demand``
+    profile is never chosen by a route, fallback or pin: it runs only when a
+    task loop asks for it by name.
     """
 
     name: str
@@ -26,3 +28,4 @@ class TaskProfile:
     command: str | None = None
     env_unset: frozenset[str] = frozenset()
     denied_root: Path | None = None
+    on_demand: bool = False

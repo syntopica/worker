@@ -6,6 +6,7 @@ from worker.config.task_profile import TaskProfile
 from worker.tasks.agy_invocation import agy_invocation
 from worker.tasks.codex_invocation import codex_invocation
 from worker.tasks.cursor_invocation import cursor_invocation
+from worker.tasks.max_lane_invocation import max_lane_invocation
 from worker.tasks.runner_invocation import RunnerInvocation
 
 
@@ -17,4 +18,6 @@ def task_invocation(
         return codex_invocation(profile, prompt, workspace, schema, scratch)
     if profile.runner == "agy":
         return agy_invocation(profile, prompt, schema)
+    if profile.runner == "max-lane":
+        return max_lane_invocation(profile, prompt, schema)
     return cursor_invocation(profile, prompt)

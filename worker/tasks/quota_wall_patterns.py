@@ -20,4 +20,10 @@ QUOTA_WALL_PATTERNS = {
         r"\s+spend limit",
         re.I,
     ),
+    # max-lane-run's own stderr once every Keychain account answered 429.
+    "max-lane": re.compile(
+        r"max-lane-run: max lane request failed for keychain service [^\n]{1,80}"
+        r" with http status 429\.",
+        re.I,
+    ),
 }

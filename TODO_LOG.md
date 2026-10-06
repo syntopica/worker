@@ -94,3 +94,9 @@ Closed engine work. Public repository: engine commits and behaviour only.
   24), none an exit status or OS error; preemptions fell from 28/day to about
   1/day and fresh timeouts coincided with a 1-minute load near 90. No longer
   timeout or bridge.
+- 2026-10-07 [x] On-demand task profiles and the `max-lane` runner (spec
+  amendment 2026-10-07): an `on_demand` profile is skipped by routes,
+  fallbacks and pins and runs only through `worker tasks --name N --profile P`,
+  which drains queued inference allowed by the profile and exits. Verified:
+  `uv run codeality-py gate` green; `tests/ladder/test_on_demand_profile.py`
+  and `tests/tasks/test_max_lane_runner.py`.

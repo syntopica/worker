@@ -1173,3 +1173,27 @@ allowance before a queue that submits one job at a time gets a turn.
    means no per-queue limit.
 2. **Counting.** Only attempts whose provider is recorded count, so up to the
    node's `remote_slots` attempts in flight may overshoot the cap.
+
+### Amendment 2026-10-07 - on-demand profiles and the max-lane runner
+
+1. **On-demand profiles.** A task profile with `"on_demand": true` is never
+   chosen by a queue's runner route, its fallbacks, a shadow or judge pin, or
+   as a task's own profile: it runs only when a task loop asks for it by name,
+   `worker tasks --name <node> --profile <name> [--slots K]`. That loop sends
+   `profile` in its lease request (`400 unknown_profile` when it names no
+   on-demand profile), skips the idle and host checks because the owner started
+   it, and exits once a lease comes back empty. It takes unpinned queued
+   inference jobs from any queue, rendered as tasks as a runner route renders
+   them, ordered by priority, weighted share and age. Privacy is unchanged: the
+   job's class must be in the profile's `privacy` and allowed for `runner`
+   executors on the asking node's trust. A quota wall rests the profile like any
+   runner, which ends the drain.
+2. **The `max-lane` runner.** `max-lane-run` (from the separate max-lane
+   library) makes one forced-tool call on a Claude subscription's OAuth
+   credentials. The worker passes the prompt on stdin and the output schema as
+   `--schema <file>`, and reads `answer` and `usage` (`input_tokens`,
+   `output_tokens`) from the JSON envelope on stdout. A max-lane profile must
+   name its `model`, takes no `input_root`, and must be `on_demand`: it spends
+   a subscription the owner releases explicitly. Its wall is the runner's own
+   stderr sentence once every account answered HTTP 429; a run that answered is
+   never a wall.

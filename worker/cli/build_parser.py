@@ -4,6 +4,7 @@ import argparse
 
 from worker.cli.add_rate_parser import add_rate_parser
 from worker.cli.add_run_parser import add_run_parser
+from worker.cli.add_tasks_parser import add_tasks_parser
 from worker.cli.cmd_audit import cmd_audit
 from worker.cli.cmd_backup import cmd_backup
 from worker.cli.cmd_cancel import cmd_cancel
@@ -15,7 +16,6 @@ from worker.cli.cmd_remote import cmd_remote
 from worker.cli.cmd_serve import cmd_serve
 from worker.cli.cmd_status import cmd_status
 from worker.cli.cmd_submit import cmd_submit
-from worker.cli.cmd_tasks import cmd_tasks
 from worker.cli.cmd_token import cmd_token
 
 
@@ -27,9 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     node = sub.add_parser("node")
     node.add_argument("--name", required=True)
     node.set_defaults(run=cmd_node)
-    tasks = sub.add_parser("tasks")
-    tasks.add_argument("--name", required=True)
-    tasks.set_defaults(run=cmd_tasks)
+    add_tasks_parser(sub)
     remote = sub.add_parser("remote")
     remote.add_argument("--name", required=True)
     remote.set_defaults(run=cmd_remote)

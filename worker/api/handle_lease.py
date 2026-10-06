@@ -21,6 +21,11 @@ def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
     kind = body.get("kind", "inference")
     if kind not in {"inference", "task", "openrouter"}:
         raise ApiError(400, "unsupported_kind")
+    profile = body.get("profile")
+    if profile is not None:
+        known = ctx.config.profiles.get(profile) if isinstance(profile, str) else None
+        if kind != "task" or known is None or not known.on_demand:
+            raise ApiError(400, "unknown_profile")
     req = LeaseRequest(
         body["node"],
         body.get("resident_model"),
@@ -28,6 +33,7 @@ def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
         float(body.get("free_gb", 0)),
         float(body["current_idle_s"]),
         kind,
+        profile,
     )
     lease = lease_job(ctx.conn, ctx.config, req, ctx.now)
     return (204, {}) if lease is None else (200, lease.to_json())

@@ -64,9 +64,15 @@ class CoordinatorLink:
             }
         )
 
-    def lease_task(self, user_active: bool, idle_s: float) -> dict[str, Any] | None:
-        """A task lease for the ``worker tasks`` loop, or None."""
-        return self._lease({"kind": "task", "user_active": user_active, "current_idle_s": idle_s})
+    def lease_task(
+        self, user_active: bool, idle_s: float, profile: str | None = None
+    ) -> dict[str, Any] | None:
+        """A task lease for the ``worker tasks`` loop, or None; ``profile`` asks on demand."""
+        payload: dict[str, Any] = {"kind": "task", "user_active": user_active}
+        payload["current_idle_s"] = idle_s
+        if profile is not None:
+            payload["profile"] = profile
+        return self._lease(payload)
 
     def lease_remote(self) -> dict[str, Any] | None:
         """An escalated inference lease for the ``worker remote`` loop, or None."""
