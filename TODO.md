@@ -22,16 +22,6 @@ the private instance, never here.
 - [ ] Useful work under repeated interruptions: a large translation backlog
       completed with `worker status` showing progress.
 
-## Node
-
-- [~] `host_state_unreadable` on a macOS node: about 2.8 days of kind-tagged
-      lines held 284 `command failed` entries, all 5 s timeouts (pmset 198,
-      ioreg 62, sysctl 24), none an exit status or OS error. Preemptions from
-      it fell from 28/day to about 1/day, and fresh timeouts coincided with a
-      1-minute load near 90. Recommendation: accept the release under load
-      (spec 7: failure = busy) rather than lengthen the timeout or bridge.
-      Next: owner confirms, then close.
-
 ## Later phases (see roadmap)
 
 - [ ] Executor preference from judged scores: once each executor has about 20
