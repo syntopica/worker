@@ -26,10 +26,16 @@ def parse_openrouter_route(name: str, raw: dict[str, Any] | None) -> OpenRouterR
     cap = raw.get("daily_cap")
     if cap is not None and (isinstance(cap, bool) or not isinstance(cap, int) or cap < 1):
         raise ValueError(f"queue {name}: openrouter.daily_cap must be a positive integer")
+    key_cap = raw.get("daily_key_cap")
+    if key_cap is not None and (
+        isinstance(key_cap, bool) or not isinstance(key_cap, int) or key_cap < 1
+    ):
+        raise ValueError(f"queue {name}: openrouter.daily_key_cap must be a positive integer")
     return OpenRouterRoute(
         models=tuple((str(k), str(v)) for k, v in models.items()),
         after_s=float(raw.get("after_s", 0)),
         zdr=bool(raw.get("zdr", True)),
         fallbacks=tuple(fallbacks),
         daily_cap=cap,
+        daily_key_cap=key_cap,
     )

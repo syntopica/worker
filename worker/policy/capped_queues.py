@@ -6,11 +6,18 @@ from worker.config.worker_config import WorkerConfig
 
 
 def capped_queues(config: WorkerConfig, spent: Mapping[str, int]) -> frozenset[str]:
-    """Queues whose route sets ``daily_cap`` and whose ``spent`` count reached it."""
+    """Queues that reached their own ``daily_cap`` or their ``daily_key_cap``.
+
+    ``daily_key_cap`` is compared with every queue's ``spent`` together.
+    """
     capped: set[str] = set()
+    key_spent = sum(spent.values())
     for name, queue in config.queues.items():
         route = queue.openrouter
-        cap = route.daily_cap if route is not None else None
-        if cap is not None and spent.get(name, 0) >= cap:
+        if route is None:
+            continue
+        if route.daily_cap is not None and spent.get(name, 0) >= route.daily_cap:
+            capped.add(name)
+        if route.daily_key_cap is not None and key_spent >= route.daily_key_cap:
             capped.add(name)
     return frozenset(capped)

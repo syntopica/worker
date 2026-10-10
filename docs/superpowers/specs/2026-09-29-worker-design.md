@@ -1174,6 +1174,21 @@ allowance before a queue that submits one job at a time gets a turn.
 2. **Counting.** Only attempts whose provider is recorded count, so up to the
    node's `remote_slots` attempts in flight may overshoot the cap.
 
+### Amendment 2026-10-10 - a cap on the key, not only the queue
+
+A fixed per-queue `daily_cap` left most of the key's allowance unused: with the
+bulk queue capped, the key spent well under its daily allowance on most days,
+because the other queues rarely need their share.
+
+1. **Key cap.** A queue's `openrouter` route may set `daily_key_cap`, a
+   positive integer. Once every queue's attempts recorded with provider
+   `openrouter` since 00:00 UTC reach it together, that queue's jobs are not
+   leased to the OpenRouter rung for the rest of the UTC day; they keep the rest
+   of the ladder. Set below the key's allowance, it lets a bulk queue use
+   whatever the others leave while keeping the difference as their reserve.
+2. **With `daily_cap`.** Both may be set; either one reached stops the queue.
+   Counting and overshoot are as for `daily_cap`.
+
 ### Amendment 2026-10-07 - on-demand profiles and the max-lane runner
 
 1. **On-demand profiles.** A task profile with `"on_demand": true` is never
