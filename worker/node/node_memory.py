@@ -16,6 +16,7 @@ class NodeMemory:
     unloaded: bool = False
     failed_model: str | None = None
     owned: set[str] = field(default_factory=set)
+    battery_tried: set[str] = field(default_factory=set)
     backoff_until: float = 0.0
     backoff_s: float = 900.0
     transport_failures: int = 0

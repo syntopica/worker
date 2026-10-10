@@ -100,3 +100,13 @@ Closed engine work. Public repository: engine commits and behaviour only.
   which drains queued inference allowed by the profile and exits. Verified:
   `uv run codeality-py gate` green; `tests/ladder/test_on_demand_profile.py`
   and `tests/tasks/test_max_lane_runner.py`.
+- 2026-10-10: a battery release now unloads the model. `relieve_battery`
+  runs every node step and, while the host is on battery, unloads the
+  resident models the node owns (never one resident at startup or loaded by
+  another app, never a failed drain's model, which keeps its timed retry),
+  one attempt per model per battery episode, so an unreachable backend cannot
+  block every step and a failed unload keeps the model owned for the next one.
+  `user_active` keeps the warm model as before. `probe_quiet` still renews
+  `keep_alive`, which no longer matters on battery: the next step unloads.
+  Three Codex review rounds. Verified: `uv run codeality-py gate` green;
+  `tests/node/test_relieve_battery.py`.

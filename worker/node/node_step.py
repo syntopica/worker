@@ -8,6 +8,7 @@ from worker.node.host_state import HostState
 from worker.node.node_block import node_block
 from worker.node.node_memory import NodeMemory
 from worker.node.observe_host_state import observe_host_state
+from worker.node.relieve_battery import relieve_battery
 from worker.node.relieve_pressure import relieve_pressure
 from worker.node.resident_models import resident_models
 from worker.node.retry_failed_drain import retry_failed_drain
@@ -41,6 +42,7 @@ def node_step(  # noqa: PLR0913, PLR0917
             memory.failed_model = None
         retry_failed_drain(node.ollama_url, memory, resident, now)
     relieve_pressure(node.ollama_url, memory, resident)
+    relieve_battery(node.ollama_url, memory, resident, state.on_ac)
     counts = track_residency(memory, resident, now) if answer is not None else {}
     block = node_block(memory, state, now, answer is None)
     link.report(
