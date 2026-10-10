@@ -64,5 +64,16 @@ the private instance, never here.
 
 ## Found during phase 1a execution
 
+- [ ] A release does not unload the model. `release_reason` preempts and
+      `drain_backend` waits for quiet, but nothing sends `keep_alive: 0`: the
+      drain probe (`probe_quiet`) even renews the pinned `keep_alive`, so a
+      node released for `on_battery` keeps the model resident for the full
+      `keep_alive` window (observed: ~30 min, 23 GB, swap 97% used, battery
+      discharging). Only `relieve_pressure` unloads, and only after sustained
+      pressure. Keeping it warm is right for short `user_active` gaps (the
+      zero-reloads criterion above); it is not for `on_battery`. Next: decide
+      per release code whether to unload, then call `unload_model` for owned
+      models on that code, and stop the probe from extending `keep_alive`.
+
 - [ ] Sleep assertion for laptop nodes; remaining minor test gaps listed in
       the phase 1a final review.
