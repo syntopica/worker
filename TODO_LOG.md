@@ -142,13 +142,15 @@ Closed engine work. Public repository: engine commits and behaviour only.
   amendment 2026-10-11, "a laptop node holds no sleep assertion"). Decided
   2026-10-11 (owner via Codex adjudication). Observing one hand-back across a
   sleep cycle stays open in `TODO.md`.
-- 2026-10-11 [x] macOS node and coordinator restarted on the phase-logging
+- 2026-10-11 [~] macOS node and coordinator restarted on the phase-logging
   build (397568b, which contains 6557b5a). Decided 2026-10-11 (owner via
   Codex adjudication). No job was `leased`, `running` or `draining` before
   either restart (`worker status`, `worker nodes`, jobs table); both
   LaunchAgents were restarted with `launchctl kickstart -k`, and both run
   the editable install from this checkout. Evidence: `worker nodes` shows the
-  node reporting again within 30 s.
+  node reporting again within 30 s, and one attempt succeeded on it after the
+  restart. No preemption happened in the next 19 minutes, so no `phase=` drain
+  line has been seen yet; the first one closes this.
 - 2026-10-11 [-] Task progress guard beyond the hard timeout: superseded by
   spec decision "phase 1c decisions" 4 (no CPU-time progress guard for
   tasks; near-zero CPU is normal while a runner waits on a remote model, and
