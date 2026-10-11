@@ -1225,3 +1225,13 @@ With `--json` codex moves its own failures from stderr to `error` and
 `turn.failed` events, so a failed run is named (section "fixed error codes")
 from stderr followed by those messages; agent messages and warning items are
 never read for it.
+
+### Amendment 2026-10-11 - a task prompt is never an argv option
+
+A task prompt is untrusted, so no runner may read it as an option or a
+subcommand. codex takes it on stdin (`codex exec -`), as cursor and max-lane
+already do: an argv prompt starting with `-` was parsed as codex options able
+to lift the read-only sandbox, and one equal to `resume` or `review` ran that
+subcommand. agy reads stdin in print mode only as `stream-json`, so its prompt
+is joined to the flag as `--print=<prompt>`; agy pre-scans argv for `--help`
+and `--version` even as the value of `-p`, never inside a joined value.

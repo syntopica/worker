@@ -116,3 +116,10 @@ Closed engine work. Public repository: engine commits and behaviour only.
   Fixtures captured from codex-cli 0.162.1: one success, one failed turn.
   Verified: `uv run codeality-py gate` green;
   `tests/tasks/test_codex_events.py`.
+- 2026-10-11 [x] Task prompts never reach a runner's argv as options: codex
+  reads the prompt on stdin (`exec -`), agy takes `--print=<prompt>` (spec
+  amendment 2026-10-11). A prompt such as
+  `--dangerously-bypass-approvals-and-sandbox` was parsed as codex options,
+  and `resume`/`review` as subcommands (since 08cd25d). agy parsing checked
+  on 1.3.3 with argv that fails before any model call. Verified:
+  `uv run codeality-py gate` green; `tests/tasks/test_prompt_not_in_argv.py`.
