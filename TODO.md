@@ -46,21 +46,12 @@ the private instance, never here.
 
 ## Usage ledger
 
-- [~] Task runners record no tokens and no cost. agy and cursor are now
-      mapped: `read_usage` takes `tokens_in`/`tokens_out` from the envelope's
-      `usage` (agy `input_tokens`/`output_tokens`, cursor
-      `inputTokens`/`outputTokens`), pinned by captured fixtures in
-      `tests/tasks/fixtures`. The agy fixture is a quota-error envelope (zero
-      counts); a success envelope is still uncaptured. No envelope carries a
-      price, so `cost_usd` stays null for every task runner. Codex is still
-      unmeasured: without `--json` it prints only a locale-formatted total on
-      stderr; with `--json` its `turn.completed` event carries `usage`
-      (`input_tokens`, `cached_input_tokens`, `output_tokens`,
-      `reasoning_output_tokens`), but its error text then moves from stderr to
-      stdout `error`/`turn.failed` events, which `runner_failure_code` (stderr
-      only) would stop seeing. Next: add `--json` to `codex_invocation`, feed
-      the `turn.failed` message to `runner_failure_code`, and parse the last
-      `turn.completed` usage, with a captured JSONL fixture.
+- [~] Task runner usage: codex, agy, cursor and max-lane record `tokens_in`
+      and `tokens_out`, pinned by captured fixtures in `tests/tasks/fixtures`.
+      The agy fixture is a quota-error envelope (zero counts); a success
+      envelope is still uncaptured. No runner prints a price, so `cost_usd`
+      stays null for every task runner. Next: capture one agy success
+      envelope when its quota allows and pin its counts.
 
 ## Found during phase 1a execution
 

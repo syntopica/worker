@@ -1,7 +1,8 @@
-"""Stderr signs that tell why a runner exited without an answer.
+"""Signs in a runner's own messages that tell why it exited without an answer.
 
-Read only on a runner's own stderr tail, never stdout: the code is a label for
-the owner, it rests nothing, and the text itself is never kept.
+Read only on the tail of the runner's own messages (stderr, and codex's error
+events), never the model's prose: the code is a label for the owner, it rests
+nothing, and the text itself is never kept.
 """
 
 import re

@@ -16,6 +16,7 @@ from worker.tasks.judge_run import judge_run
 from worker.tasks.read_answer import read_answer
 from worker.tasks.read_usage import read_usage
 from worker.tasks.runner_failure_code import runner_failure_code
+from worker.tasks.runner_failure_text import runner_failure_text
 from worker.tasks.start_runner import start_runner
 from worker.tasks.supervise_process import supervise_process
 from worker.tasks.task_invocation import task_invocation
@@ -73,7 +74,7 @@ def run_task(  # noqa: PLR0913, PLR0917
             profile.runner, proc.returncode or 0, stdout + stderr, answer
         )
         if code == "runner_failed":
-            code = runner_failure_code(stderr)
+            code = runner_failure_code(runner_failure_text(profile.runner, stdout, stderr))
         usage = read_usage(profile.runner, stdout)
         return attempt_report(
             outcome, executor, wall_s, output=output, usage=usage, error_code=code

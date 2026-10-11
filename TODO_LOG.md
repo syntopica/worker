@@ -110,3 +110,9 @@ Closed engine work. Public repository: engine commits and behaviour only.
   `keep_alive`, which no longer matters on battery: the next step unloads.
   Three Codex review rounds. Verified: `uv run codeality-py gate` green;
   `tests/node/test_relieve_battery.py`.
+- 2026-10-11 [x] Codex task usage: `codex exec` runs with `--json`; usage is
+  summed over the `turn.completed` events, and failures are named from stderr
+  plus the `error`/`turn.failed` event messages (spec amendment 2026-10-11).
+  Fixtures captured from codex-cli 0.162.1: one success, one failed turn.
+  Verified: `uv run codeality-py gate` green;
+  `tests/tasks/test_codex_events.py`.

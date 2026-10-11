@@ -1212,3 +1212,16 @@ because the other queues rarely need their share.
    a subscription the owner releases explicitly. Its wall is the runner's own
    stderr sentence once every account answered HTTP 429; a run that answered is
    never a wall.
+
+### Amendment 2026-10-11 - codex usage from its event stream
+
+`codex exec` runs with `--json`, which prints JSON Lines events on stdout; the
+answer still comes from the `-o` last-message file. The attempt's `tokens_in`
+and `tokens_out` are the sums of `usage.input_tokens` and
+`usage.output_tokens` over every `turn.completed` event (input already counts
+the cached part, output the reasoning part); a run in which no turn completed
+records no usage, and `cost_usd` stays null because codex prints no price.
+With `--json` codex moves its own failures from stderr to `error` and
+`turn.failed` events, so a failed run is named (section "fixed error codes")
+from stderr followed by those messages; agent messages and warning items are
+never read for it.
