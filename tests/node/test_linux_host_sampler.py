@@ -31,6 +31,7 @@ def test_load_above_the_limit_resets_idle_like_a_returning_user():
     now[0] = 410.0
     state = sampler()
     assert state.idle_s == 0.0
+    assert state.load_1m == 9.5
     assert state.on_ac is True
     assert state.pressure == "normal"
     load[0] = "3.0 0 0 1/1 1"

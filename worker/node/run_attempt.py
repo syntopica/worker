@@ -71,7 +71,8 @@ def run_attempt(  # noqa: PLR0913, PLR0917
                 # The phase 1c cancel-to-quiet measurement, taken from real preemptions.
                 print(
                     f"worker: drain {'quiet' if quiet else 'failed'} in {clock() - cancelled:.1f}s"
-                    f" phase={phase} reason={reason} at={utc_stamp()}",
+                    f" phase={phase} reason={reason} at={utc_stamp()}"
+                    + ("" if state.load_1m is None else f" load={state.load_1m:.1f}"),
                     file=sys.stderr,
                 )
                 report = attempt_report("preempted", executor, clock() - started, error_code=reason)

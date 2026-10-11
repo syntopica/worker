@@ -129,3 +129,7 @@ Closed engine work. Public repository: engine commits and behaviour only.
   `uv run codeality-py gate` green; `tests/node/test_chat_stream_phase.py`
   and a chunked-encoding check of `OllamaCall`. The per-phase reading waits
   for new lines.
+- 2026-10-11 [~] Linux releases name their load: `HostState.load_1m` from
+  `/proc/loadavg`, appended as `load=` to the drain line. Verified:
+  `uv run codeality-py gate` green; `tests/node/test_chat_stream_phase.py`,
+  `tests/node/test_linux_host_sampler.py`. Reading it waits for new releases.

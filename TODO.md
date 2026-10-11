@@ -41,10 +41,10 @@ the private instance, never here.
       for an agreed period.
 - [~] Linux server node (33e3cb2): from the attempts table, the night of
       2026-10-05 ran clean (22 attempts, 0 preemptions), but earlier nights
-      had `user_active` releases (4 on 10-01, 1 on 10-04), and no host load
-      history says whether the node's own model load drove them. Next: one
-      more clean night, or log the 1-minute load on each `user_active`
-      release.
+      had `user_active` releases (4 on 10-01, 1 on 10-04). Since 2026-10-11
+      each drain line on Linux carries `load=` (spec amendment 2026-10-11),
+      effective once the node restarts on it. Next: read the `load=` of the
+      next `user_active` releases against `max_load`, or one more clean night.
 
 ## Usage ledger
 

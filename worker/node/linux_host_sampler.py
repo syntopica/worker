@@ -47,7 +47,7 @@ class LinuxHostSampler:
         if load is not None and self._max_load is not None and load > self._max_load:
             self._quiet_since = now
         idle = None if load is None else now - self._quiet_since
-        return HostState(idle, True, self._pressure(free))
+        return HostState(idle, True, self._pressure(free), load)
 
     def _pressure(self, free: float | None) -> str:
         """``unknown`` when unreadable, ``warn`` below the free threshold."""

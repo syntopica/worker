@@ -1247,3 +1247,11 @@ before the first chunk lands in `prefill`, after it in `generation`. Each
 drain line reads `drain quiet|failed in <s>s phase=<prefill|generation>
 reason=<release reason> at=<UTC ISO 8601>`; every field is a fixed word or a
 number, so the line stays content-free. The quiet probe is unchanged.
+
+### Amendment 2026-10-11 - a Linux drain line carries its load
+
+On a headless Linux server `user_active` means the one-minute load exceeded
+`max_load`, a load that includes the node's own model. The sampler keeps that
+reading in `HostState.load_1m` (None on macOS), and the drain line appends
+`load=<1-minute load>` when it is known, so a release can be told apart from
+one the node's own model caused.

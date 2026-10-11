@@ -1,6 +1,7 @@
 import io
 import re
 import time
+from dataclasses import replace
 
 import pytest
 
@@ -77,3 +78,12 @@ def test_the_drain_line_names_phase_reason_and_time(fake, capsys):
         r" at=\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ",
         line,
     )
+
+
+def test_a_linux_release_names_the_load_that_drove_it(fake, capsys):
+    fake.generation_delay = 3.0
+    busy = replace(TYPING, load_1m=17.25)
+    run_attempt(lease(), Link(), PIN, node(fake.url), states(IDLE, busy), nap, time.time)
+    assert re.search(r"reason=user_active at=\S+ load=17\.2\b", capsys.readouterr().err)
+    run_attempt(lease(), Link(), PIN, node(fake.url), states(IDLE, TYPING), nap, time.time)
+    assert "load=" not in capsys.readouterr().err
