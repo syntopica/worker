@@ -16,11 +16,11 @@ the private instance, never here.
       share meet the spec is an owner decision.
 - [~] Zero model reloads while work is queued: one `worker nodes` snapshot
       (2026-10-06) showed 0 loads and 1 unload in the last hour on a macOS
-      node while 17 jobs were queued, 0/0 on the Linux node. The counters
-      cover a rolling hour and the nodes table keeps only the latest report,
-      so a day cannot be summed afterwards. Next: persist load and unload
-      events with timestamps (or sample hourly for 24 h), then count loads
-      that happened while the queue was non-empty.
+      node while 17 jobs were queued, 0/0 on the Linux node. Since 2026-10-11
+      the node logs every residency change with a UTC time (spec amendment
+      2026-10-11), effective once a node restarts on it. Next: after 24 h of
+      lines, count the loads whose time falls while the queue held work
+      (jobs' submit and finish times in the store).
 - [ ] Useful work under repeated interruptions: a large translation backlog
       completed with `worker status` showing progress.
 

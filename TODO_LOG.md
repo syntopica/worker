@@ -133,3 +133,7 @@ Closed engine work. Public repository: engine commits and behaviour only.
   `/proc/loadavg`, appended as `load=` to the drain line. Verified:
   `uv run codeality-py gate` green; `tests/node/test_chat_stream_phase.py`,
   `tests/node/test_linux_host_sampler.py`. Reading it waits for new releases.
+- 2026-10-11 [~] Residency changes persist as timestamped log lines
+  (`residency load|unload model= at=`), so a day of reloads can be counted
+  afterwards. Verified: `uv run codeality-py gate` green;
+  `tests/node/test_track_residency.py`. The 24 h count waits for new lines.
