@@ -35,7 +35,7 @@ def test_pinned_options_cannot_be_overridden_by_the_producer():
     assert (body["keep_alive"], body["think"], body["stream"], body["format"]) == (
         "5m",
         False,
-        False,
+        True,
         {"type": "object"},
     )
 

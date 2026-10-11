@@ -6,11 +6,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 class FakeOllama:
-    """Records request bodies; `delay` slows /api/chat; `busy_until` delays probes."""
+    """Records request bodies; `delay` slows prefill, `generation_delay` the chunks after it.
+
+    A streamed chat answers in two NDJSON chunks; `busy_until` delays probes.
+    """
 
     def __init__(self):
         self.bodies = []
         self.delay = 0.0
+        self.generation_delay = 0.0
         self.busy_until = 0.0
         self.loaded = ["model-a"]
         self.status = 200
@@ -39,13 +43,23 @@ class FakeOllama:
                 if fake.raw_body is not None:
                     self._reply_raw(fake.status, fake.raw_body)
                     return
-                self._reply(
-                    {
-                        "message": {"content": '{"label": "x"}'},
-                        "prompt_eval_count": 7,
-                        "eval_count": 3,
-                    }
-                )
+                final = {"message": {"content": '"x"}'}, "done": True}
+                final.update(prompt_eval_count=7, eval_count=3)
+                if not body.get("stream"):
+                    final["message"]["content"] = '{"label": "x"}'
+                    self._reply(final)
+                    return
+                self._stream([{"message": {"content": '{"label": '}, "done": False}, final])
+
+            def _stream(self, chunks):
+                self.send_response(200)
+                self.end_headers()
+                with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+                    for index, chunk in enumerate(chunks):
+                        if index:
+                            time.sleep(fake.generation_delay)
+                        self.wfile.write(json.dumps(chunk).encode() + b"\n")
+                        self.wfile.flush()
 
             def _reply(self, payload):
                 self._reply_raw(200, json.dumps(payload).encode())

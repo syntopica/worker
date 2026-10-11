@@ -9,9 +9,11 @@ the private instance, never here.
 
 - [~] Cancel-to-quiet latency: read 2026-10-06 over about 6 days of real
       preemptions: 58 quiet drains, p50 4.1 s, p90 24.4 s, max 50.1 s; 8 of
-      66 drains (12%) failed at 8-46 s. Drain lines carry no timestamp and do
-      not split prefill from generation. Next: decide whether p90 24 s and the
-      12% failed drains meet the spec, or log the phase on each drain line.
+      66 drains (12%) failed at 8-46 s. Since 2026-10-11 each drain line
+      carries `phase=`, `reason=` and a UTC `at=` (spec amendment 2026-10-11),
+      effective once a node restarts on it. Next: after a few days of new
+      lines, read the distribution per phase; whether p90 24 s and the failed
+      share meet the spec is an owner decision.
 - [~] Zero model reloads while work is queued: one `worker nodes` snapshot
       (2026-10-06) showed 0 loads and 1 unload in the last hour on a macOS
       node while 17 jobs were queued, 0/0 on the Linux node. The counters

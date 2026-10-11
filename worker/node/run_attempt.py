@@ -14,6 +14,7 @@ from worker.node.ollama_call import OllamaCall
 from worker.node.ollama_request_body import ollama_request_body
 from worker.node.report_shutdown import report_shutdown
 from worker.node.sustained_release_reason import sustained_release_reason
+from worker.node.utc_stamp import utc_stamp
 
 _SAMPLE_S = 2.0
 _CALL_TIMEOUT_S = 1800.0
@@ -58,6 +59,7 @@ def run_attempt(  # noqa: PLR0913, PLR0917
             pressed = pressed + 1 if state.pressure in ("warn", "critical") else 0
             reason = sustained_release_reason(state, lease["run_when"], pressed)
             if reason is not None and not call.done():
+                phase = call.phase()
                 call.cancel()
                 cancelled = clock()
                 quiet = drain_backend(
@@ -68,7 +70,8 @@ def run_attempt(  # noqa: PLR0913, PLR0917
                 )
                 # The phase 1c cancel-to-quiet measurement, taken from real preemptions.
                 print(
-                    f"worker: drain {'quiet' if quiet else 'failed'} in {clock() - cancelled:.1f}s",
+                    f"worker: drain {'quiet' if quiet else 'failed'} in {clock() - cancelled:.1f}s"
+                    f" phase={phase} reason={reason} at={utc_stamp()}",
                     file=sys.stderr,
                 )
                 report = attempt_report("preempted", executor, clock() - started, error_code=reason)

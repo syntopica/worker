@@ -123,3 +123,9 @@ Closed engine work. Public repository: engine commits and behaviour only.
   and `resume`/`review` as subcommands (since 08cd25d). agy parsing checked
   on 1.3.3 with argv that fails before any model call. Verified:
   `uv run codeality-py gate` green; `tests/tasks/test_prompt_not_in_argv.py`.
+- 2026-10-11 [~] Cancel-to-quiet split by phase: the node streams
+  `/api/chat`, and each drain line names `phase=prefill|generation`, the
+  release `reason=` and a UTC `at=` (spec amendment 2026-10-11). Verified:
+  `uv run codeality-py gate` green; `tests/node/test_chat_stream_phase.py`
+  and a chunked-encoding check of `OllamaCall`. The per-phase reading waits
+  for new lines.

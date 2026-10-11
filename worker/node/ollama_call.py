@@ -8,6 +8,8 @@ import threading
 import urllib.parse
 from typing import Any
 
+from worker.node.read_chat_stream import read_chat_stream
+
 
 class OllamaCall:
     """Closing the connection is only a hint to Ollama; drain_backend confirms quiet."""
@@ -17,6 +19,7 @@ class OllamaCall:
         self._answer: dict[str, Any] | None = None
         self._error: str | None = None
         self._cancelled = False
+        self._generating = False
         self._thread: threading.Thread | None = None
 
     @classmethod
@@ -43,21 +46,21 @@ class OllamaCall:
                 return
             self._conn.request("POST", "/api/chat", data, {"Content-Type": "application/json"})
             response = self._conn.getresponse()
-            body = response.read()
+            if response.status != http.HTTPStatus.OK:
+                response.read()
+                self._error = f"http_{response.status}"
+                return
+            self._answer, self._error = read_chat_stream(response, self._mark_generating)
         except (OSError, http.client.HTTPException, AttributeError):
+            self._answer = None
             self._error = "cancelled" if self._cancelled else "transport_error"
-            return
-        if response.status != http.HTTPStatus.OK:
-            self._error = f"http_{response.status}"
-            return
-        try:
-            payload = json.loads(body)
-        except ValueError:
-            payload = None
-        if isinstance(payload, dict) and "error" not in payload:
-            self._answer = payload
-        else:
-            self._error = "bad_response"
+
+    def _mark_generating(self) -> None:
+        self._generating = True
+
+    def phase(self) -> str:
+        """``generation`` once the first chunk arrived, else ``prefill``."""
+        return "generation" if self._generating else "prefill"
 
     def _was_cancelled(self) -> bool:
         return self._cancelled

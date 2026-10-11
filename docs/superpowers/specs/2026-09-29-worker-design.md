@@ -1235,3 +1235,15 @@ to lift the read-only sandbox, and one equal to `resume` or `review` ran that
 subcommand. agy reads stdin in print mode only as `stream-json`, so its prompt
 is joined to the flag as `--print=<prompt>`; agy pre-scans argv for `--help`
 and `--version` even as the value of `-p`, never inside a joined value.
+
+### Amendment 2026-10-11 - the drain line names its phase
+
+Section 7 measures cancel-to-quiet "during both prefill and generation", and
+the 1c decision reads it from real preemptions. The node therefore streams
+`/api/chat` (`stream: true`) and joins the chunks into one answer whose counts
+come from the final `done` chunk; a chunk carrying `error`, a line that is not
+a JSON object, or a stream ending without `done` is `bad_response`. A cancel
+before the first chunk lands in `prefill`, after it in `generation`. Each
+drain line reads `drain quiet|failed in <s>s phase=<prefill|generation>
+reason=<release reason> at=<UTC ISO 8601>`; every field is a fixed word or a
+number, so the line stays content-free. The quiet probe is unchanged.
