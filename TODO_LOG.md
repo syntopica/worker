@@ -2,6 +2,8 @@
 
 Closed engine work. Public repository: engine commits and behaviour only.
 
+<!-- tadu:log v1 since 2026-10-12 -->
+
 ## 2026
 
 ### September
