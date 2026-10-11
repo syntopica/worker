@@ -1263,3 +1263,13 @@ only a node's latest report, so a day of reloads cannot be summed afterwards.
 The node therefore also logs each residency change it sees as `residency
 load|unload model=<name> at=<UTC ISO 8601>`; the 1c count of "reloads while
 work is queued" matches these lines against the jobs' submit and finish times.
+
+### Amendment 2026-10-11 - a laptop node holds no sleep assertion
+
+A node on an owner's laptop holds no idle-sleep assertion, during an attempt
+or otherwise: running only while the owner is idle must not change how the
+machine sleeps. When the laptop sleeps mid-attempt, the attempt stops
+heartbeating, its lease expires, and the job returns to the queue with a new
+generation (section 10, "Leases"), exactly as for any other lost node. A node
+that wakes holding the old lease is fenced by its stale generation: the
+coordinator rejects its heartbeat and its result (section 6).
