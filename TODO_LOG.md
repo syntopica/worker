@@ -137,3 +137,7 @@ Closed engine work. Public repository: engine commits and behaviour only.
   (`residency load|unload model= at=`), so a day of reloads can be counted
   afterwards. Verified: `uv run codeality-py gate` green;
   `tests/node/test_track_residency.py`. The 24 h count waits for new lines.
+- 2026-10-11 [-] Task progress guard beyond the hard timeout: superseded by
+  spec decision "phase 1c decisions" 4 (no CPU-time progress guard for
+  tasks; near-zero CPU is normal while a runner waits on a remote model, and
+  `timeout_s` stays the guard).

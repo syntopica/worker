@@ -22,19 +22,21 @@ the private instance, never here.
       lines, count the loads whose time falls while the queue held work
       (jobs' submit and finish times in the store).
 - [ ] Useful work under repeated interruptions: a large translation backlog
-      completed with `worker status` showing progress.
+      completed with `worker status` showing progress. Needs owner: a live
+      backlog run on the instance; no engine change is pending.
 
 ## Later phases (see roadmap)
 
 - [ ] Executor preference from judged scores: once each executor has about 20
       judged answers per queue, read `worker quality --days 7` and reorder or
       drop ladder rungs per queue. Manual for now; automating it is open.
-- [~] Phase 2 remainder: a paid rung with budget reservations (the default
-      budget is $0, so nothing needs it yet), and a task progress guard beyond
-      the hard timeout: runners in JSON mode write stdout only at the end, so
-      a guard would have to read the process group's CPU time.
+      Needs owner: the ladder lives in the private instance configuration.
+- [~] Phase 2 remainder: a paid rung with budget reservations. Needs owner:
+      the default budget is $0, so nothing needs it until a paid budget is
+      set. (The task progress guard is superseded, see `TODO_LOG.md`.)
 - [~] Quality tiers: no example maps `tiers.strong` yet; shadow sampling
-      covers the comparison meanwhile.
+      covers the comparison meanwhile. Needs owner: which queue gets a strong
+      tier is instance configuration; the engine already supports it.
 - [!] Phase 4: coordinator on an always-on host, Tailscale binding with
       LocalAPI WhoIs, more nodes; HID idle test under fast user switching
       before any guest node. Blocked until a candidate host has run stably
@@ -57,5 +59,9 @@ the private instance, never here.
 
 ## Found during phase 1a execution
 
-- [ ] Sleep assertion for laptop nodes; remaining minor test gaps listed in
-      the phase 1a final review.
+- [!] Sleep assertion for laptop nodes; remaining minor test gaps listed in
+      the phase 1a final review. Blocked: the spec names no sleep assertion,
+      and holding one changes how an owner's laptop sleeps; the review's
+      minor list is no longer in the repository. Smallest unblock: the
+      owner decides whether a node holds an idle-sleep assertion during an
+      attempt, and the gap list is recovered from the private instance.
