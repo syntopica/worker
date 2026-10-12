@@ -55,6 +55,7 @@ def load_worker_config(path: Path) -> WorkerConfig:
                 max(1, int(v.get("task_slots", 1))),
                 None if v.get("max_load") is None else float(v["max_load"]),
                 v.get("coordinator_url"),
+                v.get("local_idle_only") is True,
             )
             for n, v in raw["nodes"].items()
         },

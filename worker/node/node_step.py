@@ -9,6 +9,7 @@ from worker.node.node_block import node_block
 from worker.node.node_memory import NodeMemory
 from worker.node.observe_host_state import observe_host_state
 from worker.node.relieve_battery import relieve_battery
+from worker.node.relieve_owner_active import relieve_owner_active
 from worker.node.relieve_pressure import relieve_pressure
 from worker.node.resident_models import resident_models
 from worker.node.retry_failed_drain import retry_failed_drain
@@ -43,6 +44,9 @@ def node_step(  # noqa: PLR0913, PLR0917
         retry_failed_drain(node.ollama_url, memory, resident, now)
     relieve_pressure(node.ollama_url, memory, resident)
     relieve_battery(node.ollama_url, memory, resident, state.on_ac)
+    idle = state.idle_s or 0.0
+    owner_active = node.local_idle_only and idle < node.idle_threshold_s
+    relieve_owner_active(node.ollama_url, memory, resident, owner_active)
     counts = track_residency(memory, resident, now) if answer is not None else {}
     block = node_block(memory, state, now, answer is None)
     link.report(
@@ -56,11 +60,10 @@ def node_step(  # noqa: PLR0913, PLR0917
             **counts,
         }
     )
-    if block is not None:
+    if block is not None or owner_active:
         return True
     managed = next((m for m in resident if m in config.models), None)
     footprint = config.models[managed].cold_gb if managed else 0.0
-    idle = state.idle_s or 0.0
     lease = link.lease(
         managed, idle < node.idle_threshold_s, node.memory_budget_gb - footprint, idle
     )

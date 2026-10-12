@@ -18,6 +18,10 @@ class NodePolicy:
     ``max_load`` is the load average above which a Linux server counts as in
     use; ``coordinator_url`` is how this node reaches the coordinator when
     that is not the configured listen address (a forwarded port).
+    ``local_idle_only`` keeps the local model off an owner's workstation while
+    the owner is active, ``active_ok`` queues included: no local lease below
+    the idle threshold, every local attempt released on input, and the node's
+    own model unloaded rather than left resident for its ``keep_alive``.
     """
 
     name: str
@@ -32,3 +36,4 @@ class NodePolicy:
     task_slots: int = 1
     max_load: float | None = None
     coordinator_url: str | None = None
+    local_idle_only: bool = False

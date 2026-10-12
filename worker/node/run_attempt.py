@@ -57,7 +57,8 @@ def run_attempt(  # noqa: PLR0913, PLR0917
                 break
             state = sample()
             pressed = pressed + 1 if state.pressure in ("warn", "critical") else 0
-            reason = sustained_release_reason(state, lease["run_when"], pressed)
+            run_when = "idle" if node.local_idle_only else lease["run_when"]
+            reason = sustained_release_reason(state, run_when, pressed)
             if reason is not None and not call.done():
                 phase = call.phase()
                 call.cancel()

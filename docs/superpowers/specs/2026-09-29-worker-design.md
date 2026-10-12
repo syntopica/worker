@@ -1273,3 +1273,23 @@ heartbeating, its lease expires, and the job returns to the queue with a new
 generation (section 10, "Leases"), exactly as for any other lost node. A node
 that wakes holding the old lease is fenced by its stale generation: the
 coordinator rejects its heartbeat and its result (section 6).
+
+### Amendment 2026-10-12 - a local-idle-only node
+
+`active_ok` exempts a queue from the idle requirement on every node, and a
+released attempt leaves its model resident for the whole `keep_alive`. On an
+owner's workstation that let a 22 GB model and its producer fill swap while the
+owner was working. A node may therefore set `local_idle_only: true` (default
+false). On such a node the local model never runs while the owner is active,
+whatever the queue says:
+
+- the node takes no local lease while idle time is below its threshold;
+- every local attempt is released on user input (idle below 10 s), as an
+  idle-only attempt is, `active_ok` included;
+- while idle time is below the threshold, the node unloads the models it owns
+  (`memory.owned`, as for pressure and battery), once per active spell.
+
+Remote and task executors are unaffected: an `active_ok` queue keeps running
+through the runner and OpenRouter rungs while the owner works. A server node
+leaves the flag off and keeps `active_ok` local work under its load and memory
+checks.
