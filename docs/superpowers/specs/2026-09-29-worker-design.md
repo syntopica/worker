@@ -908,6 +908,11 @@ most ten seconds old; the idle time is reused as read, never advanced. Past
 ten seconds the signal is unreadable and releases work as before. The power
 source keeps its two-minute hold.
 
+Correction 2026-10-14: the window is thirty seconds. Each reader runs in turn
+with a five-second timeout, so one sample in which they time out lasts up to
+about 25 s and outlived a ten-second window; 17 of 30 drains from 2026-10-11
+to 2026-10-13 were still `host_state_unreadable`, all from reader timeouts.
+
 ### Amendment 2026-10-01 - concurrent OpenRouter slots
 
 A free model takes 150-440 s per call, so one call in flight moved 10-20 jobs
@@ -1298,3 +1303,13 @@ Remote and task executors are unaffected: an `active_ok` queue keeps running
 through the runner and OpenRouter rungs while the owner works. A server node
 leaves the flag off and keeps `active_ok` local work under its load and memory
 checks.
+
+### Amendment 2026-10-14 - status shows today's OpenRouter use
+
+A free OpenRouter key's daily allowance can be spent by mid-morning, after
+which the remote loop rests until 00:00 UTC; nothing in `status` said so.
+`GET /v1/status` now carries `openrouter`: `spent_today` (attempts recorded
+with provider `openrouter` since 00:00 UTC, the count the daily caps use),
+`key_cap` (the strictest `daily_key_cap` of any queue, or null) and `capped`
+(the queues already at their `daily_cap` or `daily_key_cap`). `worker status`
+prints it as one line.
