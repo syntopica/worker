@@ -200,3 +200,11 @@ Closed engine work. Public repository: engine commits and behaviour only.
   a judge no longer spends both attempts inside one runner outage.
   - Result: 7530773, spec amendment 2026-10-14.
   - Evidence: `tests/jobs/test_runner_unavailable_backoff.py`; gate green.
+- 2026-10-14 [-] Phase 1a leftovers: laptop sleep and the final review's
+  minor test gaps.
+  - Resolution: a laptop node holds no sleep assertion (amendment
+    2026-10-11); its hand-back is lease expiry plus generation fencing,
+    pinned by `test_expired_lease_is_reissued_and_the_old_attempt_is_fenced`
+    and `test_one_pass_reclaims_an_expired_lease`. The minor gap list is not
+    recoverable: the review artifacts under `.superpowers/sdd/` were not kept
+    and the named items were closed on 2026-09-30.

@@ -42,13 +42,3 @@ Closed 2026-10-14; see `TODO_LOG.md`.
       a server node's engine must be updated before a configuration that
       needs it is pushed. Next: read the `load=` of the next `user_active`
       releases against `max_load`, or a few clean days.
-
-## Found during phase 1a execution
-
-- [~] Sleep assertion for laptop nodes; remaining minor test gaps listed in
-      the phase 1a final review. Decided 2026-10-11 (owner via Codex adjudication): a laptop
-      node holds no idle-sleep assertion; a sleeping laptop hands its work
-      back through lease expiry and fencing (spec amendment 2026-10-11, "a
-      laptop node holds no sleep assertion"). Remaining: observe one hand-back
-      across a normal sleep cycle, and recover the review's minor gap list
-      from the private instance.
