@@ -2,16 +2,16 @@ from worker.node.bridge_unreadable import BridgeUnreadable
 from worker.node.host_state import HostState
 
 
-def test_a_failed_idle_or_pressure_read_reuses_one_at_most_ten_seconds_old():
+def test_a_failed_idle_or_pressure_read_reuses_one_at_most_thirty_seconds_old():
     samples = [HostState(30, True, "normal"), HostState(None, True, "unknown")]
     now = [0.0]
     bridge = BridgeUnreadable(
         lambda: samples.pop(0) if len(samples) > 1 else samples[0], lambda: now[0]
     )
     assert bridge() == HostState(30, True, "normal")
-    now[0] = 8.0
+    now[0] = 28.0
     assert bridge() == HostState(30, True, "normal")
-    now[0] = 12.0
+    now[0] = 32.0
     assert bridge() == HostState(None, True, "unknown")
 
 
