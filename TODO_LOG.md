@@ -208,3 +208,16 @@ Closed engine work. Public repository: engine commits and behaviour only.
     and `test_one_pass_reclaims_an_expired_lease`. The minor gap list is not
     recoverable: the review artifacts under `.superpowers/sdd/` were not kept
     and the named items were closed on 2026-09-30.
+- 2026-10-14 [x] agy's empty answers on large prompts: a denied tool request
+  ends the turn `SUCCESS` with an empty response (`denied_actions:
+  RunCommand`); agy has no flag that removes its tools. Every agy prompt now
+  opens with a request for a plain answer.
+  - Result: 19edbce, spec amendment 2026-10-14.
+  - Evidence: a 195 KB synthetic prompt answered empty in 2 of 4 runs
+    without the line and in 0 of 3 with it; `test_prompt_not_in_argv.py`.
+- 2026-10-14 [x] A pinned OpenRouter shadow member was sent with the queue's
+  fallbacks, so a withdrawn free model was silently answered by another and
+  judged under the wrong label. Leases carry `pinned`; a pinned request names
+  only its own model.
+  - Result: 09c5f8f, lease fixture updated, spec amendment 2026-10-14.
+  - Evidence: `tests/remote/test_pinned_remote_no_fallbacks.py`; gate green.
