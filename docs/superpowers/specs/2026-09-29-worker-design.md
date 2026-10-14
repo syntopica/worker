@@ -1322,3 +1322,23 @@ stream) the outage was seen lasting 5-10 minutes, so a judge spent both of
 its attempts inside one outage (21 failed judges from 2026-10-07 to
 2026-10-14). A `runner_unavailable` retry now waits at least ten minutes. The
 attempt is still charged, so a lasting outage cannot loop a job.
+
+### Amendment 2026-10-14 - agy's prompt asks for a plain answer
+
+agy has no flag that removes its tools, and in print mode a denied tool
+request still ends the turn `SUCCESS` with an empty response, which the
+worker records as `no_output`. Large prompts drew it most: a clips synthesis
+prompt failed on agy in 282 of 341 attempts while short prompts on the same
+model answered. Every agy prompt now opens with one line asking for a plain
+answer from the prompt alone, without tools, commands or files. The posture
+flags are unchanged: a tool request is still denied, never approved.
+
+### Amendment 2026-10-14 - a pinned remote job asks its own model only
+
+A shadow member pinned to an OpenRouter model was sent with its queue's
+`fallbacks` as OpenRouter's `models` list, so when the pinned model was gone
+(a free model withdrawn on about 2026-10-05) another model answered and the
+member was judged under the wrong label. A lease now carries `pinned`, true
+for a shadow member or a judge, and a pinned OpenRouter request names only
+its own model. A withdrawn pinned model therefore fails the member, which is
+the signal to drop the target.
