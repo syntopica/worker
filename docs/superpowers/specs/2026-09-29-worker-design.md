@@ -1313,3 +1313,12 @@ with provider `openrouter` since 00:00 UTC, the count the daily caps use),
 `key_cap` (the strictest `daily_key_cap` of any queue, or null) and `capped`
 (the queues already at their `daily_cap` or `daily_key_cap`). `worker status`
 prints it as one line.
+
+### Amendment 2026-10-14 - an unavailable runner is retried after its outage
+
+A charged failure is retried after 30 s, doubling. When a runner reports its
+service unavailable (`runner_unavailable`: a 5xx, an overload, a dropped
+stream) the outage was seen lasting 5-10 minutes, so a judge spent both of
+its attempts inside one outage (21 failed judges from 2026-10-07 to
+2026-10-14). A `runner_unavailable` retry now waits at least ten minutes. The
+attempt is still charged, so a lasting outage cannot loop a job.
