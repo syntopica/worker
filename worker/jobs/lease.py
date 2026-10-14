@@ -12,7 +12,8 @@ class Lease:
 
     ``model`` is the executor target: a pinned model, a task's profile, or an
     OpenRouter model id. ``queue`` and ``privacy`` let a remote executor apply
-    the queue's route and the class's data-handling rule.
+    the queue's route and the class's data-handling rule. ``pinned`` marks a
+    shadow member or judge, which runs on its own target only.
     """
 
     job_id: str
@@ -25,6 +26,7 @@ class Lease:
     kind: str = "inference"
     queue: str = ""
     privacy: str = ""
+    pinned: bool = False
 
     def to_json(self) -> dict[str, Any]:
         """The wire form of the lease."""

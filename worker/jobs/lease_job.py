@@ -107,4 +107,5 @@ def lease_job(
         req.kind,
         chosen.queue,
         chosen.privacy,
+        chosen.pin is not None,
     )

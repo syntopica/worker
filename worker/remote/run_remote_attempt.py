@@ -32,12 +32,13 @@ def run_remote_attempt(  # noqa: PLR0913, PLR0917
     Non-public jobs go to zero-data-retention endpoints unless the queue's
     route turns that off. The call runs in a daemon thread so the lease is
     heartbeated; a fenced call is left to finish and its answer dropped.
+    A pinned job asks its own model only, never the route's fallbacks.
     A ``stopping`` loop hands the job back as a shutdown within a second.
     """
     queue = config.queues.get(str(lease.get("queue")))
     route = queue.openrouter if queue is not None else None
     zdr = (route.zdr if route is not None else True) and lease.get("privacy") != "public"
-    fallbacks = route.fallbacks if route is not None else ()
+    fallbacks = route.fallbacks if route is not None and not lease.get("pinned") else ()
     body = openrouter_request_body(str(lease["model"]), lease["input"], zdr, fallbacks)
     executor = {"node": node_name, "provider": "openrouter", "model": str(lease["model"])}
     attempt, gen = lease["attempt_id"], lease["generation"]
