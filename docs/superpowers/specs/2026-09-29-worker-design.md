@@ -1041,6 +1041,11 @@ the runner rung skips a job last handed back that way, so OpenRouter or the
 local model answers it next without waiting for the route's `after_s`. A task
 job's empty answer is still charged.
 
+Correction 2026-10-14: a pinned job (a shadow member or a judge) has no next
+executor, so the uncharged hand-back looped it on the same runner (one shadow
+member drew 218 empty answers in two hours). A pinned job's empty answer is
+charged like any other failure.
+
 ### Amendment 2026-10-03 - quota windows rest the models they meter
 
 A provider can meter model families apart: Antigravity reports a Gemini

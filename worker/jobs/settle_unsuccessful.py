@@ -25,10 +25,11 @@ def settle_unsuccessful(
     about the job, so it is re-planned without charging an attempt (or, for a
     shutdown, a preemption); any other failure is charged. A runner's empty
     answer to an inference job is not charged either: the runner rung skips
-    the job afterwards, so the next executor answers it.
+    the job afterwards, so the next executor answers it. A pinned job has no
+    next executor, so its empty answer is charged like any other failure.
     """
     if report.error_code in _UNCHARGED or (
-        report.error_code == "no_output" and job["kind"] == "inference"
+        report.error_code == "no_output" and job["kind"] == "inference" and job["pin"] is None
     ):
         return requeue_uncharged(conn, job, report.error_code, now)
     if report.outcome == "preempted":
