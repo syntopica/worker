@@ -3,6 +3,7 @@ import time
 from tests.tasks.fake_runner import fake_runner
 from worker.config.task_profile import TaskProfile
 from worker.tasks.agy_invocation import agy_invocation
+from worker.tasks.agy_no_tools_preface import AGY_NO_TOOLS_PREFACE
 from worker.tasks.codex_invocation import codex_invocation
 from worker.tasks.run_task import run_task
 
@@ -36,7 +37,7 @@ def test_agy_joins_the_prompt_to_its_flag(tmp_path):
     for prompt in (HOSTILE, "--help", "--version"):
         argv = agy_invocation(profile("agy"), prompt, None).argv
         assert prompt not in argv
-        assert argv[1] == f"--print={prompt}"
+        assert argv[1] == f"--print={AGY_NO_TOOLS_PREFACE}{prompt}"
         assert "--dangerously-skip-permissions" not in argv
 
 

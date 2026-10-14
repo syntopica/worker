@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from worker.config.task_profile import TaskProfile
+from worker.tasks.agy_no_tools_preface import AGY_NO_TOOLS_PREFACE
 from worker.tasks.runner_invocation import RunnerInvocation
 
 
@@ -15,10 +16,17 @@ def agy_invocation(profile: TaskProfile, prompt: str, schema: Path | None) -> Ru
     The prompt is joined to its flag as ``--print=<prompt>``: agy pre-scans
     argv for ``--help`` and ``--version`` even as the value of ``-p``, while a
     joined value is never read as a flag (checked on agy 1.3.3). Its print
-    mode reads stdin only as ``stream-json``.
+    mode reads stdin only as ``stream-json``. The prompt opens with a line
+    asking for a plain answer, because a denied tool request ends the turn
+    with an empty response.
     """
     minutes = max(1, int(profile.timeout_s // 60))
-    argv = [profile.command or "agy", f"--print={prompt}", "--output-format", "json"]
+    argv = [
+        profile.command or "agy",
+        f"--print={AGY_NO_TOOLS_PREFACE}{prompt}",
+        "--output-format",
+        "json",
+    ]
     argv += ["--print-timeout", f"{minutes}m", "--sandbox", "--mode", "plan"]
     argv += ["--disable-slash-commands"]
     if profile.model:
