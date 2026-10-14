@@ -36,4 +36,9 @@ def cmd_status(args: argparse.Namespace) -> int:
             )
         for runner, left in status.get("cooldowns", {}).items():
             print(f"cooldown {runner:15} {left:.0f}s left")
+        remote = status.get("openrouter")
+        if remote:
+            cap = remote.get("key_cap") or "-"
+            capped = ",".join(remote.get("capped", [])) or "none"
+            print(f"openrouter today {remote.get('spent_today')}/{cap} capped={capped}")
     return 0

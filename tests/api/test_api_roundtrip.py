@@ -112,7 +112,8 @@ def test_wrong_principal_and_stale_attempt_are_refused(api):
 def test_status_needs_admin(api):
     base, t = api
     assert call(base, t["pa"], "GET", "/v1/status")[0] == 403
-    assert call(base, t["admin"], "GET", "/v1/status")[0] == 200
+    code, status = call(base, t["admin"], "GET", "/v1/status")
+    assert (code, status["openrouter"]["spent_today"]) == (200, 0)
 
 
 def test_activity_needs_admin_and_a_numeric_span(api):
