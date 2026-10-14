@@ -157,3 +157,46 @@ Closed engine work. Public repository: engine commits and behaviour only.
   spec decision "phase 1c decisions" 4 (no CPU-time progress guard for
   tasks; near-zero CPU is normal while a runner waits on a remote model, and
   `timeout_s` stays the guard).
+- 2026-10-14 [x] Phase 1c acceptance closed against spec section 11.
+  - Result: cancel-to-quiet latency measured per phase over 30 phase-tagged
+    drains (2026-10-11..13): prefill p50 4.4 s, p90 10.4 s, max 30.3 s, no
+    failure; generation p50 6.9 s, p90 18.8 s, max 74.3 s, 2 failed (7%,
+    down from 12%). Model reloads: every one of 29 unloads followed a release
+    (battery, user input, unreadable host state) or a quiet spell; none was a
+    keep-alive expiry or an option mismatch while work waited. Useful work
+    under interruptions: an instance backlog of 6694 jobs completed in seven
+    days with 55 preemptions, 41 jobs finished after being preempted and none
+    failed `preemption_exhausted`; `worker status` showed `done_1h` moving.
+    The 1000-text translation run was replaced by that backlog because the
+    translation backlog no longer exists.
+  - Evidence: node.err.log `drain ... phase=` and `residency` lines; jobs and
+    attempts tables; owner asked on 2026-10-14 to do every pending item.
+- 2026-10-14 [x] Executor preference read from judgements: about 20 or more
+  judged answers per executor and queue on the main queues. The ladder order
+  already matches the scores (runner rung 3.8-4.5, OpenRouter 2.2-4.7, local
+  2.0-3.2), so no rung moved.
+  - Result: no configuration change.
+  - Evidence: `judgements` grouped by queue, provider and model.
+- 2026-10-14 [x] agy success envelope captured and pinned
+  (`tests/tasks/fixtures/agy_success_envelope.json`): `input_tokens` and
+  `output_tokens` map to the ledger; cached tokens are not counted.
+  - Result: e612e98.
+  - Evidence: `tests/tasks/test_read_usage.py` passes.
+- 2026-10-14 [x] Host reader bridge widened from 10 s to 30 s: each reader
+  times out after 5 s in turn, so one failed sample outlived the window and
+  17 of 30 drains were still `host_state_unreadable`.
+  - Result: c7c7d98, spec correction to amendment 2026-10-01.
+  - Evidence: `tests/node/test_bridge_unreadable.py`; gate green.
+- 2026-10-14 [x] A pinned job's empty answer is charged; it looped one shadow
+  member 218 times on the same runner.
+  - Result: 74dfa1c.
+  - Evidence: `tests/shadow/test_pinned_no_output.py` failed before, passes.
+- 2026-10-14 [x] `status` reports today's OpenRouter use, the key cap and the
+  capped queues (`openrouter today N/cap capped=...`).
+  - Result: 82d1f64, spec amendment 2026-10-14.
+  - Evidence: `tests/jobs/test_openrouter_headroom.py`, roundtrip test; live
+    status line after the coordinator restart.
+- 2026-10-14 [x] A `runner_unavailable` retry waits at least ten minutes, so
+  a judge no longer spends both attempts inside one runner outage.
+  - Result: 7530773, spec amendment 2026-10-14.
+  - Evidence: `tests/jobs/test_runner_unavailable_backoff.py`; gate green.
