@@ -10,6 +10,7 @@ from worker.tasks.run_task import run_task
 FIXTURES = Path(__file__).parent / "fixtures"
 CURSOR = (FIXTURES / "cursor_envelope.json").read_text()
 AGY = (FIXTURES / "agy_error_envelope.json").read_text()
+AGY_OK = (FIXTURES / "agy_success_envelope.json").read_text()
 
 
 def test_cursor_envelope_maps_input_and_output_tokens():
@@ -21,6 +22,10 @@ def test_agy_envelope_maps_its_snake_case_counts():
     envelope = json.loads(AGY)
     envelope["usage"].update(input_tokens=120, output_tokens=7)
     assert read_usage("agy", json.dumps(envelope)) == {"tokens_in": 120, "tokens_out": 7}
+
+
+def test_agy_success_envelope_maps_input_and_output_but_not_cached_tokens():
+    assert read_usage("agy", AGY_OK) == {"tokens_in": 2214, "tokens_out": 19}
 
 
 def test_codex_and_unreadable_envelopes_report_no_usage():
