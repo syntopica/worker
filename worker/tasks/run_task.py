@@ -21,6 +21,7 @@ from worker.tasks.runner_failure_text import runner_failure_text
 from worker.tasks.start_runner import start_runner
 from worker.tasks.supervise_process import supervise_process
 from worker.tasks.task_invocation import task_invocation
+from worker.tasks.wall_resets_in_s import wall_resets_in_s
 from worker.tasks.workspace_error import WorkspaceError
 
 
@@ -80,6 +81,9 @@ def run_task(  # noqa: PLR0913, PLR0917
             if code == "runner_failed":
                 report_runner_failure(profile.runner, profile.model or "", failure)
         usage = read_usage(profile.runner, stdout)
+        resets_in = wall_resets_in_s(stdout + stderr) if code == "quota_wall" else None
+        if resets_in is not None:
+            usage = {**usage, "wall_resets_in_s": resets_in}
         return attempt_report(
             outcome, executor, wall_s, output=output, usage=usage, error_code=code
         )

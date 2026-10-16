@@ -15,6 +15,7 @@ def requeue_after_wall(
     job: sqlite3.Row,
     executor: dict[str, Any],
     now: float,
+    resets_in_s: float | None = None,
 ) -> str:
     """Return ``queued``; the attempt is not charged and the job waits out the cooldown.
 
@@ -24,7 +25,9 @@ def requeue_after_wall(
     fallback for its profile is due at once: the next pick runs it elsewhere.
     An inference job sent to a runner keeps its own model, so the runner is
     the reporting executor, and it is due at once for the next rung. Only the
-    model that hit the wall rests when the profile pins one.
+    model that hit the wall rests when the profile pins one. A wall that says
+    when it resets (``resets_in_s``) rests the runner that long when it is
+    longer than the configured cooldown: agy's weekly quotas outlast it.
     """
     inference = job["kind"] == "inference"
     profile = config.profiles.get(job["model"])
@@ -33,7 +36,7 @@ def requeue_after_wall(
     else:
         runner = profile.runner if profile is not None else ""
         model = profile.model if profile is not None else None
-    until = now + config.runner_cooldown_s.get(runner, _DEFAULT_COOLDOWN_S)
+    until = now + max(config.runner_cooldown_s.get(runner, _DEFAULT_COOLDOWN_S), resets_in_s or 0.0)
     if runner:
         conn.execute(
             "INSERT INTO cooldowns (runner, until) VALUES (?, ?)"

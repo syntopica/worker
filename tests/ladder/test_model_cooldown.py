@@ -40,3 +40,15 @@ def test_a_wall_on_one_model_rests_that_model_only(tmp_path):
     submit_job(conn, config, "pa", body(key="k2", queue="pa.live"), 3.0)
     assert lease(conn, config, 4.0).model == "b.flash"
     assert lease(conn, config, 5.0) is None
+
+
+def test_a_wall_that_names_its_reset_rests_that_long(tmp_path):
+    config = make_config(tmp_path)
+    conn = fresh_store(tmp_path / "state")
+    submit_job(conn, config, "pa", body(), 0.0)
+    got = lease(conn, config, 1.0)
+    executor = {"node": "node-a", "provider": "agy", "model": "pro"}
+    week = 167 * 3600.0
+    report = CompletionReport("failed", None, {"wall_resets_in_s": week}, executor, "quota_wall", 1.0)
+    complete_attempt(conn, config, got.attempt_id, got.generation, report, 2.0, node="node-a")
+    assert conn.execute("SELECT until FROM cooldowns").fetchone()[0] == 2.0 + week

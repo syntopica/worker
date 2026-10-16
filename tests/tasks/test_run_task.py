@@ -111,6 +111,16 @@ def test_an_unmatched_failure_leaves_its_tail_on_stderr(tmp_path, capsys):
     assert "model gemini-x is not available" in capsys.readouterr().err
 
 
+def test_a_wall_reports_when_it_resets(tmp_path):
+    body = (
+        "sys.stderr.write('error: Individual quota reached. Please upgrade your subscription "
+        "to increase your limits. Resets in 2h5m.'); sys.exit(1)"
+    )
+    report = run(profile("agy", fake_runner(tmp_path, "agy", body)), lease())
+    assert report["error_code"] == "quota_wall"
+    assert report["usage"]["wall_resets_in_s"] == 2 * 3600 + 5 * 60
+
+
 def test_a_timeout_kills_the_runner(tmp_path):
     prof = profile("codex", fake_runner(tmp_path, "codex", "time.sleep(60)"), timeout_s=0.5)
     started = time.monotonic()
