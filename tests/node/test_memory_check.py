@@ -12,7 +12,7 @@ def fake_host(level: str | None, free: str | None):
         "kern.memorystatus_vm_pressure_level": level,
         "kern.memorystatus_level": free,
         "IOHIDSystem": '"HIDIdleTime" = 900000000000',
-        "ps": "Now drawing from 'AC Power'",
+        "AppleSmartBattery": '"ExternalConnected" = Yes',
     }
 
     def run(args: list[str]) -> str | None:

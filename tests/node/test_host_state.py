@@ -67,3 +67,18 @@ def test_a_transient_pmset_failure_is_retried_once():
     state = sample_host_state(flaky)
     assert state.on_ac is True
     assert calls.count("/usr/bin/pmset") == 2
+
+
+def test_a_hung_pmset_falls_back_to_the_battery_flag(capsys):
+    def run(args):
+        if args[0].endswith("pmset"):
+            return None
+        if "AppleSmartBattery" in args:
+            return '      "ExternalConnected" = Yes\n'
+        if args[0].endswith("ioreg"):
+            return IOREG
+        return "1\n"
+
+    state = sample_host_state(run)
+    assert state.on_ac is True
+    assert "host readers failed" not in capsys.readouterr().err
