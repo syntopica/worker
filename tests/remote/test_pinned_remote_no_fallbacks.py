@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 from tests.conftest import CONFIG, body, fresh_store
 from tests.remote.test_remote_step import LEASE, Link
@@ -51,14 +52,14 @@ def test_the_lease_says_whether_the_job_is_pinned(tmp_path):
     raw["privacy"] = {"mail": {"executors": ["ollama", "runner", "openrouter"], "trust": ["owner"]}}
     (tmp_path / "config.json").write_text(json.dumps(raw))
     config = load_worker_config(tmp_path / "config.json")
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(), 0.0)
-    local = lease_job(
-        conn, config, LeaseRequest("node-a", None, False, 0.0, 99.0, "inference"), 1.0
-    )
-    assert local.to_json()["pinned"] is False
-    executor = {"node": "node-a", "provider": "ollama", "model": "model-a"}
-    done = CompletionReport("succeeded", {"text": "L", "json": None}, {}, executor, None, 1.0)
-    complete_attempt(conn, config, local.attempt_id, local.generation, done, 2.0, node="node-a")
-    req = LeaseRequest("node-a", None, False, 0.0, 99.0, "openrouter")
-    assert lease_job(conn, config, req, 3.0).to_json()["pinned"] is True
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(), 0.0)
+        local = lease_job(
+            conn, config, LeaseRequest("node-a", None, False, 0.0, 99.0, "inference"), 1.0
+        )
+        assert local.to_json()["pinned"] is False
+        executor = {"node": "node-a", "provider": "ollama", "model": "model-a"}
+        done = CompletionReport("succeeded", {"text": "L", "json": None}, {}, executor, None, 1.0)
+        complete_attempt(conn, config, local.attempt_id, local.generation, done, 2.0, node="node-a")
+        req = LeaseRequest("node-a", None, False, 0.0, 99.0, "openrouter")
+        assert lease_job(conn, config, req, 3.0).to_json()["pinned"] is True

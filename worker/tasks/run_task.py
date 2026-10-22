@@ -81,7 +81,9 @@ def run_task(  # noqa: PLR0913, PLR0917
             if code == "runner_failed":
                 report_runner_failure(profile.runner, profile.model or "", failure)
         usage = read_usage(profile.runner, stdout)
-        resets_in = wall_resets_in_s(profile.runner, stdout + stderr) if code == "quota_wall" else None
+        resets_in = (
+            wall_resets_in_s(profile.runner, stdout + stderr) if code == "quota_wall" else None
+        )
         if resets_in is not None:
             usage = {**usage, "wall_resets_in_s": resets_in}
         return attempt_report(

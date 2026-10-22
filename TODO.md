@@ -42,3 +42,7 @@ Closed 2026-10-14; see `TODO_LOG.md`.
       a server node's engine must be updated before a configuration that
       needs it is pushed. Next: read the `load=` of the next `user_active`
       releases against `max_load`, or a few clean days.
+
+## Security
+
+## Quality gate

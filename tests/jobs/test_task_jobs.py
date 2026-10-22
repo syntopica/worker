@@ -33,7 +33,11 @@ def tconfig(tmp_path):
 
 @pytest.fixture
 def tconn(tmp_path):
-    return fresh_store(tmp_path / "state")
+    connection = fresh_store(tmp_path / "state")
+    try:
+        yield connection
+    finally:
+        connection.close()
 
 
 def task(key="t1", profile="pa.codex", runner="codex", privacy="internal", **extra):

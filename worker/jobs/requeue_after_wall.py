@@ -1,10 +1,11 @@
 """Rest a runner after a quota wall and requeue its task (amendment 2026-09-30)."""
 
 import sqlite3
-from typing import Any
 
 from worker.config.cooldown_key import cooldown_key
 from worker.config.worker_config import WorkerConfig
+from worker.jobs.completion_report import CompletionReport
+from worker.jobs.trusted_wall_reset import trusted_wall_reset
 
 _DEFAULT_COOLDOWN_S = 3600.0
 
@@ -13,9 +14,8 @@ def requeue_after_wall(
     conn: sqlite3.Connection,
     config: WorkerConfig,
     job: sqlite3.Row,
-    executor: dict[str, Any],
+    report: CompletionReport,
     now: float,
-    resets_in_s: float | None = None,
 ) -> str:
     """Return ``queued``; the attempt is not charged and the job waits out the cooldown.
 
@@ -29,6 +29,8 @@ def requeue_after_wall(
     when it resets (``resets_in_s``) rests the runner that long when it is
     longer than the configured cooldown: agy's weekly quotas outlast it.
     """
+    executor = report.executor
+    resets_in_s = trusted_wall_reset(report.usage)
     inference = job["kind"] == "inference"
     profile = config.profiles.get(job["model"])
     if inference:

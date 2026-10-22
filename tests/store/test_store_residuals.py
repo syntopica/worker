@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from contextlib import closing
 
 import pytest
 
@@ -17,9 +18,8 @@ def test_an_unmigrated_store_is_refused(tmp_path):
     legacy_store(tmp_path / "old")
     with pytest.raises(StoreNotMigratedError):
         open_store(tmp_path / "old")
-    assert fresh_store(tmp_path / "old").execute("PRAGMA user_version").fetchone()[0] == (
-        STORE_VERSION
-    )
+    with closing(fresh_store(tmp_path / "old")) as store:
+        assert store.execute("PRAGMA user_version").fetchone()[0] == STORE_VERSION
 
 
 def test_open_store_begins_nothing_and_changes_no_schema(tmp_path, monkeypatch):
@@ -41,12 +41,12 @@ def test_open_store_begins_nothing_and_changes_no_schema(tmp_path, monkeypatch):
 
 def test_a_read_completes_while_another_connection_holds_the_writer_lock(tmp_path):
     state = tmp_path / "state"
-    writer = fresh_store(state)
-    writer.execute("BEGIN IMMEDIATE")
-    try:
-        started = time.monotonic()
-        reader = open_store(state)
-        assert reader.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
-        assert time.monotonic() - started < 2.0  # the busy timeout is 10 s
-    finally:
-        writer.execute("ROLLBACK")
+    with closing(fresh_store(state)) as writer:
+        writer.execute("BEGIN IMMEDIATE")
+        try:
+            started = time.monotonic()
+            with closing(open_store(state)) as reader:
+                assert reader.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+                assert time.monotonic() - started < 2.0  # the busy timeout is 10 s
+        finally:
+            writer.execute("ROLLBACK")

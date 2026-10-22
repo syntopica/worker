@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 
 from tests.conftest import fresh_store
 from worker.store.schema_sql import SCHEMA
@@ -20,9 +21,9 @@ def test_a_version_7_store_gains_the_audit_table_and_retry_of(tmp_path):
     conn.execute("PRAGMA user_version=7")
     conn.commit()
     conn.close()
-    store = fresh_store(state)
-    assert STORE_VERSION == 8
-    assert store.execute("PRAGMA user_version").fetchone()[0] == 8
-    assert "retry_of" in {r[1] for r in store.execute("PRAGMA table_info(jobs)")}
-    columns = {r[1] for r in store.execute("PRAGMA table_info(audit)")}
-    assert columns == {"seq", "action", "job_id", "privacy", "principal", "created"}
+    with closing(fresh_store(state)) as store:
+        assert STORE_VERSION == 8
+        assert store.execute("PRAGMA user_version").fetchone()[0] == 8
+        assert "retry_of" in {r[1] for r in store.execute("PRAGMA table_info(jobs)")}
+        columns = {r[1] for r in store.execute("PRAGMA table_info(audit)")}
+        assert columns == {"seq", "action", "job_id", "privacy", "principal", "created"}

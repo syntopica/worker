@@ -2,6 +2,7 @@ import sqlite3
 import stat
 import subprocess
 import sys
+from contextlib import closing
 
 import pytest
 
@@ -42,8 +43,8 @@ def test_the_legacy_store_gains_the_column_and_keeps_its_rows(tmp_path):
     rows = dict(conn.execute("SELECT id, payloads_deleted FROM jobs").fetchall())
     assert rows == {"old": 1, "live": 0}
     conn.close()
-    conn = fresh_store(tmp_path / "state")  # idempotent on the second open
-    assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 2
+    with closing(fresh_store(tmp_path / "state")) as conn:  # idempotent on the second open
+        assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 2
 
 
 def test_the_hot_path_indexes_exist(conn):
@@ -56,10 +57,10 @@ def test_state_files_are_private(tmp_path):
     conn = fresh_store(state)
     conn.execute("INSERT INTO nodes (name, report, updated) VALUES ('n', '{}', 0)")
     conn.close()
-    conn = fresh_store(state)
-    assert stat.S_IMODE(state.stat().st_mode) == 0o700
-    for path in state.iterdir():
-        assert stat.S_IMODE(path.stat().st_mode) == 0o600, path.name
+    with closing(fresh_store(state)) as conn:
+        assert stat.S_IMODE(state.stat().st_mode) == 0o700
+        for path in state.iterdir():
+            assert stat.S_IMODE(path.stat().st_mode) == 0o600, path.name
 
 
 def test_the_payload_wal_is_truncated_after_checkpoints(conn):
@@ -69,7 +70,7 @@ def test_the_payload_wal_is_truncated_after_checkpoints(conn):
 @pytest.mark.skipif(sys.platform != "darwin", reason="Time Machine exists on macOS only")
 def test_payload_files_are_excluded_from_time_machine(tmp_path):
     state = tmp_path / "state"
-    fresh_store(state)
+    fresh_store(state).close()
     value = subprocess.run(
         [
             "/usr/bin/xattr",

@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 import pytest
 
@@ -28,23 +29,23 @@ def remote(conn, config, now):
 
 def test_without_a_runner_route_a_public_job_escalates_at_once(tmp_path):
     config = make_config(tmp_path)
-    conn = fresh_store(tmp_path / "state")
-    job_id, _ = submit_job(conn, config, "pa", body(privacy="public"), 0.0)
-    lease = remote(conn, config, 1.0)
-    assert (lease.job_id, lease.model, lease.queue, lease.privacy) == (
-        job_id,
-        "vendor/model:free",
-        "pa.bulk",
-        "public",
-    )
-    assert conn.execute("SELECT model FROM jobs").fetchone()[0] == "model-a"
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        job_id, _ = submit_job(conn, config, "pa", body(privacy="public"), 0.0)
+        lease = remote(conn, config, 1.0)
+        assert (lease.job_id, lease.model, lease.queue, lease.privacy) == (
+            job_id,
+            "vendor/model:free",
+            "pa.bulk",
+            "public",
+        )
+        assert conn.execute("SELECT model FROM jobs").fetchone()[0] == "model-a"
 
 
 def test_a_mail_job_never_escalates_by_default(tmp_path):
     config = make_config(tmp_path)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="mail"), 0.0)
-    assert remote(conn, config, 500.0) is None
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="mail"), 0.0)
+        assert remote(conn, config, 500.0) is None
 
 
 def test_only_free_endpoints_are_accepted(tmp_path):
@@ -56,44 +57,44 @@ def test_only_free_endpoints_are_accepted(tmp_path):
 
 def test_the_ledger_records_provider_and_cost_per_day(tmp_path):
     config = make_config(tmp_path)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="public"), 0.0)
-    lease = remote(conn, config, 200.0)
-    report = CompletionReport(
-        "succeeded",
-        {"text": "{}", "json": {}},
-        {"tokens_in": 7, "tokens_out": 3, "cost_usd": 0.5},
-        {"node": "node-a", "provider": "openrouter", "model": "vendor/model:free"},
-        None,
-        2.0,
-    )
-    complete_attempt(conn, config, lease.attempt_id, lease.generation, report, 210.0)
-    rows = read_costs(conn, 0.0)
-    assert rows == [
-        {
-            "provider": "openrouter",
-            "queue": "pa.bulk",
-            "day": "1970-01-01",
-            "attempts": 1,
-            "succeeded": 1,
-            "tokens_in": 7,
-            "tokens_out": 3,
-            "cost_usd": 0.5,
-            "wall_s": 2.0,
-        }
-    ]
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="public"), 0.0)
+        lease = remote(conn, config, 200.0)
+        report = CompletionReport(
+            "succeeded",
+            {"text": "{}", "json": {}},
+            {"tokens_in": 7, "tokens_out": 3, "cost_usd": 0.5},
+            {"node": "node-a", "provider": "openrouter", "model": "vendor/model:free"},
+            None,
+            2.0,
+        )
+        complete_attempt(conn, config, lease.attempt_id, lease.generation, report, 210.0)
+        rows = read_costs(conn, 0.0)
+        assert rows == [
+            {
+                "provider": "openrouter",
+                "queue": "pa.bulk",
+                "day": "1970-01-01",
+                "attempts": 1,
+                "succeeded": 1,
+                "tokens_in": 7,
+                "tokens_out": 3,
+                "cost_usd": 0.5,
+                "wall_s": 2.0,
+            }
+        ]
 
 
 def test_a_rate_limited_remote_attempt_is_not_charged(tmp_path):
     config = make_config(tmp_path)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="public"), 0.0)
-    lease = remote(conn, config, 200.0)
-    executor = {"node": "node-a", "provider": "openrouter", "model": "vendor/model:free"}
-    report = CompletionReport("failed", None, {}, executor, "rate_limited", 0.3)
-    assert (
-        complete_attempt(conn, config, lease.attempt_id, lease.generation, report, 201.0)
-        == "queued"
-    )
-    row = conn.execute("SELECT attempts, not_before, error FROM jobs").fetchone()
-    assert (row["attempts"], row["not_before"], row["error"]) == (0, 201.0, "rate_limited")
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="public"), 0.0)
+        lease = remote(conn, config, 200.0)
+        executor = {"node": "node-a", "provider": "openrouter", "model": "vendor/model:free"}
+        report = CompletionReport("failed", None, {}, executor, "rate_limited", 0.3)
+        assert (
+            complete_attempt(conn, config, lease.attempt_id, lease.generation, report, 201.0)
+            == "queued"
+        )
+        row = conn.execute("SELECT attempts, not_before, error FROM jobs").fetchone()
+        assert (row["attempts"], row["not_before"], row["error"]) == (0, 201.0, "rate_limited")

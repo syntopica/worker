@@ -1,3 +1,5 @@
+from contextlib import closing
+
 import pytest
 
 from tests.conftest import body, fresh_store
@@ -19,18 +21,18 @@ from worker.tasks.task_step import task_step
 
 
 def test_only_the_lease_holder_may_heartbeat_or_complete(config, tmp_path):
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(), 0.0)
-    leased = lease_job(conn, config, LeaseRequest("node-a", None, False, 40.0, 9999.0), 1.0)
-    with pytest.raises(ApiError) as caught:
-        heartbeat_attempt(conn, leased.attempt_id, leased.generation, False, 2.0, node="node-g")
-    assert caught.value.code == "stale_attempt"
-    report = CompletionReport("succeeded", {"text": "x"}, {}, {}, None, 1.0)
-    with pytest.raises(ApiError):
-        complete_attempt(
-            conn, config, leased.attempt_id, leased.generation, report, 2.0, node="node-g"
-        )
-    heartbeat_attempt(conn, leased.attempt_id, leased.generation, False, 2.0, node="node-a")
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(), 0.0)
+        leased = lease_job(conn, config, LeaseRequest("node-a", None, False, 40.0, 9999.0), 1.0)
+        with pytest.raises(ApiError) as caught:
+            heartbeat_attempt(conn, leased.attempt_id, leased.generation, False, 2.0, node="node-g")
+        assert caught.value.code == "stale_attempt"
+        report = CompletionReport("succeeded", {"text": "x"}, {}, {}, None, 1.0)
+        with pytest.raises(ApiError):
+            complete_attempt(
+                conn, config, leased.attempt_id, leased.generation, report, 2.0, node="node-g"
+            )
+        heartbeat_attempt(conn, leased.attempt_id, leased.generation, False, 2.0, node="node-a")
 
 
 def test_the_node_refuses_an_inference_lease_its_policy_forbids(config):

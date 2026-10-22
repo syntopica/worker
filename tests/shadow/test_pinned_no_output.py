@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 from tests.conftest import CONFIG, body, fresh_store
 from worker.config.load_worker_config import load_worker_config
@@ -38,16 +39,20 @@ def report(provider, outcome, output, error):
 
 def test_an_empty_answer_to_a_pinned_member_is_charged_not_retried_forever(tmp_path):
     config = make_config(tmp_path)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(), 0.0)
-    got = lease(conn, config, "inference", 1.0)
-    answer = {"text": "L", "json": None}
-    done = report("ollama", "succeeded", answer, None)
-    complete_attempt(conn, config, got.attempt_id, got.generation, done, 2.0, node="node-a")
-    member = lease(conn, config, "task", 3.0)
-    assert member.model == "bulk.agy"
-    empty = report("agy", "failed", None, "no_output")
-    complete_attempt(conn, config, member.attempt_id, member.generation, empty, 4.0, node="node-a")
-    row = conn.execute("SELECT state, error, attempts FROM jobs WHERE pin=?", ("runner:bulk.agy",))
-    assert row.fetchone()[:] == ("failed", "no_output", 1)
-    assert lease(conn, config, "task", 5.0) is None
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(), 0.0)
+        got = lease(conn, config, "inference", 1.0)
+        answer = {"text": "L", "json": None}
+        done = report("ollama", "succeeded", answer, None)
+        complete_attempt(conn, config, got.attempt_id, got.generation, done, 2.0, node="node-a")
+        member = lease(conn, config, "task", 3.0)
+        assert member.model == "bulk.agy"
+        empty = report("agy", "failed", None, "no_output")
+        complete_attempt(
+            conn, config, member.attempt_id, member.generation, empty, 4.0, node="node-a"
+        )
+        row = conn.execute(
+            "SELECT state, error, attempts FROM jobs WHERE pin=?", ("runner:bulk.agy",)
+        )
+        assert row.fetchone()[:] == ("failed", "no_output", 1)
+        assert lease(conn, config, "task", 5.0) is None

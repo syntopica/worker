@@ -1,5 +1,6 @@
 import json
 import re
+from contextlib import closing, contextmanager
 
 from tests.conftest import body, fresh_store
 from tests.jobs.test_results_and_retention import succeed
@@ -33,60 +34,68 @@ def test_a_sweep_over_already_swept_jobs_touches_no_rows(conn, config):
     assert (conn.total_changes - before, writes) == (0, [])
 
 
+@contextmanager
 def seed(state, count):
     """``count`` public jobs, succeeded and acked at t=0, each with input and output."""
-    conn = fresh_store(state)
-    conn.execute("BEGIN")
-    for i in range(count):
-        job, result = f"j{i}", f"r{i}"
-        conn.execute(
-            "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority,"
-            " privacy, model, state, max_attempts, not_before, created, updated, finished, acked)"
-            " VALUES (?, 'pa', 'pa.live', 'inference', ?, 'h', 50, 'public', 'model-a', 'succeeded',"
-            " 3, 0, 0, 0, 0, 0)",
-            (job, job),
-        )
-        conn.execute(
-            "INSERT INTO results (result_id, job_id, producer, queue, created, acked)"
-            " VALUES (?, ?, 'pa', 'pa.live', 0, 0)",
-            (result, job),
-        )
-        conn.execute("INSERT INTO p.inputs VALUES (?, ?)", (job, json.dumps({"input": {}})))
-        conn.execute("INSERT INTO p.outputs VALUES (?, ?)", (result, "{}"))
-    conn.execute("COMMIT")
-    return conn
+    with closing(fresh_store(state)) as conn:
+        conn.execute("BEGIN")
+        for i in range(count):
+            job, result = f"j{i}", f"r{i}"
+            conn.execute(
+                "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority,"
+                " privacy, model, state, max_attempts, not_before, created, updated, finished, acked)"
+                " VALUES (?, 'pa', 'pa.live', 'inference', ?, 'h', 50, 'public', 'model-a', 'succeeded',"
+                " 3, 0, 0, 0, 0, 0)",
+                (job, job),
+            )
+            conn.execute(
+                "INSERT INTO results (result_id, job_id, producer, queue, created, acked)"
+                " VALUES (?, ?, 'pa', 'pa.live', 0, 0)",
+                (result, job),
+            )
+            conn.execute("INSERT INTO p.inputs VALUES (?, ?)", (job, json.dumps({"input": {}})))
+            conn.execute("INSERT INTO p.outputs VALUES (?, ?)", (result, "{}"))
+        conn.execute("COMMIT")
+        yield conn
 
 
+@contextmanager
 def traced_sweep(state, config, count):
     """Seed ``count`` due jobs, sweep twice, return (conn, first pass, second pass) statements."""
-    conn = seed(state, count)
-    passes = []
-    for _ in range(2):
-        statements = []
-        conn.set_trace_callback(statements.append)
-        swept = sweep_retention(conn, config, 8 * DAY)
-        conn.set_trace_callback(None)
-        passes.append((swept, statements))
-    assert [swept for swept, _ in passes] == [count, 0]
-    assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
-    return conn, passes[0][1], passes[1][1]
+    with seed(state, count) as conn:
+        passes = []
+        for _ in range(2):
+            statements = []
+            conn.set_trace_callback(statements.append)
+            swept = sweep_retention(conn, config, 8 * DAY)
+            conn.set_trace_callback(None)
+            passes.append((swept, statements))
+        assert [swept for swept, _ in passes] == [count, 0]
+        assert conn.execute("SELECT count(*) FROM jobs").fetchone()[0] == 0
+        yield conn, passes[0][1], passes[1][1]
 
 
 def test_the_sweep_issues_a_linear_number_of_statements(tmp_path, config):
-    _, small, small_again = traced_sweep(tmp_path / "small", config, 1250)
-    _, large, large_again = traced_sweep(tmp_path / "large", config, 5000)
-    assert len(large) - 4 * len(small) <= 60  # per-batch overhead only, never per job squared
-    assert len(small_again) == len(large_again)  # a pass over nothing costs the same at any size
+    with (
+        traced_sweep(tmp_path / "small", config, 1250) as (_, small, small_again),
+        traced_sweep(tmp_path / "large", config, 5000) as (_, large, large_again),
+    ):
+        assert len(large) - 4 * len(small) <= 60  # per-batch overhead only, never per job squared
+        assert len(small_again) == len(
+            large_again
+        )  # a pass over nothing costs the same at any size
 
 
 def test_every_sweep_statement_uses_an_index(tmp_path, config):
-    conn, first, _ = traced_sweep(tmp_path / "state", config, 600)
-    queries = {s for s in first if s.lstrip().upper().startswith(("SELECT", "DELETE", "UPDATE"))}
-    assert queries
-    for sql in queries:
-        plan = [r["detail"] for r in conn.execute("EXPLAIN QUERY PLAN " + sql)]
-        scans = [d for d in plan if re.match(r"SCAN (\w+\.)?(results|attempts|jobs)\b", d)]
-        assert scans == [], (sql, plan)
+    with traced_sweep(tmp_path / "state", config, 600) as (conn, first, _):
+        queries = {
+            s for s in first if s.lstrip().upper().startswith(("SELECT", "DELETE", "UPDATE"))
+        }
+        assert queries
+        for sql in queries:
+            plan = [r["detail"] for r in conn.execute("EXPLAIN QUERY PLAN " + sql)]
+            scans = [d for d in plan if re.match(r"SCAN (\w+\.)?(results|attempts|jobs)\b", d)]
+            assert scans == [], (sql, plan)
 
 
 def test_unacked_public_output_expires_with_a_control_result(conn, config):
@@ -160,7 +169,7 @@ def test_an_unknown_queue_gets_default_retention_and_one_log_line(conn, config, 
 
 def test_the_payload_wal_is_checkpointed_after_a_deleting_pass(tmp_path, config):
     state = tmp_path / "state"
-    conn = fresh_store(state)
-    succeed(conn, config, privacy="public", queue="pa.live")
-    sweep_retention(conn, config, 8 * DAY)
-    assert (state / "payloads.sqlite3-wal").stat().st_size == 0
+    with closing(fresh_store(state)) as conn:
+        succeed(conn, config, privacy="public", queue="pa.live")
+        sweep_retention(conn, config, 8 * DAY)
+        assert (state / "payloads.sqlite3-wal").stat().st_size == 0

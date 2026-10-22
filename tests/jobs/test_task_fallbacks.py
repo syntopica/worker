@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 import pytest
 
@@ -53,23 +54,23 @@ def wall(conn, config, leased, now):
 
 def test_a_walled_task_runs_at_once_under_the_queue_fallback(tmp_path):
     config = make_config(tmp_path, {"pa.cursor": ["pa.agy"]})
-    conn = fresh_store(tmp_path / "state")
-    job_id, _ = submit_job(conn, config, "pa", task(), 0.0)
-    first = lease(conn, config, 1.0)
-    assert first.model == "pa.cursor"
-    assert wall(conn, config, first, 2.0) == "queued"
-    assert job_cooling_until(conn, config, job_id, 3.0) is None
-    second = lease(conn, config, 3.0)
-    assert (second.job_id, second.model) == (job_id, "pa.agy")
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        job_id, _ = submit_job(conn, config, "pa", task(), 0.0)
+        first = lease(conn, config, 1.0)
+        assert first.model == "pa.cursor"
+        assert wall(conn, config, first, 2.0) == "queued"
+        assert job_cooling_until(conn, config, job_id, 3.0) is None
+        second = lease(conn, config, 3.0)
+        assert (second.job_id, second.model) == (job_id, "pa.agy")
 
 
 def test_without_a_fallback_the_task_waits_out_the_cooldown(tmp_path):
     config = make_config(tmp_path, {})
-    conn = fresh_store(tmp_path / "state")
-    job_id, _ = submit_job(conn, config, "pa", task(), 0.0)
-    wall(conn, config, lease(conn, config, 1.0), 2.0)
-    assert lease(conn, config, 3.0) is None
-    assert job_cooling_until(conn, config, job_id, 3.0) == 3602.0
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        job_id, _ = submit_job(conn, config, "pa", task(), 0.0)
+        wall(conn, config, lease(conn, config, 1.0), 2.0)
+        assert lease(conn, config, 3.0) is None
+        assert job_cooling_until(conn, config, job_id, 3.0) == 3602.0
 
 
 def test_a_fallback_narrower_than_its_primary_is_refused(tmp_path):

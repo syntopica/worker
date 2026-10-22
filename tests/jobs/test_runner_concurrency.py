@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 from tests.conftest import CONFIG, fresh_store
 from tests.jobs.test_task_fallbacks import lease, task
@@ -19,17 +20,17 @@ def make_config(tmp_path, max_concurrent):
 
 def test_a_runner_at_its_concurrency_cap_takes_no_further_task(tmp_path):
     config = make_config(tmp_path, 1)
-    conn = fresh_store(tmp_path / "state")
-    for key in ("t1", "t2"):
-        submit_job(conn, config, "pa", task(key), 0.0)
-    assert lease(conn, config, 1.0) is not None
-    assert lease(conn, config, 2.0) is None
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        for key in ("t1", "t2"):
+            submit_job(conn, config, "pa", task(key), 0.0)
+        assert lease(conn, config, 1.0) is not None
+        assert lease(conn, config, 2.0) is None
 
 
 def test_without_a_cap_a_runner_takes_every_ready_task(tmp_path):
     config = make_config(tmp_path, 2)
-    conn = fresh_store(tmp_path / "state")
-    for key in ("t1", "t2"):
-        submit_job(conn, config, "pa", task(key), 0.0)
-    assert lease(conn, config, 1.0) is not None
-    assert lease(conn, config, 2.0) is not None
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        for key in ("t1", "t2"):
+            submit_job(conn, config, "pa", task(key), 0.0)
+        assert lease(conn, config, 1.0) is not None
+        assert lease(conn, config, 2.0) is not None

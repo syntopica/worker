@@ -1,6 +1,7 @@
 import os
 import signal
 import threading
+from contextlib import closing
 
 import pytest
 
@@ -85,16 +86,16 @@ def test_a_stopped_remote_loop_hands_its_job_back(config, monkeypatch):
 
 
 def test_a_shutdown_charges_neither_an_attempt_nor_a_preemption(config, tmp_path):
-    conn = fresh_store(tmp_path / "state")
-    job_id, _ = submit_job(conn, config, "pa", body(), 0.0)
-    leased = lease_job(conn, config, LeaseRequest("node-a", None, False, 40.0, 9999.0), 1.0)
-    executor = {"node": "node-a", "provider": "ollama", "model": "model-a"}
-    report = CompletionReport("preempted", None, {}, executor, "node_shutdown", 1.0)
-    assert complete_attempt(conn, config, leased.attempt_id, leased.generation, report, 2.0) == (
-        "queued"
-    )
-    row = conn.execute("SELECT attempts, preemptions, error FROM jobs WHERE id=?", (job_id,))
-    assert tuple(row.fetchone()) == (0, 0, "node_shutdown")
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        job_id, _ = submit_job(conn, config, "pa", body(), 0.0)
+        leased = lease_job(conn, config, LeaseRequest("node-a", None, False, 40.0, 9999.0), 1.0)
+        executor = {"node": "node-a", "provider": "ollama", "model": "model-a"}
+        report = CompletionReport("preempted", None, {}, executor, "node_shutdown", 1.0)
+        assert complete_attempt(
+            conn, config, leased.attempt_id, leased.generation, report, 2.0
+        ) == ("queued")
+        row = conn.execute("SELECT attempts, preemptions, error FROM jobs WHERE id=?", (job_id,))
+        assert tuple(row.fetchone()) == (0, 0, "node_shutdown")
 
 
 def test_sigterm_becomes_system_exit():

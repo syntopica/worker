@@ -7,7 +7,6 @@ from worker.jobs.completion_report import CompletionReport
 from worker.jobs.fail_attempt import fail_attempt
 from worker.jobs.preempt_job import preempt_job
 from worker.jobs.requeue_after_wall import requeue_after_wall
-from worker.jobs.trusted_wall_reset import trusted_wall_reset
 from worker.jobs.requeue_uncharged import requeue_uncharged
 
 _UNCHARGED = ("rate_limited", "node_shutdown")
@@ -36,7 +35,5 @@ def settle_unsuccessful(
     if report.outcome == "preempted":
         return preempt_job(conn, config, job, now)
     if report.error_code == "quota_wall":
-        return requeue_after_wall(
-            conn, config, job, report.executor, now, trusted_wall_reset(report.usage)
-        )
+        return requeue_after_wall(conn, config, job, report, now)
     return fail_attempt(conn, job, report.error_code or "executor_error", now)

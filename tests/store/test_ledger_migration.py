@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 
 from tests.conftest import fresh_store
 from worker.store.schema_sql import SCHEMA
@@ -29,8 +30,8 @@ def test_an_older_store_gains_the_ledger_and_quality_columns(tmp_path):
     conn.execute("PRAGMA user_version=4")
     conn.commit()
     conn.close()
-    store = fresh_store(state)
-    columns = {r[1] for r in store.execute("PRAGMA table_info(attempts)")}
-    assert {"provider", "cost_usd", "model"} <= columns
-    assert "rating" in {r[1] for r in store.execute("PRAGMA table_info(results)")}
-    assert store.execute("SELECT tier FROM jobs").fetchone()[0] == "basic"
+    with closing(fresh_store(state)) as store:
+        columns = {r[1] for r in store.execute("PRAGMA table_info(attempts)")}
+        assert {"provider", "cost_usd", "model"} <= columns
+        assert "rating" in {r[1] for r in store.execute("PRAGMA table_info(results)")}
+        assert store.execute("SELECT tier FROM jobs").fetchone()[0] == "basic"

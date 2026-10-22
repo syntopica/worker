@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 import pytest
 
@@ -44,22 +45,22 @@ def finish_remotely(conn, config, now):
 
 def test_a_queue_at_its_daily_cap_is_not_leased_to_openrouter(tmp_path):
     config = make_config(tmp_path, 1)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
-    finish_remotely(conn, config, DAY + 10)
-    submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
+        finish_remotely(conn, config, DAY + 10)
+        submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
 
-    assert remote(conn, config, DAY + 30) is None
+        assert remote(conn, config, DAY + 30) is None
 
 
 def test_the_cap_resets_at_midnight_utc(tmp_path):
     config = make_config(tmp_path, 1)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
-    finish_remotely(conn, config, DAY + 10)
-    submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
+        finish_remotely(conn, config, DAY + 10)
+        submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
 
-    assert remote(conn, config, 2 * DAY + 5) is not None
+        assert remote(conn, config, 2 * DAY + 5) is not None
 
 
 def test_a_cap_must_be_a_positive_integer(tmp_path):
@@ -69,11 +70,11 @@ def test_a_cap_must_be_a_positive_integer(tmp_path):
 
 def test_a_capped_queue_is_not_held_back_from_the_local_model(tmp_path):
     config = make_config(tmp_path, 1)
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
-    finish_remotely(conn, config, DAY + 10)
-    submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(privacy="public", key="one"), DAY)
+        finish_remotely(conn, config, DAY + 10)
+        submit_job(conn, config, "pa", body(privacy="public", key="two"), DAY + 20)
 
-    local = lease_job(conn, config, LeaseRequest("node-a", None, False, 64.0, 0.0), DAY + 30)
+        local = lease_job(conn, config, LeaseRequest("node-a", None, False, 64.0, 0.0), DAY + 30)
 
-    assert local is not None
+        assert local is not None

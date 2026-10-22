@@ -221,3 +221,13 @@ Closed engine work. Public repository: engine commits and behaviour only.
   only its own model.
   - Result: 09c5f8f, lease fixture updated, spec amendment 2026-10-14.
   - Evidence: `tests/remote/test_pinned_remote_no_fallbacks.py`; gate green.
+
+### 2026-10
+
+- [x] 2026-10-22 — **Quality gate:** Restore source quality and close test-owned SQLite stores deterministically. Isolated verification exposed unclosed connections, optional-reader typing, import/format findings and an oversized quota-wall helper signature. Keep original assertions, manual exclusions, coverage requirements and descriptor limits.
+  - Result: Close all independently acquired test stores through explicit managed scopes or existing teardown. Use CompletionReport in the quota-wall helper without changing trusted reset semantics; correct optional-reader typing, imports and formatting. Add seven invalid-reset regressions.
+  - Evidence: Isolated pytest -q passed 571 tests with two existing warnings; codeality-py gate --json passed all seven required stages at the unchanged descriptor limit of 256 and coverage threshold of 80 percent. Focused 53 tests passed. All 490 source bytes/modes and 50 installed distribution records remained unchanged; existing assertions/markers were preserved and independent review returned no findings.
+
+- [x] 2026-10-22 — **Security:** **Security: update the locked certifi trust bundle.** The lockfile candidate updates only certifi from 2026.7.22 to the patched 2026.10.19 release for GHSA-6q48-6c7w-9gw2. Next: verify the exact locked candidate in an isolated environment and complete the required source gates. Installed instances require separate verification; source acceptance does not establish their runtime state.
+  - Result: Update only the certifi lock record from 2026.7.22 to 2026.10.19; installed consumer adoption remains separate from source acceptance.
+  - Evidence: Locked wheel-only all-extras/all-groups setup and uv lock --check passed; 50 installed distributions match the accepted lock. Direct pytest -q passed 571 tests and codeality-py gate --json passed all seven required stages, including pip-audit. Independent parsed lock comparison confirmed no other package or lock metadata changes.

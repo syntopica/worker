@@ -49,7 +49,11 @@ def fresh_store(state):
 
 @pytest.fixture
 def conn(tmp_path):
-    return fresh_store(tmp_path / "state")
+    connection = fresh_store(tmp_path / "state")
+    try:
+        yield connection
+    finally:
+        connection.close()
 
 
 def body(key="k1", queue="pa.bulk", privacy="mail", **extra):

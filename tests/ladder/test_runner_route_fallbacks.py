@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 
 import pytest
 
@@ -23,17 +24,17 @@ def make_config(tmp_path, route):
 
 def test_a_resting_route_profile_hands_the_job_to_its_fallback(tmp_path):
     config = make_config(tmp_path, {"profile": "a.gemini", "fallbacks": ["a.claude"]})
-    conn = fresh_store(tmp_path / "state")
-    conn.execute("INSERT INTO cooldowns (runner, until) VALUES ('agy:gemini-pro', 100.0)")
-    submit_job(conn, config, "pa", body(), 0.0)
-    assert lease(conn, config, 1.0).model == "a.claude"
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        conn.execute("INSERT INTO cooldowns (runner, until) VALUES ('agy:gemini-pro', 100.0)")
+        submit_job(conn, config, "pa", body(), 0.0)
+        assert lease(conn, config, 1.0).model == "a.claude"
 
 
 def test_the_route_profile_comes_first_while_it_can_run(tmp_path):
     config = make_config(tmp_path, {"profile": "a.gemini", "fallbacks": ["a.claude"]})
-    conn = fresh_store(tmp_path / "state")
-    submit_job(conn, config, "pa", body(), 0.0)
-    assert lease(conn, config, 1.0).model == "a.gemini"
+    with closing(fresh_store(tmp_path / "state")) as conn:
+        submit_job(conn, config, "pa", body(), 0.0)
+        assert lease(conn, config, 1.0).model == "a.gemini"
 
 
 @pytest.mark.parametrize("fallbacks", ["a.claude", ["missing"], [""]])
