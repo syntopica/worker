@@ -1235,6 +1235,12 @@ The 24-hour sampling expiry also covers shadow members waiting for a split. Inte
 
 `worker tasks --profile <name> --snapshot` limits an on-demand run to jobs created by the command's start time. Its lease requests carry finite, nonnegative `created_before` seconds since the epoch; the coordinator filters creation time before applying candidate limits. New producer work keeps its ordinary routes. A snapshot does not include judges created later; another explicit run can collect those.
 
+### Amendment 2026-10-24 - explicit comparison executor overrides
+
+`worker tasks --profile <name> --override-pins` explicitly permits an on-demand run to execute inference comparison members originally pinned to an Ollama, OpenRouter or runner target. The default remains exact pin enforcement. The API accepts boolean `override_pins` only with an explicit on-demand profile. Profile, node, privacy, cooldown, concurrency, snapshot and fencing checks still apply. Original pins stay on the jobs for provenance; `attempts.profile` records the selected executor profile, an `override_pin` audit row records the node and job at lease time, and result metadata and blind-judge labels name the executor that actually answered. Original-answer markers and other task pins cannot be overridden. Existing self-evaluation exclusions remain in effect, so substitute inference and judging require different executor models.
+
+Codex task runs use `--ephemeral` and `--ignore-user-config`: job prompts and answers must not become persistent session rollouts, and task execution must not load unrelated user plugins, hooks or MCP servers. Prompt-only profiles also disable `shell_tool` and `shell_snapshot`. The explicit model, output schema and read-only sandbox remain in the invocation.
+
 ### Amendment 2026-10-11 - codex usage from its event stream
 
 `codex exec` runs with `--json`, which prints JSON Lines events on stdout; the

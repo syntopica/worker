@@ -33,6 +33,15 @@ def test_codex_takes_the_prompt_on_stdin_never_in_argv(tmp_path):
         assert invocation.stdin == prompt
 
 
+def test_codex_prompt_only_runs_do_not_persist_sessions_or_load_unrelated_tools(tmp_path):
+    invocation = codex_invocation(profile("codex"), "classify", tmp_path, None, tmp_path)
+    assert "--ephemeral" in invocation.argv
+    assert "--ignore-user-config" in invocation.argv
+    assert ["--disable", "shell_tool"] in [
+        invocation.argv[i : i + 2] for i in range(len(invocation.argv) - 1)
+    ]
+
+
 def test_agy_joins_the_prompt_to_its_flag(tmp_path):
     for prompt in (HOSTILE, "--help", "--version"):
         argv = agy_invocation(profile("agy"), prompt, None).argv

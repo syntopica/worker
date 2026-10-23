@@ -24,6 +24,9 @@ def cmd_tasks(args: argparse.Namespace) -> int:
     if args.snapshot and args.profile is None:
         print("worker: --snapshot requires --profile", file=sys.stderr)
         return 2
+    if args.override_pins and args.profile is None:
+        print("worker: --override-pins requires --profile", file=sys.stderr)
+        return 2
     created_before = time.time() if args.snapshot else None
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
@@ -33,7 +36,13 @@ def cmd_tasks(args: argparse.Namespace) -> int:
     token = read_token(state, args.name)
     slots = args.slots or config.nodes[args.name].task_slots
     links = [
-        CoordinatorLink(base_url(config), token, args.name, created_before=created_before)
+        CoordinatorLink(
+            base_url(config),
+            token,
+            args.name,
+            created_before=created_before,
+            override_pins=args.override_pins,
+        )
         for _ in range(slots)
     ]
     raise_on_sigterm()

@@ -21,6 +21,9 @@ def codex_invocation(
     answer = scratch / "last-message.txt"
     argv = [profile.command or "codex", "exec", "-", "-C", str(workspace), "-s", "read-only"]
     argv += ["--skip-git-repo-check", "--json", "-o", str(answer)]
+    argv += ["--ephemeral", "--ignore-user-config"]
+    if profile.input_root is None:
+        argv += ["--disable", "shell_tool", "--disable", "shell_snapshot"]
     if profile.model:
         argv += ["-m", profile.model]
     if profile.reasoning:

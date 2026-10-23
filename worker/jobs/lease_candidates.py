@@ -25,7 +25,9 @@ def lease_candidates(  # noqa: PLR0913, PLR0917
     cooling, capped = walls
     node = (req.node, trust)
     if req.profile is not None:
-        return on_demand_candidates(candidates, config, cooling, node, req.profile)
+        return on_demand_candidates(
+            candidates, config, cooling, node, req.profile, req.override_pins
+        )
     if req.kind == "task":
         return runner_candidates(candidates, config, cooling, node, now)
     if req.kind == "openrouter":

@@ -15,3 +15,6 @@ def add_tasks_parser(sub: "argparse._SubParsersAction[argparse.ArgumentParser]")
     tasks.add_argument(
         "--snapshot", action="store_true", help="drain only jobs already submitted at startup"
     )
+    tasks.add_argument(
+        "--override-pins", action="store_true", help="explicitly substitute comparison executors"
+    )

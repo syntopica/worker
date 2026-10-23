@@ -15,6 +15,7 @@ from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
 from worker.jobs.on_demand_payload_candidates import on_demand_payload_candidates
 from worker.jobs.openrouter_spent_today import openrouter_spent_today
+from worker.jobs.record_audit import record_audit
 from worker.jobs.saturated_runners import saturated_runners
 from worker.policy.capped_queues import capped_queues
 from worker.policy.pick_job import pick_job
@@ -85,6 +86,8 @@ def lease_job(
         if req.kind == "task" and chosen.kind == "inference":
             job_input = inference_task_input(job_input)
         attempt_id = uuid.uuid4().hex
+        if req.override_pins and chosen.kind == "inference" and chosen.pin is not None:
+            record_audit(conn, "override_pin", chosen.job_id, chosen.privacy, req.node, now)
         conn.execute(
             # A task picked under a fallback profile keeps it: a wall is then
             # charged to the runner that actually ran. An escalated inference

@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from worker.api.lease_created_before import lease_created_before
+from worker.api.lease_override_pins import lease_override_pins
 from worker.api.request_context import RequestContext
 from worker.jobs.api_error import ApiError
 from worker.jobs.expire_leases import expire_leases
@@ -36,6 +37,7 @@ def handle_lease(ctx: RequestContext) -> tuple[int, dict[str, Any]]:
         kind,
         profile,
         lease_created_before(body, profile),
+        lease_override_pins(body, profile),
     )
     lease = lease_job(ctx.conn, ctx.config, req, ctx.now)
     return (204, {}) if lease is None else (200, lease.to_json())

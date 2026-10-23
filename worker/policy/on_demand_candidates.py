@@ -5,17 +5,19 @@ from collections.abc import Sequence
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
+from worker.policy.on_demand_inference_allowed import on_demand_inference_allowed
 from worker.policy.on_demand_task_allowed import on_demand_task_allowed
 from worker.policy.privacy_allows import privacy_allows
 from worker.policy.profile_resting import profile_resting
 
 
-def on_demand_candidates(
+def on_demand_candidates(  # noqa: PLR0913, PLR0917
     candidates: Sequence[Candidate],
     config: WorkerConfig,
     cooling: frozenset[str],
     node: tuple[str, str],
     name: str,
+    override_pins: bool = False,
 ) -> list[Candidate]:
     """Inference, prompt-only tasks and judges under an explicit execution profile.
 
@@ -32,7 +34,10 @@ def on_demand_candidates(
     return [
         dataclasses.replace(c, model=name)
         for c in candidates
-        if ((c.kind == "inference" and c.pin is None) or on_demand_task_allowed(c, config, node[0]))
+        if (
+            on_demand_inference_allowed(c, override_pins)
+            or on_demand_task_allowed(c, config, node[0])
+        )
         and c.privacy in profile.privacy
         and privacy_allows(config, c.privacy, "runner", node[1])
     ]

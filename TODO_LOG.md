@@ -247,3 +247,7 @@ Closed engine work. Public repository: engine commits and behaviour only.
 - [x] 2026-10-24 — **Execution:** Bound manual queue drains to jobs submitted before startup.
   - Result: Added --snapshot to explicit task drains, with authenticated creation-time filtering before candidate limits; new producer work remains on its normal routes.
   - Evidence: uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and coordinator-link tests cover the cutoff and invalid numeric input; the snapshot drain command ran against the live coordinator.
+
+- [x] 2026-10-24 — **Execution:** Audit explicit comparison executor substitutions and isolate task sessions.
+  - Result: Added --override-pins for explicit on-demand drains, preserved default pin enforcement and original target provenance, and isolated Codex task sessions from unrelated user configuration.
+  - Evidence: uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and selection tests cover opt-in enforcement, preserved pins, actual executor metadata and audit rows; a real Codex worker call passed its output schema with ephemeral sessions and shell tools disabled.

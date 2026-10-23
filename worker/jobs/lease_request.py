@@ -19,3 +19,4 @@ class LeaseRequest:
     kind: str = "inference"
     profile: str | None = None
     created_before: float | None = None
+    override_pins: bool = False
