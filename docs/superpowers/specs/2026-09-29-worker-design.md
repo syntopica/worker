@@ -1233,6 +1233,8 @@ Runner failure diagnostics log fixed error codes and configured executor metadat
 
 The 24-hour sampling expiry also covers shadow members waiting for a split. Internal sampling producers cannot answer a split request, so those members must not keep a comparison group open indefinitely.
 
+`worker tasks --profile <name> --snapshot` limits an on-demand run to jobs created by the command's start time. Its lease requests carry finite, nonnegative `created_before` seconds since the epoch; the coordinator filters creation time before applying candidate limits. New producer work keeps its ordinary routes. A snapshot does not include judges created later; another explicit run can collect those.
+
 ### Amendment 2026-10-11 - codex usage from its event stream
 
 `codex exec` runs with `--json`, which prints JSON Lines events on stdout; the

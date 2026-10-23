@@ -9,8 +9,13 @@ from worker.policy.privacy_allows import privacy_allows
 _PER_QUEUE = 200
 
 
-def load_candidates(
-    conn: sqlite3.Connection, config: WorkerConfig, trust: str, now: float, kind: str = "inference"
+def load_candidates(  # noqa: PLR0913, PLR0917
+    conn: sqlite3.Connection,
+    config: WorkerConfig,
+    trust: str,
+    now: float,
+    kind: str = "inference",
+    created_before: float | None = None,
 ) -> list[Candidate]:
     """Queued, due and not past deadline, of one kind, from configured queues only.
 
@@ -33,9 +38,20 @@ def load_candidates(
         "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s, kind, pin, error FROM ("  # noqa: S608
         " SELECT *, row_number() OVER (PARTITION BY queue, kind ORDER BY priority DESC, created) AS rank"
         " FROM jobs WHERE state='queued' AND kind IN (?, ?) AND not_before<=?"
+        " AND (? IS NULL OR created<=?)"
         f" AND (deadline IS NULL OR deadline>?) AND privacy IN ({marks}) AND queue IN ({queue_marks})"
         ") WHERE rank<=? ORDER BY priority DESC, created",
-        (kinds[0], kinds[-1], now, now, *allowed, *queues, _PER_QUEUE),
+        (
+            kinds[0],
+            kinds[-1],
+            now,
+            created_before,
+            created_before,
+            now,
+            *allowed,
+            *queues,
+            _PER_QUEUE,
+        ),
     ).fetchall()
     return [
         Candidate(

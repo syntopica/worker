@@ -243,3 +243,7 @@ Closed engine work. Public repository: engine commits and behaviour only.
 - [x] 2026-10-24 — **Security:** Update the locked filelock tooling dependency.
   - Result: Updated filelock from 4.1.1 to 4.2.1 to address six reported advisories.
   - Evidence: uv run --group quality --python 3.14 pip-audit reports no known vulnerabilities; the full codeality-py gate passed. Parsed lock comparison confirms filelock is the only changed package.
+
+- [x] 2026-10-24 — **Execution:** Bound manual queue drains to jobs submitted before startup.
+  - Result: Added --snapshot to explicit task drains, with authenticated creation-time filtering before candidate limits; new producer work remains on its normal routes.
+  - Evidence: uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and coordinator-link tests cover the cutoff and invalid numeric input; the snapshot drain command ran against the live coordinator.

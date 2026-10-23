@@ -2,6 +2,7 @@ import pytest
 
 from tests.api.test_api_roundtrip import api, call  # noqa: F401
 from tests.ladder.test_on_demand_tasks import setup_task
+from worker.node.coordinator_link import CoordinatorLink
 
 
 @pytest.fixture
@@ -52,3 +53,27 @@ def test_only_explicit_on_demand_task_profiles_are_accepted(api, kind, profile):
     }
     status, error = call(base, tokens["node-a"], "POST", "/v1/leases", request)
     assert (status, error["error"]) == (400, "unknown_profile")
+
+
+@pytest.mark.parametrize("cutoff", [True, -1, "now", [], float("nan"), float("inf"), 10**400])
+def test_a_snapshot_rejects_invalid_creation_times(api, cutoff):  # noqa: F811
+    base, tokens = api
+    request = {
+        "node": "node-a",
+        "kind": "task",
+        "profile": "max",
+        "user_active": False,
+        "current_idle_s": 0,
+        "created_before": cutoff,
+    }
+    assert call(base, tokens["node-a"], "POST", "/v1/leases", request)[0] == 400
+
+
+def test_the_node_link_transmits_the_snapshot_boundary(api, tmp_path):  # noqa: F811
+    base, tokens = api
+    _, payload = setup_task(tmp_path)
+    assert call(base, tokens["pa"], "POST", "/v1/jobs", payload)[0] == 201
+    link = CoordinatorLink(base, tokens["node-a"], "node-a", created_before=0.0)
+    assert link.lease_task(False, 0, "max") is None
+    unbounded = CoordinatorLink(base, tokens["node-a"], "node-a")
+    assert unbounded.lease_task(False, 0, "max") is not None

@@ -45,4 +45,6 @@ Closed 2026-10-14; see `TODO_LOG.md`.
 
 ## Security
 
+- [ ] Keep task prompts out of process arguments for the agy runner. Its current joined `--print=<prompt>` argument is visible to process inspectors; diagnostic process listings must use command names and metadata only. Next: verify the CLI's stream-json stdin contract and preserve schema support and the no-tools posture when migrating the invocation.
+
 ## Quality gate

@@ -12,3 +12,6 @@ def add_tasks_parser(sub: "argparse._SubParsersAction[argparse.ArgumentParser]")
     tasks.add_argument("--profile")
     tasks.add_argument("--slots", type=int)
     tasks.set_defaults(run=cmd_tasks)
+    tasks.add_argument(
+        "--snapshot", action="store_true", help="drain only jobs already submitted at startup"
+    )

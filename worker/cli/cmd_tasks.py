@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import time
 
 from worker.cli.base_url import base_url
 from worker.cli.read_token import read_token
@@ -20,6 +21,10 @@ def cmd_tasks(args: argparse.Namespace) -> int:
     With ``--profile`` it drains that on-demand profile's jobs instead and
     exits once none is left; ``--slots`` overrides the node's task slots.
     """
+    if args.snapshot and args.profile is None:
+        print("worker: --snapshot requires --profile", file=sys.stderr)
+        return 2
+    created_before = time.time() if args.snapshot else None
     config_path, state = resolve_paths()
     config = load_worker_config(config_path)
     if args.name not in config.nodes:
@@ -27,7 +32,10 @@ def cmd_tasks(args: argparse.Namespace) -> int:
         return 2
     token = read_token(state, args.name)
     slots = args.slots or config.nodes[args.name].task_slots
-    links = [CoordinatorLink(base_url(config), token, args.name) for _ in range(slots)]
+    links = [
+        CoordinatorLink(base_url(config), token, args.name, created_before=created_before)
+        for _ in range(slots)
+    ]
     raise_on_sigterm()
     if args.profile is not None:
         ran = run_on_demand(config, args.name, links, args.profile)

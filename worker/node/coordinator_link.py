@@ -21,10 +21,13 @@ class CoordinatorLink:
     net for anything lost with the process.
     """
 
-    def __init__(self, base_url: str, token: str, node: str) -> None:
+    def __init__(
+        self, base_url: str, token: str, node: str, *, created_before: float | None = None
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.token = token
         self.node = node
+        self.created_before = created_before
         self.pending: list[tuple[str, int, dict[str, Any]]] = []
 
     def _post(self, path: str, payload: dict[str, Any]) -> tuple[int | None, dict[str, Any] | None]:
@@ -72,6 +75,8 @@ class CoordinatorLink:
         payload["current_idle_s"] = idle_s
         if profile is not None:
             payload["profile"] = profile
+            if self.created_before is not None:
+                payload["created_before"] = self.created_before
         return self._lease(payload)
 
     def lease_remote(self) -> dict[str, Any] | None:

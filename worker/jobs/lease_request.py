@@ -18,3 +18,4 @@ class LeaseRequest:
     current_idle_s: float
     kind: str = "inference"
     profile: str | None = None
+    created_before: float | None = None

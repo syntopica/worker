@@ -39,7 +39,7 @@ def lease_job(
     if node is None:
         raise ApiError(403, "unknown_node")
     with transaction(conn):
-        candidates = load_candidates(conn, config, node.trust, now, req.kind)
+        candidates = load_candidates(conn, config, node.trust, now, req.kind, req.created_before)
         # A runner at its concurrency cap is passed over like a resting one.
         cooling = cooling_runners(conn, now) | saturated_runners(conn, config)
         # A queue past its daily OpenRouter cap leaves that rung for the day.
