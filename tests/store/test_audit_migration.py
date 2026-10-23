@@ -22,8 +22,7 @@ def test_a_version_7_store_gains_the_audit_table_and_retry_of(tmp_path):
     conn.commit()
     conn.close()
     with closing(fresh_store(state)) as store:
-        assert STORE_VERSION == 8
-        assert store.execute("PRAGMA user_version").fetchone()[0] == 8
+        assert store.execute("PRAGMA user_version").fetchone()[0] == STORE_VERSION
         assert "retry_of" in {r[1] for r in store.execute("PRAGMA table_info(jobs)")}
         columns = {r[1] for r in store.execute("PRAGMA table_info(audit)")}
         assert columns == {"seq", "action", "job_id", "privacy", "principal", "created"}

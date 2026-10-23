@@ -13,6 +13,7 @@ from worker.jobs.lease_candidates import lease_candidates
 from worker.jobs.lease_request import LeaseRequest
 from worker.jobs.load_candidates import load_candidates
 from worker.jobs.load_job_input import load_job_input
+from worker.jobs.on_demand_payload_candidates import on_demand_payload_candidates
 from worker.jobs.openrouter_spent_today import openrouter_spent_today
 from worker.jobs.saturated_runners import saturated_runners
 from worker.policy.capped_queues import capped_queues
@@ -44,6 +45,10 @@ def lease_job(
         # A queue past its daily OpenRouter cap leaves that rung for the day.
         capped = capped_queues(config, openrouter_spent_today(conn, now))
         candidates = lease_candidates(candidates, config, req, node.trust, (cooling, capped), now)
+        if req.profile is not None and req.profile in config.profiles:
+            candidates = on_demand_payload_candidates(
+                conn, candidates, config.profiles[req.profile]
+            )
         recent = {
             r[0]: r[1]
             for r in conn.execute(
@@ -85,15 +90,30 @@ def lease_job(
             # charged to the runner that actually ran. An escalated inference
             # job keeps its local model for a retry at home.
             "UPDATE jobs SET state='leased', generation=generation+1, lease_node=?, lease_attempt=?,"
-            " lease_expires=?, updated=?, model=CASE WHEN kind='task' THEN ? ELSE model END WHERE id=?",
-            (req.node, attempt_id, now + LEASE_TTL_S, now, chosen.model, chosen.job_id),
+            " lease_expires=?, updated=?, model=CASE WHEN kind='task' AND ? IS NULL THEN ? ELSE model END WHERE id=?",
+            (
+                req.node,
+                attempt_id,
+                now + LEASE_TTL_S,
+                now,
+                req.profile,
+                chosen.model,
+                chosen.job_id,
+            ),
         )
         generation = conn.execute(
             "SELECT generation FROM jobs WHERE id=?", (chosen.job_id,)
         ).fetchone()[0]
         conn.execute(
-            "INSERT INTO attempts (id, job_id, generation, node, started) VALUES (?, ?, ?, ?, ?)",
-            (attempt_id, chosen.job_id, generation, req.node, now),
+            "INSERT INTO attempts (id, job_id, generation, node, started, profile) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                attempt_id,
+                chosen.job_id,
+                generation,
+                req.node,
+                now,
+                chosen.model if req.kind == "task" else None,
+            ),
         )
     run_when = config.queues[chosen.queue].run_when
     return Lease(

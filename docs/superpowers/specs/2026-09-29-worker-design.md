@@ -1223,6 +1223,16 @@ because the other queues rarely need their share.
    stderr sentence once every account answered HTTP 429; a run that answered is
    never a wall.
 
+### Amendment 2026-10-24 - on-demand tasks and judges
+
+An explicitly requested on-demand profile may also execute queued tasks with no input files, including blind judges pinned as `judge`. Inference comparison pins and other task pins keep their exact executor. The source task profile and the requested profile must both permit the job's privacy class and the asking node; a missing source profile denies the override. A judge cannot use the same provider and model as an answer it is judging. Automatic routes continue to exclude on-demand profiles.
+
+The job retains its original task profile when overridden. Schema version 9 adds nullable `attempts.profile`, recording the selected task profile for concurrency accounting and quota cooldowns. Existing attempts remain readable. A quota wall on the override rests that executor and leaves the original job due for its normal route. Completion still requires the current attempt id, generation and lease holder, and validates the original output schema. Input-bearing tasks stay on their original route.
+
+Runner failure diagnostics log fixed error codes and configured executor metadata only. Raw runner stderr and stdout can contain task content and must never be copied to logs.
+
+The 24-hour sampling expiry also covers shadow members waiting for a split. Internal sampling producers cannot answer a split request, so those members must not keep a comparison group open indefinitely.
+
 ### Amendment 2026-10-11 - codex usage from its event stream
 
 `codex exec` runs with `--json`, which prints JSON Lines events on stdout; the

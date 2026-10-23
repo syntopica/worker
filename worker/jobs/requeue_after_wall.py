@@ -32,7 +32,12 @@ def requeue_after_wall(
     executor = report.executor
     resets_in_s = trusted_wall_reset(report.usage)
     inference = job["kind"] == "inference"
-    profile = config.profiles.get(job["model"])
+    attempt = conn.execute(
+        "SELECT profile FROM attempts WHERE id=?", (job["lease_attempt"],)
+    ).fetchone()
+    selected = attempt["profile"] if attempt is not None else None
+    profile = config.profiles.get(selected or job["model"])
+    overridden = selected is not None and selected != job["model"]
     if inference:
         runner, model = str(executor.get("provider") or ""), executor.get("model") or None
     else:
@@ -46,8 +51,10 @@ def requeue_after_wall(
             (cooldown_key(runner, model), until),
         )
     queue = config.queues.get(job["queue"])
-    has_fallback = inference or (
-        queue is not None and bool(dict(queue.fallbacks).get(job["model"]))
+    has_fallback = (
+        inference
+        or overridden
+        or (queue is not None and bool(dict(queue.fallbacks).get(job["model"])))
     )
     conn.execute(
         "UPDATE jobs SET state='queued', error='quota_wall', not_before=?, updated=?,"

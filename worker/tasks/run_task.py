@@ -79,7 +79,7 @@ def run_task(  # noqa: PLR0913, PLR0917
             failure = runner_failure_text(profile.runner, stdout, stderr)
             code = runner_failure_code(failure)
             if code == "runner_failed":
-                report_runner_failure(profile.runner, profile.model or "", failure)
+                report_runner_failure(profile.runner, profile.model or "")
         usage = read_usage(profile.runner, stdout)
         resets_in = (
             wall_resets_in_s(profile.runner, stdout + stderr) if code == "quota_wall" else None

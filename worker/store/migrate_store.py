@@ -4,6 +4,7 @@ import sqlite3
 
 from worker.store.added_columns import ADDED_COLUMNS
 from worker.store.index_sql import INDEXES
+from worker.store.migrate_attempt_profiles import migrate_attempt_profiles
 from worker.store.schema_sql import SCHEMA
 from worker.store.store_version import STORE_VERSION
 from worker.store.transaction import transaction
@@ -33,4 +34,5 @@ def migrate_store(conn: sqlite3.Connection) -> None:
                 conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {sql_type}")
         for statement in INDEXES:
             conn.execute(statement)
+        migrate_attempt_profiles(conn)
         conn.execute(f"PRAGMA user_version={STORE_VERSION}")

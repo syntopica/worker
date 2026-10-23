@@ -16,10 +16,14 @@ def saturated_runners(conn: sqlite3.Connection, config: WorkerConfig) -> frozens
     if not config.runner_max_concurrent:
         return frozenset()
     live: dict[str, int] = {}
-    for kind, model, pin in conn.execute(
-        "SELECT kind, model, pin FROM jobs WHERE state IN ('leased','running','draining')"
+    for kind, model, pin, execution_profile in conn.execute(
+        "SELECT j.kind, j.model, j.pin, a.profile FROM jobs j"
+        " LEFT JOIN attempts a ON a.id=j.lease_attempt"
+        " WHERE j.state IN ('leased','running','draining')"
     ):
-        if kind == "task":
+        if execution_profile is not None:
+            name = execution_profile
+        elif kind == "task":
             name = model
         elif (pin or "").startswith(_RUNNER_PIN):
             name = pin[len(_RUNNER_PIN) :]

@@ -231,3 +231,15 @@ Closed engine work. Public repository: engine commits and behaviour only.
 - [x] 2026-10-22 — **Security:** **Security: update the locked certifi trust bundle.** The lockfile candidate updates only certifi from 2026.7.22 to the patched 2026.10.19 release for GHSA-6q48-6c7w-9gw2. Next: verify the exact locked candidate in an isolated environment and complete the required source gates. Installed instances require separate verification; source acceptance does not establish their runtime state.
   - Result: Update only the certifi lock record from 2026.7.22 to 2026.10.19; installed consumer adoption remains separate from source acceptance.
   - Evidence: Locked wheel-only all-extras/all-groups setup and uv lock --check passed; 50 installed distributions match the accepted lock. Direct pytest -q passed 571 tests and codeality-py gate --json passed all seven required stages, including pip-audit. Independent parsed lock comparison confirmed no other package or lock metadata changes.
+
+- [x] 2026-10-24 — **Execution:** Support on-demand task and judge execution with preserved source routing.
+  - Result: Explicit on-demand runs now execute prompt-only tasks and independent blind judges while preserving source profiles and pinned comparison targets.
+  - Evidence: uv run --group quality --python 3.14 codeality-py gate: all seven required stages passed, including schema-v9 migration, authenticated API, task/judge override, concurrency, fencing, privacy, original output-schema and no-content logging coverage.
+
+- [x] 2026-10-24 — **Sampling:** Expire stale internal sampling split requests.
+  - Result: Sampling expiry now closes split requests older than 24 hours while leaving production split requests unchanged.
+  - Evidence: uv run --group quality --python 3.14 pytest tests/shadow/test_stale_split_sampling.py -q passed; the full codeality-py gate passed.
+
+- [x] 2026-10-24 — **Security:** Update the locked filelock tooling dependency.
+  - Result: Updated filelock from 4.1.1 to 4.2.1 to address six reported advisories.
+  - Evidence: uv run --group quality --python 3.14 pip-audit reports no known vulnerabilities; the full codeality-py gate passed. Parsed lock comparison confirms filelock is the only changed package.

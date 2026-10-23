@@ -5,6 +5,7 @@ from collections.abc import Sequence
 
 from worker.config.worker_config import WorkerConfig
 from worker.jobs.candidate import Candidate
+from worker.policy.on_demand_task_allowed import on_demand_task_allowed
 from worker.policy.privacy_allows import privacy_allows
 from worker.policy.profile_resting import profile_resting
 
@@ -16,11 +17,11 @@ def on_demand_candidates(
     node: tuple[str, str],
     name: str,
 ) -> list[Candidate]:
-    """Unpinned inference jobs, carrying the profile in ``model``, from any queue.
+    """Inference, prompt-only tasks and judges under an explicit execution profile.
 
     The profile must be on demand, rested and allowed on the node; each job's
-    class must be allowed by the profile and for ``runner`` executors. Tasks
-    and pinned jobs stay with the executors they were submitted or pinned to.
+    class must be allowed by the profile and for ``runner`` executors.
+    Comparison pins stay with their submitted executors.
     ``node`` is the asking node's name and trust class.
     """
     profile = config.profiles.get(name)
@@ -31,8 +32,7 @@ def on_demand_candidates(
     return [
         dataclasses.replace(c, model=name)
         for c in candidates
-        if c.kind == "inference"
-        and c.pin is None
+        if ((c.kind == "inference" and c.pin is None) or on_demand_task_allowed(c, config, node[0]))
         and c.privacy in profile.privacy
         and privacy_allows(config, c.privacy, "runner", node[1])
     ]

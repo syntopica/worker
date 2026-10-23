@@ -104,11 +104,13 @@ def test_a_runner_that_answers_nothing_fails_without_a_wall(tmp_path):
     assert (report["outcome"], report["error_code"]) == ("failed", "runner_failed")
 
 
-def test_an_unmatched_failure_leaves_its_tail_on_stderr(tmp_path, capsys):
+def test_an_unmatched_failure_keeps_runner_text_out_of_logs(tmp_path, capsys):
     body = "sys.stderr.write('model gemini-x is not available'); sys.exit(1)"
     report = run(profile("agy", fake_runner(tmp_path, "agy", body)), lease())
     assert report["error_code"] == "runner_failed"
-    assert "model gemini-x is not available" in capsys.readouterr().err
+    diagnostic = capsys.readouterr().err
+    assert "worker: runner_failed agy:" in diagnostic
+    assert "model gemini-x is not available" not in diagnostic
 
 
 def test_a_wall_reports_when_it_resets(tmp_path):
