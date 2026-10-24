@@ -1,3 +1,4 @@
+import json
 import time
 
 from tests.tasks.fake_runner import fake_runner
@@ -42,11 +43,13 @@ def test_codex_prompt_only_runs_do_not_persist_sessions_or_load_unrelated_tools(
     ]
 
 
-def test_agy_joins_the_prompt_to_its_flag(tmp_path):
+def test_agy_sends_the_prompt_only_on_stdin(tmp_path):
     for prompt in (HOSTILE, "--help", "--version"):
-        argv = agy_invocation(profile("agy"), prompt, None).argv
+        invocation = agy_invocation(profile("agy"), prompt, None)
+        argv = invocation.argv
         assert prompt not in argv
-        assert argv[1] == f"--print={AGY_NO_TOOLS_PREFACE}{prompt}"
+        assert not any(prompt in arg for arg in argv)
+        assert json.loads(invocation.stdin)["message"]["content"] == AGY_NO_TOOLS_PREFACE + prompt
         assert "--dangerously-skip-permissions" not in argv
 
 

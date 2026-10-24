@@ -7,14 +7,14 @@ from worker.tasks.task_output import task_output
 
 
 def judge_run(
-    runner: str, exit_code: int, output: str, answer: str | None
+    runner: str, exit_code: int, output: str, answer: str | None, *, silent_wall: bool = True
 ) -> tuple[str, str | None, dict[str, Any] | None]:
     """A wall outranks everything; an answer outranks a non-zero exit.
 
     codex has exited non-zero after writing a usable last message, and the
     coordinator's schema check decides whether that answer is acceptable.
     """
-    if is_quota_wall(runner, exit_code, output, answer):
+    if is_quota_wall(runner, exit_code, output, answer, silent_wall=silent_wall):
         return "failed", "quota_wall", None
     if answer is None or not answer.strip():
         # An empty answer is no answer: agy returns one when a tool it wanted

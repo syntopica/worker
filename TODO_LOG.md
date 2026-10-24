@@ -251,3 +251,14 @@ Closed engine work. Public repository: engine commits and behaviour only.
 - [x] 2026-10-24 — **Execution:** Audit explicit comparison executor substitutions and isolate task sessions.
   - Result: Added --override-pins for explicit on-demand drains, preserved default pin enforcement and original target provenance, and isolated Codex task sessions from unrelated user configuration.
   - Evidence: uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and selection tests cover opt-in enforcement, preserved pins, actual executor metadata and audit rows; a real Codex worker call passed its output schema with ephemeral sessions and shell tools disabled.
+
+- [-] 2026-10-24 — **Later phases (see roadmap):** Strong-tier routing capability is already implemented.
+  - Resolution: Strong model/profile routing already exists and is covered by tests/jobs/test_quality_tiers.py (40 focused tests passed including this suite). A queue-specific activation is instance configuration and is not missing engine work.
+
+- [x] 2026-10-24 — **Later phases (see roadmap):** Verify Linux drain load reporting.
+  - Result: Verify Linux drain load reporting.
+  - Evidence: tests/node/test_linux_host_sampler.py and tests/node/test_chat_stream_phase.py run by the full codeality-py gate.
+
+- [x] 2026-10-24 — **Security:** Send AGY prompts over stdin and parse terminal stream results safely.
+  - Result: Send AGY prompts over stdin and parse terminal stream results safely.
+  - Evidence: uv run --group quality --python 3.14 codeality-py gate; focused AGY pipeline/schema/timeout/fencing and quality-tier tests: 40 passed.

@@ -1,5 +1,8 @@
 import itertools
+import sys
 import time
+
+import pytest
 
 from tests.tasks.fake_runner import fake_runner
 from worker.config.task_profile import TaskProfile
@@ -140,3 +143,54 @@ def test_a_fenced_attempt_is_killed_and_not_reported(tmp_path):
 def test_a_missing_runner_binary_fails_cleanly(tmp_path):
     report = run(profile("codex", str(tmp_path / "absent")), lease())
     assert report["error_code"] == "runner_failed"
+
+
+def test_agy_incomplete_stream_is_no_output_without_a_quota_cooldown(tmp_path):
+    body = 'print(json.dumps({"event": "step_update", "text": "partial"}))'
+    report = run(profile("agy", fake_runner(tmp_path, "agy", body)), lease())
+    assert report["error_code"] == "no_output"
+    assert not report.get("usage", {}).get("wall_resets_in_s")
+
+
+def test_agy_final_schema_and_usage_survive_the_stdin_pipeline(tmp_path):
+    body = (
+        'assert json.loads(stdin)["message"]["content"].endswith("--help\\nclassify")\n'
+        'assert "--help" not in args\n'
+        'assert "--json-schema" in args\n'
+        'print(json.dumps({"event": "result", "result": {"status": "SUCCESS", '
+        '"response": "prose", "structured_output": {"ok": True}, '
+        '"usage": {"input_tokens": 3, "output_tokens": 2}}}))'
+    )
+    report = run(
+        profile("agy", fake_runner(tmp_path, "agy", body)),
+        lease("--help\nclassify", output_schema={"type": "object"}),
+    )
+    assert report["outcome"] == "succeeded"
+    assert report["output"]["json"] == {"ok": True}
+    assert report["usage"] == {"tokens_in": 3, "tokens_out": 2}
+
+
+@pytest.mark.parametrize("exit_code", [1, 2])
+def test_nonzero_incomplete_agy_stream_is_a_runner_failure(tmp_path, exit_code):
+    body = (
+        f'print(json.dumps({{"event": "step_update", "text": "partial"}})); sys.exit({exit_code})'
+    )
+    report = run(profile("agy", fake_runner(tmp_path, "agy", body)), lease())
+    assert report["error_code"] == "runner_failed"
+
+
+@pytest.mark.parametrize("fenced", [False, True])
+def test_agy_large_stdin_cannot_block_timeout_or_fencing(tmp_path, fenced):
+    script = tmp_path / "unread-stdin"
+    script.write_text(f"#!{sys.executable}\nimport time\ntime.sleep(60)\n")
+    script.chmod(0o700)
+    prof = profile("agy", str(script), timeout_s=600 if fenced else 0.5)
+    ticks = itertools.count(0, 25)
+    clock = (lambda: float(next(ticks))) if fenced else time.monotonic
+    started = time.monotonic()
+    report = run(prof, lease("x" * 1_000_000), heartbeat=lambda: not fenced, clock=clock)
+    assert time.monotonic() - started < 10
+    if fenced:
+        assert report is None
+    else:
+        assert report["error_code"] == "timeout"

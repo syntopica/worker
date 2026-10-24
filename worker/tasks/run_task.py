@@ -11,6 +11,8 @@ from worker.config.task_profile import TaskProfile
 from worker.jobs.known_error_code import known_error_code
 from worker.node.attempt_report import attempt_report
 from worker.node.redact_credentials import redact_credentials
+from worker.tasks.agy_final_result import agy_final_result
+from worker.tasks.agy_runner_output import agy_runner_output
 from worker.tasks.build_workspace import build_workspace
 from worker.tasks.judge_run import judge_run
 from worker.tasks.read_answer import read_answer
@@ -72,8 +74,13 @@ def run_task(  # noqa: PLR0913, PLR0917
         stdout = (scratch / "stdout").read_text(errors="replace")
         stderr = (scratch / "stderr").read_text(errors="replace")
         answer = read_answer(profile.runner, invocation.answer_file, stdout)
+        judged = stdout + stderr
+        if profile.runner == "agy":
+            judged = agy_runner_output(stdout, stderr, answer is not None)
+        final = agy_final_result(stdout) if profile.runner == "agy" else None
+        silent_wall = profile.runner != "agy" or (final is not None and not final[1])
         outcome, code, output = judge_run(
-            profile.runner, proc.returncode or 0, stdout + stderr, answer
+            profile.runner, proc.returncode or 0, judged, answer, silent_wall=silent_wall
         )
         if code == "runner_failed":
             failure = runner_failure_text(profile.runner, stdout, stderr)
@@ -81,9 +88,7 @@ def run_task(  # noqa: PLR0913, PLR0917
             if code == "runner_failed":
                 report_runner_failure(profile.runner, profile.model or "")
         usage = read_usage(profile.runner, stdout)
-        resets_in = (
-            wall_resets_in_s(profile.runner, stdout + stderr) if code == "quota_wall" else None
-        )
+        resets_in = wall_resets_in_s(profile.runner, judged) if code == "quota_wall" else None
         if resets_in is not None:
             usage = {**usage, "wall_resets_in_s": resets_in}
         return attempt_report(

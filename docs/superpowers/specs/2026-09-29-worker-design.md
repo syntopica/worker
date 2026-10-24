@@ -1241,6 +1241,12 @@ The 24-hour sampling expiry also covers shadow members waiting for a split. Inte
 
 Codex task runs use `--ephemeral` and `--ignore-user-config`: job prompts and answers must not become persistent session rollouts, and task execution must not load unrelated user plugins, hooks or MCP servers. Prompt-only profiles also disable `shell_tool` and `shell_snapshot`. The explicit model, output schema and read-only sandbox remain in the invocation.
 
+### Amendment 2026-10-24 - agy prompts over stdin
+
+The agy runner sends exactly one newline-delimited `user` message through stdin using `--input-format stream-json --output-format stream-json`. Its plain-answer preface stays inside that message. The stdin pipe closes after the record so the CLI finishes the turn and exits. Prompts never appear in argv, including option-like text and embedded newlines.
+
+Only a terminal `result` event supplies an answer, structured output and cumulative token usage. Step updates and partial response text cannot complete a job. Legacy single-result JSON remains readable for older fixtures and rolling upgrades. The silent-wall heuristic applies only to complete legacy envelopes. An incomplete stream without an explicit wall is `no_output` on exit zero and `runner_failed` on nonzero exit. Runner diagnostics and quota detection read the terminal error and stderr rather than intermediate or successful model prose. Structured output retains priority over response text; schema validation, read-only sandbox flags, disabled slash commands, timeouts and attempt fencing remain unchanged.
+
 ### Amendment 2026-10-11 - codex usage from its event stream
 
 `codex exec` runs with `--json`, which prints JSON Lines events on stdout; the
