@@ -55,13 +55,24 @@ def test_a_task_is_leased_run_and_completed(tmp_path):
     assert (attempt, generation, report["outcome"]) == ("a1", 2, "succeeded")
 
 
-@pytest.mark.parametrize(
-    "state", [HostState(900.0, False, "normal"), HostState(None, True, "normal")]
-)
-def test_battery_or_an_unreadable_host_takes_no_task(tmp_path, state):
+def test_a_known_battery_takes_no_task(tmp_path):
     link = Link(LEASE)
-    assert step(make_config(tmp_path, "codex"), link, state) is True
+    assert step(make_config(tmp_path, "codex"), link, HostState(900.0, False, "normal")) is True
     assert link.leases == []
+
+
+@pytest.mark.parametrize(
+    ("state", "user_active"),
+    [
+        (HostState(None, True, "normal"), True),
+        (HostState(900.0, None, "unknown"), False),
+        (HostState(None, None, "unknown"), True),
+    ],
+)
+def test_an_unreadable_host_still_leases_as_an_active_user(tmp_path, state, user_active):
+    link = Link(None)
+    assert step(make_config(tmp_path, "codex"), link, state) is True
+    assert link.leases == [user_active]
 
 
 def test_a_lease_for_a_removed_profile_fails_as_unknown_profile(tmp_path):

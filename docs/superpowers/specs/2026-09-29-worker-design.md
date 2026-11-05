@@ -1389,3 +1389,15 @@ the signal to drop the target.
    Values are taken literally; a leading `~/` expands to the home directory.
    It exists to select a runner's account (for claude, `CLAUDE_CONFIG_DIR`),
    never to carry a credential.
+
+### Amendment 2026-11-05 - the task loop admits work on an unreadable host
+
+The task loop's runners are CLIs talking to remote models, so its host check
+only protects the battery and tells the coordinator whether the user is
+active. Under sustained load `ioreg` and `pmset` time out on every sample, and
+treating that as busy stopped every runner queue for hours while nothing on
+the machine was at risk (2026-11-05, load 60-110). The task loop now reads an
+unreadable idle time as an active user, so only `active_ok` queues are leased,
+and an unreadable power source as mains: only a reading that says battery
+stops admission. Memory pressure stays ignored. The inference node keeps the
+section 7 rule, an unreadable signal is busy.
