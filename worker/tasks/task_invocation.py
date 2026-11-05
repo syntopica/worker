@@ -4,6 +4,7 @@ from pathlib import Path
 
 from worker.config.task_profile import TaskProfile
 from worker.tasks.agy_invocation import agy_invocation
+from worker.tasks.claude_invocation import claude_invocation
 from worker.tasks.codex_invocation import codex_invocation
 from worker.tasks.cursor_invocation import cursor_invocation
 from worker.tasks.max_lane_invocation import max_lane_invocation
@@ -20,4 +21,6 @@ def task_invocation(
         return agy_invocation(profile, prompt, schema)
     if profile.runner == "max-lane":
         return max_lane_invocation(profile, prompt, schema)
+    if profile.runner == "claude":
+        return claude_invocation(profile, prompt, schema)
     return cursor_invocation(profile, prompt)

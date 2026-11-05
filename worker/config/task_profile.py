@@ -10,7 +10,9 @@ class TaskProfile:
 
     ``command`` is the runner executable (default: its name on PATH) and
     ``env_unset`` the variables removed from its environment, such as an API
-    key that would bill a call the subscription login should carry.
+    key that would bill a call the subscription login should carry. ``env``
+    holds variables set after that, such as the configuration directory that
+    selects a runner's account.
     ``denied_root`` is never copied into a workspace, even inside ``input_root``:
     the worker's own state, which holds the bearer tokens. An ``on_demand``
     profile is never chosen by a route, fallback or pin: it runs only when a
@@ -29,3 +31,4 @@ class TaskProfile:
     env_unset: frozenset[str] = frozenset()
     denied_root: Path | None = None
     on_demand: bool = False
+    env: tuple[tuple[str, str], ...] = ()

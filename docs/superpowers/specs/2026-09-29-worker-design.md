@@ -1366,3 +1366,26 @@ member was judged under the wrong label. A lease now carries `pinned`, true
 for a shadow member or a judge, and a pinned OpenRouter request names only
 its own model. A withdrawn pinned model therefore fails the member, which is
 the signal to drop the target.
+
+### Amendment 2026-11-05 - the claude runner and per-profile environment
+
+1. **The `claude` runner.** A profile with `"runner": "claude"` runs the
+   Claude Code CLI in print mode on the subscription login of whatever
+   configuration directory its environment names: `claude -p --model <model>
+   --output-format json --tools "" --strict-mcp-config --setting-sources ""
+   --no-session-persistence`, plus `--json-schema <schema JSON>` when the task
+   has an output schema. No tools, no MCP servers, no settings (so no hooks or
+   plugins) and no session file; the prompt goes on stdin. A claude profile
+   must name its `model` and takes no `input_root`. The answer is the
+   envelope's `structured_output` (serialized as JSON) or else its `result`,
+   unless `is_error` is true; usage is the envelope's `input_tokens` and
+   `output_tokens`. Its wall is the CLI's own limit sentence, or an envelope
+   with `api_error_status` 429, and a run that answered is never a wall.
+   Unlike max-lane it is not on demand: it is an ordinary route or fallback
+   rung, because it goes through the official CLI rather than reusing OAuth
+   credentials outside it.
+2. **Per-profile environment.** A profile may carry `env`, an object of string
+   variables set in the runner's environment after `env_unset` is applied.
+   Values are taken literally; a leading `~/` expands to the home directory.
+   It exists to select a runner's account (for claude, `CLAUDE_CONFIG_DIR`),
+   never to carry a credential.

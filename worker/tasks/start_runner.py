@@ -19,6 +19,7 @@ def start_runner(
 ) -> subprocess.Popen[bytes]:
     """Stdin is fed from a thread so a large prompt cannot block this loop."""
     env = {k: v for k, v in os.environ.items() if k not in profile.env_unset}
+    env.update(profile.env)
     proc = subprocess.Popen(
         invocation.argv,
         cwd=workspace,

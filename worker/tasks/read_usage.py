@@ -8,13 +8,13 @@ from worker.tasks.envelope_usage import envelope_usage
 
 
 def read_usage(runner: str, stdout: str) -> dict[str, Any]:
-    """The agy final result, cursor and max-lane envelopes carry ``usage``; codex its events.
+    """The agy final result, cursor, max-lane and claude envelopes carry ``usage``; codex events.
 
     Field names are pinned by captured output in ``tests/tasks/fixtures``.
     """
     if runner == "agy":
         return agy_usage(stdout)
-    if runner == "max-lane":
+    if runner in {"max-lane", "claude"}:
         return envelope_usage(stdout, "input_tokens", "output_tokens")
     if runner == "codex":
         return codex_usage(stdout)

@@ -20,6 +20,13 @@ QUOTA_WALL_PATTERNS = {
         r"\s+spend limit",
         re.I,
     ),
+    # The Claude Code CLI's limit sentences, or its JSON envelope's API status.
+    "claude": re.compile(
+        r"claude ai usage limit reached|you['\u2019]ve hit your (?:\w+ )?limit"
+        r"|(?:5-hour|session|weekly|opus|sonnet) limit reached"
+        r'|"api_error_status":\s*429\b',
+        re.I,
+    ),
     # max-lane-run's own stderr once every Keychain account answered 429.
     "max-lane": re.compile(
         r"max-lane-run: max lane request failed for keychain service [^\n]{1,80}"

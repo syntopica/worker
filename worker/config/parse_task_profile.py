@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Any
 
+from worker.config.parse_profile_env import parse_profile_env
 from worker.config.task_profile import TaskProfile
 from worker.config.task_runners import TASK_RUNNERS
 
@@ -14,7 +15,8 @@ def parse_task_profile(name: str, raw: dict[str, Any], config_dir: Path) -> Task
     every Syntopica path follows. An agy profile takes no inputs: reading files
     needs ``--dangerously-skip-permissions``, a later and explicit decision.
     A max-lane profile has no tools either, pins its model, and is on demand:
-    it spends a subscription the owner releases explicitly.
+    it spends a subscription the owner releases explicitly. A claude profile
+    names its model and takes no inputs either, but runs on ordinary routes.
     """
     runner = raw.get("runner")
     if runner not in TASK_RUNNERS:
@@ -24,6 +26,8 @@ def parse_task_profile(name: str, raw: dict[str, Any], config_dir: Path) -> Task
         raise ValueError(f"profile {name}: agy profiles take no input_root")
     if runner == "max-lane" and (root is not None or not raw.get("model")):
         raise ValueError(f"profile {name}: max-lane profiles name a model and take no input_root")
+    if runner == "claude" and (root is not None or not raw.get("model")):
+        raise ValueError(f"profile {name}: claude profiles name a model and take no input_root")
     if runner == "max-lane" and raw.get("on_demand") is not True:
         raise ValueError(f"profile {name}: max-lane profiles are on_demand")
     nodes = raw.get("nodes")
@@ -40,4 +44,5 @@ def parse_task_profile(name: str, raw: dict[str, Any], config_dir: Path) -> Task
         env_unset=frozenset(raw.get("env_unset", ())),
         denied_root=(config_dir / "state").resolve(),
         on_demand=raw.get("on_demand") is True,
+        env=parse_profile_env(name, raw.get("env")),
     )
