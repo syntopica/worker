@@ -55,6 +55,14 @@ def test_only_free_endpoints_are_accepted(tmp_path):
         make_config(tmp_path, {**ROUTE, "fallbacks": ["vendor/paid"]})
 
 
+def test_the_free_router_is_accepted_and_other_routers_are_not(tmp_path):
+    config = make_config(tmp_path, {**ROUTE, "fallbacks": ["openrouter/free"]})
+    assert config.queues["pa.bulk"].openrouter.fallbacks == ("openrouter/free",)
+    make_config(tmp_path, {"models": {"model-a": "openrouter/free"}})
+    with pytest.raises(ValueError, match=":free"):
+        make_config(tmp_path, {"models": {"model-a": "openrouter/auto"}})
+
+
 def test_the_ledger_records_provider_and_cost_per_day(tmp_path):
     config = make_config(tmp_path)
     with closing(fresh_store(tmp_path / "state")) as conn:

@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from worker.config.is_free_openrouter_model import is_free_openrouter_model
 from worker.config.shadow_policy import ShadowPolicy
 
 _KINDS = ("ollama", "openrouter", "runner")
@@ -10,7 +11,7 @@ _KINDS = ("ollama", "openrouter", "runner")
 def parse_shadow_policy(name: str, raw: dict[str, Any] | None) -> ShadowPolicy | None:
     """None when the queue has none; raise ValueError on a malformed one.
 
-    OpenRouter targets must be ``:free`` endpoints, as in a route.
+    OpenRouter targets must be ``:free`` endpoints or the free router, as in a route.
     """
     if raw is None:
         return None
@@ -25,7 +26,7 @@ def parse_shadow_policy(name: str, raw: dict[str, Any] | None) -> ShadowPolicy |
         kind, _, rest = str(target).partition(":")
         if kind not in _KINDS or not rest:
             raise ValueError(f"queue {name}: shadow target {target!r} is not kind:name")
-        if kind == "openrouter" and not rest.endswith(":free"):
+        if kind == "openrouter" and not is_free_openrouter_model(rest):
             raise ValueError(f"queue {name}: shadow openrouter targets must be :free endpoints")
     if not isinstance(judge, str) or not judge:
         raise ValueError(f"queue {name}: shadow.judge must name a task profile")

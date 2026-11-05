@@ -1401,3 +1401,14 @@ unreadable idle time as an active user, so only `active_ok` queues are leased,
 and an unreadable power source as mains: only a reading that says battery
 stops admission. Memory pressure stays ignored. The inference node keeps the
 section 7 rule, an unreadable signal is busy.
+
+### Amendment 2026-11-05 - OpenRouter's free router counts as a free endpoint
+
+OpenRouter retires and renames `:free` models every few weeks, and each change
+left a route failing with 404 until someone edited the configuration
+(`nemotron-3-super-120b-a12b:free` on 2026-11-05, `qwen3.8-27b:free` on
+2026-10-12). A route, a fallback or a shadow target may now also name
+`openrouter/free`, the router that picks among the free models that support the
+request's parameters and is priced at zero. Any other id still has to end in
+`:free`. The attempt records the model that answered, so quality and cost stay
+attributed to a real model.
