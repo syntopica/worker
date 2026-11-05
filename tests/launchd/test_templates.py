@@ -99,3 +99,14 @@ def test_serve_template_no_process_type() -> None:
 
     # Assert ProcessType is not present
     assert "ProcessType" not in plist
+
+
+def test_tasks_template_runs_at_standard_priority() -> None:
+    """Runners inherit the class: Background starves them on a loaded host."""
+    template = (
+        Path(__file__).parent.parent.parent
+        / "launchd"
+        / "com.syntopica.worker.tasks.plist.template"
+    )
+    plist = plistlib.loads(template.read_text().replace("@", "x").encode("utf-8"))
+    assert plist["ProcessType"] == "Standard"

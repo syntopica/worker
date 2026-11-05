@@ -1412,3 +1412,12 @@ left a route failing with 404 until someone edited the configuration
 request's parameters and is priced at zero. Any other id still has to end in
 `:free`. The attempt records the model that answered, so quality and cost stay
 attributed to a real model.
+
+### Amendment 2026-11-05 - the task loop runs at standard priority
+
+The task loop and the inference node used to share `ProcessType` Background.
+The node keeps it. The task loop's runners inherit the class, and on a host
+at load 120-170 a background `claude -p` got about one CPU-second in fifteen
+minutes and timed out, while the same call at standard priority answered in
+four seconds (2026-11-05). The runners are network clients that use little CPU
+themselves, so the task loop now runs as `Standard`.
