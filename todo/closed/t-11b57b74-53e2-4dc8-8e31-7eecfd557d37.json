@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-11b57b74-53e2-4dc8-8e31-7eecfd557d37",
+  "title": "Send AGY prompts over stdin and parse terminal stream results safely",
+  "state": "done",
+  "category": "security",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Send AGY prompts over stdin and parse terminal stream results safely.",
+  "evidence": [
+    "uv run --group quality --python 3.14 codeality-py gate; focused AGY pipeline/schema/timeout/fencing and quality-tier tests: 40 passed."
+  ]
+}

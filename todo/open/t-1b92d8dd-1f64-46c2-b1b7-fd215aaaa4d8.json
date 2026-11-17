@@ -1,0 +1,10 @@
+{
+  "tadu": 2,
+  "id": "t-1b92d8dd-1f64-46c2-b1b7-fd215aaaa4d8",
+  "title": "Phase 2 remainder: a paid rung with budget reservations. Needs owner:",
+  "state": "blocked",
+  "category": "later-phases-see-roadmap",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "blocker": "the default budget is $0, so nothing needs it until a paid budget is set. (The task progress guard is superseded, see `TODO_LOG.md`.) Decided 2026-10-11 (owner via Codex adjudication): the budget stays at $0 and the paid rung inactive; an explicit dollar cap comes first if paid capacity is ever wanted."
+}

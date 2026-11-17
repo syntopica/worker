@@ -1,0 +1,10 @@
+{
+  "tadu": 2,
+  "categories": {
+    "execution": "Execution",
+    "later-phases-see-roadmap": "Later phases (see roadmap)",
+    "quality-gate": "Quality gate",
+    "sampling": "Sampling",
+    "security": "Security"
+  }
+}

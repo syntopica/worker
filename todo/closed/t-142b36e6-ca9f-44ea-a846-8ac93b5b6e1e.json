@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-142b36e6-ca9f-44ea-a846-8ac93b5b6e1e",
+  "title": "Bound manual queue drains to jobs submitted before startup",
+  "state": "done",
+  "category": "execution",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Added --snapshot to explicit task drains, with authenticated creation-time filtering before candidate limits; new producer work remains on its normal routes.",
+  "evidence": [
+    "uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and coordinator-link tests cover the cutoff and invalid numeric input; the snapshot drain command ran against the live coordinator."
+  ]
+}

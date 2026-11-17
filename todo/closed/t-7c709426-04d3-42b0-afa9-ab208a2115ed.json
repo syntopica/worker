@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-7c709426-04d3-42b0-afa9-ab208a2115ed",
+  "title": "Update the locked filelock tooling dependency",
+  "state": "done",
+  "category": "security",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Updated filelock from 4.1.1 to 4.2.1 to address six reported advisories.",
+  "evidence": [
+    "uv run --group quality --python 3.14 pip-audit reports no known vulnerabilities; the full codeality-py gate passed. Parsed lock comparison confirms filelock is the only changed package."
+  ]
+}

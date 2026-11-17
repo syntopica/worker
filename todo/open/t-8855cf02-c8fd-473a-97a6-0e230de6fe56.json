@@ -1,0 +1,10 @@
+{
+  "tadu": 2,
+  "id": "t-8855cf02-c8fd-473a-97a6-0e230de6fe56",
+  "title": "Phase 4: coordinator on an always-on host, Tailscale binding with",
+  "state": "blocked",
+  "category": "later-phases-see-roadmap",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "blocker": "LocalAPI WhoIs, more nodes; HID idle test under fast user switching before any guest node. Blocked until a candidate host has run stably for an agreed period. Decided 2026-10-11 (owner via Codex adjudication): wait; keep the present coordinator until a candidate host passes a stability period with recorded uptime, load and recovery evidence."
+}

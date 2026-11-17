@@ -1,0 +1,17 @@
+{
+  "tadu": 2,
+  "id": "t-c3c7bc6d-81ce-418f-8abc-d4a8a99f7dc2",
+  "title": "**Security: update the locked certifi trust bundle.** The lockfile candidate updates only certifi from 2026.7.22 to the patched 2026.10.19 release for GHSA-6q48-6c7w-9gw2",
+  "state": "done",
+  "category": "security",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "notes": [
+    "Next: verify the exact locked candidate in an isolated environment and complete the required source gates. Installed instances require separate verification; source acceptance does not establish their runtime state."
+  ],
+  "closed": "2026-10-22",
+  "result": "Update only the certifi lock record from 2026.7.22 to 2026.10.19; installed consumer adoption remains separate from source acceptance.",
+  "evidence": [
+    "Locked wheel-only all-extras/all-groups setup and uv lock --check passed; 50 installed distributions match the accepted lock. Direct pytest -q passed 571 tests and codeality-py gate --json passed all seven required stages, including pip-audit. Independent parsed lock comparison confirmed no other package or lock metadata changes."
+  ]
+}

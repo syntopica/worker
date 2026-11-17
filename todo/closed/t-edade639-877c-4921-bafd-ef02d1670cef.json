@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-edade639-877c-4921-bafd-ef02d1670cef",
+  "title": "Audit explicit comparison executor substitutions and isolate task sessions",
+  "state": "done",
+  "category": "execution",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Added --override-pins for explicit on-demand drains, preserved default pin enforcement and original target provenance, and isolated Codex task sessions from unrelated user configuration.",
+  "evidence": [
+    "uv run --group quality --python 3.14 codeality-py gate passed all seven required stages. API and selection tests cover opt-in enforcement, preserved pins, actual executor metadata and audit rows; a real Codex worker call passed its output schema with ephemeral sessions and shell tools disabled."
+  ]
+}

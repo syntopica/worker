@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-b7a910ca-6daa-48b9-b99d-e617c0a1e2bb",
+  "title": "Expire stale internal sampling split requests",
+  "state": "done",
+  "category": "sampling",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Sampling expiry now closes split requests older than 24 hours while leaving production split requests unchanged.",
+  "evidence": [
+    "uv run --group quality --python 3.14 pytest tests/shadow/test_stale_split_sampling.py -q passed; the full codeality-py gate passed."
+  ]
+}

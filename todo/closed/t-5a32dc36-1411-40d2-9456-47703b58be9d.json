@@ -1,0 +1,17 @@
+{
+  "tadu": 2,
+  "id": "t-5a32dc36-1411-40d2-9456-47703b58be9d",
+  "title": "Restore source quality and close test-owned SQLite stores deterministically",
+  "state": "done",
+  "category": "quality-gate",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "notes": [
+    "Isolated verification exposed unclosed connections, optional-reader typing, import/format findings and an oversized quota-wall helper signature. Keep original assertions, manual exclusions, coverage requirements and descriptor limits."
+  ],
+  "closed": "2026-10-22",
+  "result": "Close all independently acquired test stores through explicit managed scopes or existing teardown. Use CompletionReport in the quota-wall helper without changing trusted reset semantics; correct optional-reader typing, imports and formatting. Add seven invalid-reset regressions.",
+  "evidence": [
+    "Isolated pytest -q passed 571 tests with two existing warnings; codeality-py gate --json passed all seven required stages at the unchanged descriptor limit of 256 and coverage threshold of 80 percent. Focused 53 tests passed. All 490 source bytes/modes and 50 installed distribution records remained unchanged; existing assertions/markers were preserved and independent review returned no findings."
+  ]
+}

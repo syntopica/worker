@@ -1,0 +1,14 @@
+{
+  "tadu": 2,
+  "id": "t-c09786cb-fe3e-4c5d-bd1a-cfd55fb2c18f",
+  "title": "Verify Linux drain load reporting",
+  "state": "done",
+  "category": "later-phases-see-roadmap",
+  "type": "untriaged",
+  "priority": "untriaged",
+  "closed": "2026-10-24",
+  "result": "Verify Linux drain load reporting.",
+  "evidence": [
+    "tests/node/test_linux_host_sampler.py and tests/node/test_chat_stream_phase.py run by the full codeality-py gate."
+  ]
+}
