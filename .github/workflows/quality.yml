@@ -53,6 +53,9 @@ jobs:
           path: pyrefly.json
           retention-days: 90
 
+  go:
+    uses: ./.github/workflows/codeality.yml
+
   security:
     name: secrets + workflow lint
     runs-on: ubuntu-latest
