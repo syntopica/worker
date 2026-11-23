@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-74d2dab0-23d2-40fe-9ac4-35e5b604affb",
   "title": "Go port: inference node (host state, lease, heartbeat, Ollama executor, drain)",
-  "state": "pending",
+  "state": "in_progress",
   "category": "execution",
   "type": "feature",
   "priority": "high",
   "kind": "task",
   "created": "2026-11-23",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:claude"
+  ],
   "notes": [
     "Ports worker/node and the config and policy it reads, against the Python coordinator. Spec amendment 2026-11-23."
   ],
