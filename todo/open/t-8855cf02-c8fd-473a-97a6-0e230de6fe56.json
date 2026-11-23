@@ -1,10 +1,14 @@
 {
   "tadu": 2,
   "id": "t-8855cf02-c8fd-473a-97a6-0e230de6fe56",
-  "title": "Phase 4: coordinator on an always-on host, Tailscale binding with",
+  "title": "Phase 4: move coordinator to an always-on host after a stability gate; Tailscale binding with LocalAPI WhoIs, more nodes, HID idle test before guest nodes",
   "state": "blocked",
   "category": "later-phases-see-roadmap",
-  "type": "untriaged",
-  "priority": "untriaged",
-  "blocker": "LocalAPI WhoIs, more nodes; HID idle test under fast user switching before any guest node. Blocked until a candidate host has run stably for an agreed period. Decided 2026-10-11 (owner via Codex adjudication): wait; keep the present coordinator until a candidate host passes a stability period with recorded uptime, load and recovery evidence."
+  "type": "feature",
+  "priority": "low",
+  "kind": "waiting",
+  "blocker": "LocalAPI WhoIs, more nodes; HID idle test under fast user switching before any guest node. Blocked until a candidate host has run stably for an agreed period. Decided 2026-10-11 (owner via Codex adjudication): wait; keep the present coordinator until a candidate host passes a stability period with recorded uptime, load and recovery evidence.",
+  "notes": [
+    "2026-11-24 audit: verified still blocked. No Tailscale/WhoIs code in repo (grep); Phase 4 only in docs/superpowers/plans/2026-09-29-roadmap.md; HEAD is Go port work (ab5d5b2). Left: pick a candidate host, record uptime/load/recovery evidence over an agreed period, then build Tailscale binding. Next: owner names candidate host and stability period."
+  ]
 }

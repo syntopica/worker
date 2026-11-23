@@ -1,15 +1,16 @@
 {
   "tadu": 2,
   "id": "t-8e977dda-b5bc-41ce-8296-1b6d392185f4",
-  "title": "CI security job is red: gitleaks flags the placeholder AWS-style key in tests/node/test_redact_credentials.py",
+  "title": "Fix red gitleaks job: AWS-style fixture AKIAABCDEFGHIJKLMNOP in tests/node/test_redact_credentials.py (build at run time or add .gitleaksignore)",
   "state": "pending",
   "category": "security",
   "type": "bug",
-  "priority": "normal",
+  "priority": "high",
   "kind": "task",
   "created": "2026-11-23",
   "notes": [
-    "Red on main since at least 2026-11-05. The value is a redactor fixture (alphabet sequence), not a credential, first committed in e74e62b. Smallest step: build the fixture at run time or add its fingerprint to .gitleaksignore."
+    "Red on main since at least 2026-11-05. The value is a redactor fixture (alphabet sequence), not a credential, first committed in e74e62b. Smallest step: build the fixture at run time or add its fingerprint to .gitleaksignore.",
+    "2026-11-24 audit: still not done. Latest main run 45291980724 (2026-11-23): job \"secrets + workflow lint\" fails with \"leaks found: 1\"; gate 3.11/3.13 and go jobs pass. No .gitleaksignore exists; fixture still literal at tests/node/test_redact_credentials.py:18. Smallest step: add .gitleaksignore with the finding fingerprint, or build the string at run time (\"AKIA\"+\"ABCDEFGHIJKLMNOP\"), then confirm job green."
   ],
   "done_when": [
     "The secrets + workflow lint job is green on main"

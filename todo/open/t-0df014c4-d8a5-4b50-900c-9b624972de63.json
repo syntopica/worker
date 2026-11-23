@@ -1,7 +1,7 @@
 {
   "tadu": 2,
   "id": "t-0df014c4-d8a5-4b50-900c-9b624972de63",
-  "title": "Go port: CLI, launchd templates, then delete the Python engine",
+  "title": "Finish the Go port (api, store, jobs, tasks, remote, CLI), switch launchd templates to the Go binary, then delete the 359-file Python engine",
   "state": "pending",
   "category": "execution",
   "type": "feature",
@@ -9,7 +9,8 @@
   "kind": "task",
   "created": "2026-11-23",
   "notes": [
-    "Python is deleted in the commit that makes the Go binary the one the templates start."
+    "Python is deleted in the commit that makes the Go binary the one the templates start.",
+    "2026-11-24 audit: not done, partial. Go packages exist under internal/ (client, config, contract, host, link, node [uncommitted], ollama, policy; last commit ab5d5b2). No cmd/ or main package, so no Go CLI/binary. Python worker/ still has 359 .py files (api, auth, jobs, store, tasks, remote, cli unported). launchd/*.plist.template (4) unchanged, README and quality.yml still describe Python (quality.yml has a go job beside the py matrix). Next: commit internal/node, port remaining packages, add cmd/worker, repoint templates, then delete Python."
   ],
   "done_when": [
     "No .py file is left, README and quality.yml describe the Go engine only"
