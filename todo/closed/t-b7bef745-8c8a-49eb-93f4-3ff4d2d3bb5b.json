@@ -2,7 +2,7 @@
   "tadu": 2,
   "id": "t-b7bef745-8c8a-49eb-93f4-3ff4d2d3bb5b",
   "title": "Add the codeality-go gate job to CI once codeality-go v0.1.0 is tagged",
-  "state": "pending",
+  "state": "done",
   "category": "quality-gate",
   "type": "chore",
   "priority": "high",
@@ -10,5 +10,10 @@
   "created": "2026-11-23",
   "notes": [
     "Run codeality-go init --apply --ci and make quality.yml call codeality.yml. Until then the Go code is gated locally only."
+  ],
+  "closed": "2026-11-24",
+  "result": "Add the codeality-go gate job to CI once codeality-go v0.1.0 is tagged",
+  "evidence": [
+    "quality.yml calls codeality.yml; job 'go / codeality-go (.)' green on 541f8bb"
   ]
 }
