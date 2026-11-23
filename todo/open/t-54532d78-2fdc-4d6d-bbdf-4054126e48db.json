@@ -1,0 +1,17 @@
+{
+  "tadu": 2,
+  "id": "t-54532d78-2fdc-4d6d-bbdf-4054126e48db",
+  "title": "Go port: coordinator (store, migrations, jobs, policy, auth, HTTP API)",
+  "state": "pending",
+  "category": "execution",
+  "type": "feature",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-23",
+  "notes": [
+    "Opens the same SQLite database and applies the same numbered migrations; contract v1 unchanged."
+  ],
+  "done_when": [
+    "The Go coordinator passes the ported job, policy and API scenarios and serves the Python node unchanged"
+  ]
+}

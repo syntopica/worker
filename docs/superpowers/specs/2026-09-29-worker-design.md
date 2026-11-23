@@ -1421,3 +1421,40 @@ at load 120-170 a background `claude -p` got about one CPU-second in fifteen
 minutes and timed out, while the same call at standard priority answered in
 four seconds (2026-11-05). The runners are network clients that use little CPU
 themselves, so the task loop now runs as `Standard`.
+
+### Amendment 2026-11-23 - the engine moves to Go
+
+Decision 4.3 changes in one word: the engine is Go, not Python. Everything else
+in it stands: SQLite in WAL mode, the HTTP API, one pull-based node per machine.
+The reasons are a single static binary per machine instead of an interpreter and
+a virtual environment on every node, cancellation and deadlines carried by
+`context` through every lease, heartbeat and executor call instead of threads
+and flags, and a node whose idle footprint is a few megabytes.
+
+Contract v1 does not change, and is what makes the move safe: the two
+implementations are interchangeable on either side of it.
+
+- The port goes component by component, each one replacing its Python
+  counterpart only when it passes the same scenarios: the contract types and
+  the producer client, then the inference node, the remote and task loops, the
+  coordinator, and last the CLI. Until the coordinator moves, Go nodes talk to
+  the Python coordinator.
+- The Go coordinator opens the same database and applies the same numbered
+  migrations; no data is converted. A migration already applied is never
+  rewritten.
+- Python code is deleted in the commit that makes its Go replacement the one
+  the launchd templates start, never before.
+- Behaviour is ported, not redesigned. A difference found on the way is either
+  a bug fixed on both sides or its own amendment.
+
+Layout: one module at the repository root, `cmd/worker` for the binary and
+everything else under `internal/`, one package per component of section 5.
+
+Section 14's gates become, for Go code, `codeality-go gate`: gofumpt and gci,
+`go mod tidy`, golangci-lint under the strict shipped configuration, one
+exported unit per file named after it (at most 200 lines), duplicates,
+`go test -race -shuffle=on` with the coverage floor, and govulncheck. The fake
+clock, the simulated host state and the fake Ollama and OpenRouter servers are
+ported with the scenarios that use them. The contract fixtures are decoded by
+the Go types with unknown fields refused, so a field added on one side fails
+the other's tests.

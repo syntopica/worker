@@ -26,6 +26,9 @@ changing behaviour it specifies.
   Tests are `tests/test_*.py`.
 - One exported unit and one responsibility per file (codeality-py: at most 150
   lines per file); every dependency an explicit import.
+- Go, for the port (spec amendment 2026-11-23): one module at the root,
+  `cmd/worker` and `internal/<component>`, one exported unit per file named
+  after it, gated by `codeality-go gate`. Port behaviour, do not redesign it.
 - All code, comments, docs and commit messages in English.
 - Only `main`; commit and push when the gate is green.
 

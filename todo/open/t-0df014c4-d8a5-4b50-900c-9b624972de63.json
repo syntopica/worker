@@ -1,0 +1,17 @@
+{
+  "tadu": 2,
+  "id": "t-0df014c4-d8a5-4b50-900c-9b624972de63",
+  "title": "Go port: CLI, launchd templates, then delete the Python engine",
+  "state": "pending",
+  "category": "execution",
+  "type": "feature",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-23",
+  "notes": [
+    "Python is deleted in the commit that makes the Go binary the one the templates start."
+  ],
+  "done_when": [
+    "No .py file is left, README and quality.yml describe the Go engine only"
+  ]
+}
