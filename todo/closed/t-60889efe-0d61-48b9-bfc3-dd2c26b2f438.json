@@ -2,7 +2,7 @@
   "tadu": 2,
   "id": "t-60889efe-0d61-48b9-bfc3-dd2c26b2f438",
   "title": "Fix the zizmor upload-artifact version mismatch",
-  "state": "in_progress",
+  "state": "done",
   "category": "quality-gate",
   "type": "bug",
   "priority": "normal",
@@ -20,5 +20,10 @@
   ],
   "done_when": [
     "Align the pinned upload-artifact reference and its version comment, then verify that the Quality workflow succeeds."
+  ],
+  "closed": "2026-11-24",
+  "result": "Fix the zizmor upload-artifact version mismatch",
+  "evidence": [
+    "zizmor 1.29.0 and actionlint passed locally. GitHub Actions Quality run 45325153078 on cb537e7 passed all four jobs, including the workflow security check."
   ]
 }
