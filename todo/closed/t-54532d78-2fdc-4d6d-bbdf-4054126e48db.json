@@ -2,7 +2,7 @@
   "tadu": 2,
   "id": "t-54532d78-2fdc-4d6d-bbdf-4054126e48db",
   "title": "Go port: coordinator (SQLite store and migrations, jobs, policy, auth, HTTP API) serving the unchanged Python node",
-  "state": "in_progress",
+  "state": "done",
   "category": "execution",
   "type": "feature",
   "priority": "normal",
@@ -20,5 +20,10 @@
   ],
   "done_when": [
     "The Go coordinator passes the ported job, policy and API scenarios and serves the Python node unchanged"
+  ],
+  "closed": "2026-11-24",
+  "result": "The Go coordinator serves contract v1 through worker serve using the existing SQLite migrations and supports the existing Python node and producer clients.",
+  "evidence": [
+    "codeality-go gate passed all seven stages with 87.0% Go coverage. go test -count=1 ./internal/coordinator -run TestPythonNodeRoundTrip passes with the unchanged Python inference loop and a fake Ollama server. The Python HTTP suite redirected to the Go binary passed 86 checks; the Python-only monkeypatch check has a dedicated Go regression test."
   ]
 }

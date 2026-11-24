@@ -13,13 +13,7 @@ func CancelJob(ctx context.Context, s *store.Store, producer *string, id string,
 		if err != nil {
 			return "", err
 		}
-		if !liveState(job.State) && job.State != stateQueued && job.State != stateSplitRequested {
-			return job.State, nil
-		}
-		if err := run(ctx, tx, "cancel_job", params{keyID: id, keyNow: now}); err != nil {
-			return "", err
-		}
-		return stateCancelled, deleteSensitivePayloads(ctx, tx, job)
+		return cancelOwnedJob(ctx, tx, job, now)
 	})
 	if err != nil {
 		return "", err

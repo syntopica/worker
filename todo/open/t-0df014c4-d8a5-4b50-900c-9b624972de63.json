@@ -10,7 +10,8 @@
   "created": "2026-11-23",
   "notes": [
     "Python is deleted in the commit that makes the Go binary the one the templates start.",
-    "2026-11-24 audit: not done, partial. Go packages exist under internal/ (client, config, contract, host, link, node [uncommitted], ollama, policy; last commit ab5d5b2). No cmd/ or main package, so no Go CLI/binary. Python worker/ still has 359 .py files (api, auth, jobs, store, tasks, remote, cli unported). launchd/*.plist.template (4) unchanged, README and quality.yml still describe Python (quality.yml has a go job beside the py matrix). Next: commit internal/node, port remaining packages, add cmd/worker, repoint templates, then delete Python."
+    "2026-11-24 audit: not done, partial. Go packages exist under internal/ (client, config, contract, host, link, node [uncommitted], ollama, policy; last commit ab5d5b2). No cmd/ or main package, so no Go CLI/binary. Python worker/ still has 359 .py files (api, auth, jobs, store, tasks, remote, cli unported). launchd/*.plist.template (4) unchanged, README and quality.yml still describe Python (quality.yml has a go job beside the py matrix). Next: commit internal/node, port remaining packages, add cmd/worker, repoint templates, then delete Python.",
+    "The Go coordinator now exposes contract v1 through worker serve. Continue with the remaining CLI commands, then verify the binary and launchd templates together before removing Python."
   ],
   "done_when": [
     "No .py file is left, README and quality.yml describe the Go engine only"

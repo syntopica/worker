@@ -1,0 +1,18 @@
+{
+  "tadu": 2,
+  "id": "t-36c7b67e-9cfa-4812-894a-f2e9cb7737fc",
+  "title": "Constrain node telemetry to metadata fields",
+  "state": "pending",
+  "category": "execution",
+  "type": "bug",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-24",
+  "discovered_from": "t-54532d78-2fdc-4d6d-bbdf-4054126e48db",
+  "notes": [
+    "Node reports currently accept any object and runner wall reports accept arbitrary names. Both are written to SQLite metadata, which is eligible for backups."
+  ],
+  "done_when": [
+    "Define and enforce the supported host report fields and runner identifiers while preserving the metadata produced by the node and task loops."
+  ]
+}
