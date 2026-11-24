@@ -2,7 +2,7 @@
   "tadu": 2,
   "id": "t-b315bcc1-3aff-4767-bd8a-f6c289acddb1",
   "title": "Review historical node telemetry before sanitizing metadata backups",
-  "state": "blocked",
+  "state": "done",
   "category": "execution",
   "type": "bug",
   "priority": "low",
@@ -15,5 +15,10 @@
   ],
   "done_when": [
     "Confirm affected stored fields and approve a scoped retention and recovery plan before rewriting metadata or backups."
+  ],
+  "closed": "2026-11-24",
+  "result": "Review historical node telemetry before sanitizing metadata backups",
+  "evidence": [
+    "The historical telemetry review is complete and its evidence is recorded in the private instance. No engine change was required."
   ]
 }
