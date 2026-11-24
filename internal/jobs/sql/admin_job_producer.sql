@@ -1,0 +1,1 @@
+AND j.producer = :producer
