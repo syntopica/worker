@@ -1,6 +1,6 @@
 # Worker contract v1
 
-Producers talk to the coordinator over HTTP with JSON bodies and a bearer token. The fixtures in `fixtures/` are the canonical examples of each shape; every value in them is a placeholder. The Python client in `worker/client/` is stdlib only and can be vendored.
+Producers talk to the coordinator over HTTP with JSON bodies and a bearer token. The fixtures in `fixtures/` give canonical examples with placeholder values. Shell scripts can use `worker submit` or `worker run`; other producers can call the routes below from their own HTTP clients.
 
 ## Routes
 

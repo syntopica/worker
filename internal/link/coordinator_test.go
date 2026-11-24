@@ -1,6 +1,7 @@
 package link_test
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/syntopica/worker/internal/contract"
 	"github.com/syntopica/worker/internal/link"
@@ -279,5 +281,38 @@ func TestCoordinatorReportWallsPostsEachRunnersEnd(t *testing.T) {
 
 	if got := coordinator.requests(); len(got) != 1 || got[0] != `/v1/nodes/node-1/walls {"codex":1700}` {
 		t.Errorf("requests %v", got)
+	}
+}
+
+func TestCoordinatorAttemptsButBoundsShutdownCompletion(t *testing.T) {
+	t.Parallel()
+	received := make(chan *link.Completion, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		var completion link.Completion
+		if err := json.NewDecoder(r.Body).Decode(&completion); err != nil {
+			t.Error(err)
+			return
+		}
+		received <- &completion
+		<-r.Context().Done()
+	}))
+	defer server.Close()
+
+	node := link.New(server.URL, "node-token", "node-1", server.Client())
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	code := "node_shutdown"
+	start := time.Now()
+	node.Complete(ctx, "a", 5, &link.Completion{Outcome: "preempted", ErrorCode: &code})
+	if time.Since(start) > 3*time.Second || node.Pending() != 1 {
+		t.Fatal("stalled completion did not return promptly and stay pending")
+	}
+	select {
+	case report := <-received:
+		if report.Generation != 5 || report.ErrorCode == nil || *report.ErrorCode != code {
+			t.Fatal("unexpected completion during shutdown")
+		}
+	default:
+		t.Fatal("shutdown completion was never attempted")
 	}
 }

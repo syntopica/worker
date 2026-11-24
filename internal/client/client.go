@@ -7,19 +7,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/syntopica/worker/internal/contract"
-)
-
-const (
-	defaultLimit = 50
-	// pollMargin is how long the socket outlives a long poll, whatever the
-	// server's own cap.
-	pollMargin = 10 * time.Second
 )
 
 // Client talks to a coordinator as one producer. It is safe for concurrent
@@ -57,32 +48,6 @@ func (c *Client) Get(ctx context.Context, jobID string) (contract.Job, error) {
 	err := c.call(ctx, http.MethodGet, jobPath(jobID), nil, &job)
 
 	return job, err
-}
-
-// Results returns the unacknowledged results a query selects, in Seq order.
-func (c *Client) Results(ctx context.Context, query ResultsQuery) ([]contract.Result, error) {
-	limit := query.Limit
-	if limit == 0 {
-		limit = defaultLimit
-	}
-
-	values := url.Values{
-		"queue": {query.Queue},
-		"after": {strconv.FormatInt(query.After, 10)},
-		"limit": {strconv.Itoa(limit)},
-		"wait":  {strconv.FormatFloat(query.Wait.Seconds(), 'f', -1, 64)},
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, max(0, query.Wait)+pollMargin)
-	defer cancel()
-
-	var page struct {
-		Results []contract.Result `json:"results"`
-	}
-
-	err := c.call(ctx, http.MethodGet, "/v1/results?"+values.Encode(), nil, &page)
-
-	return page.Results, err
 }
 
 // Ack acknowledges a result, or declines a split_requested control result.
@@ -124,11 +89,6 @@ func (c *Client) WaitFor(ctx context.Context, jobID string, poll time.Duration) 
 		case <-ticker.C:
 		}
 	}
-}
-
-// jobPath percent-encodes the id, "/" included, so it stays one path segment.
-func jobPath(jobID string) string {
-	return "/v1/jobs/" + url.PathEscape(jobID)
 }
 
 // call sends one request and decodes a 2xx answer into out when out is set.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -84,7 +85,13 @@ func (c *Coordinator) Complete(ctx context.Context, attemptID string, generation
 	fenced := *report
 	fenced.Generation = generation
 
-	status, _ := c.post(ctx, "/v1/attempts/"+url.PathEscape(attemptID)+"/complete", &fenced)
+	path := "/v1/attempts/" + url.PathEscape(attemptID) + "/complete"
+	status, _ := c.post(ctx, path, &fenced)
+	if status == 0 && errors.Is(ctx.Err(), context.Canceled) {
+		grace, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownReportTimeout)
+		status, _ = c.post(grace, path, &fenced)
+		cancel()
+	}
 	if status == 0 && len(c.pending) < maxPending {
 		c.pending = append(c.pending, held{attemptID, fenced})
 	}
@@ -92,10 +99,19 @@ func (c *Coordinator) Complete(ctx context.Context, attemptID string, generation
 
 // Flush retries the held completions; any answer, even a 409, settles one.
 func (c *Coordinator) Flush(ctx context.Context) {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		grace, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownReportTimeout)
+		defer cancel()
+		ctx = grace
+	}
 	waiting := c.pending
 	c.pending = nil
 
 	for i := range waiting {
+		if ctx.Err() != nil {
+			c.pending = append(c.pending, waiting[i:]...)
+			break
+		}
 		c.Complete(ctx, waiting[i].attemptID, waiting[i].report.Generation, &waiting[i].report)
 	}
 }

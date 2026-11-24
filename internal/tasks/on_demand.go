@@ -41,7 +41,7 @@ func (o *OnDemand) Run(ctx context.Context) int {
 		ran++
 	}
 
-	o.Loop.Link.Flush(context.WithoutCancel(ctx))
+	o.Loop.Link.Flush(ctx)
 
 	return ran
 }

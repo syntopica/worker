@@ -64,3 +64,22 @@ func TestAChangedFileIsReloadedAndAnInvalidOneIsRefused(t *testing.T) {
 		t.Error("a missing file dropped the configuration")
 	}
 }
+
+func TestIncompleteModelRetainsThePreviousConfig(t *testing.T) {
+	t.Parallel()
+	path := writeConfig(t, baseConfig())
+	stampFile(t, path, 1)
+	initial, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := NewSource(path, initial, t.Output())
+	incomplete := with("models", object{"model-a": object{"num_ctx": 40960, "keep_alive": "5m", "warm_gb": 2}})
+	if err := os.Rename(writeConfig(t, incomplete), path); err != nil {
+		t.Fatal(err)
+	}
+	stampFile(t, path, 2)
+	if source.Current() != initial {
+		t.Fatal("an incomplete model replaced the working configuration")
+	}
+}

@@ -1,0 +1,21 @@
+{
+  "tadu": 2,
+  "id": "t-9ecc1eb5-fd0a-46ec-a806-b6b512e9e493",
+  "title": "Apply executor metadata validation to Python completions",
+  "state": "cancelled",
+  "category": "execution",
+  "type": "bug",
+  "priority": "high",
+  "kind": "task",
+  "created": "2026-11-24",
+  "discovered_from": "t-54532d78-2fdc-4d6d-bbdf-4054126e48db",
+  "notes": [
+    "The Go port validates executor metadata before persisting a completion. The Python coordinator still writes reported executor values in worker/jobs/complete_attempt.py."
+  ],
+  "done_when": [
+    "Derive the node from the fenced lease, preserve supported provider and model identifiers, and verify free-form executor text stays out of metadata."
+  ],
+  "closed": "2026-11-24",
+  "resolution": "Superseded by t-0df014c4-d8a5-4b50-900c-9b624972de63.",
+  "superseded_by": "t-0df014c4-d8a5-4b50-900c-9b624972de63"
+}

@@ -96,7 +96,7 @@ func (a *attempt) settle(ctx context.Context, got posted) (how outcome, why reas
 		how, why = failed, reason(got.code)
 	}
 
-	a.complete(context.WithoutCancel(ctx), how, why, got.answer)
+	a.complete(ctx, how, why, got.answer)
 
 	return how, why
 }

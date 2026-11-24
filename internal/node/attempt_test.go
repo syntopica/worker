@@ -139,3 +139,20 @@ func TestAStoppedNodeHandsItsJobBack(t *testing.T) {
 		t.Fatalf("log: %q", h.log.String())
 	}
 }
+
+func TestShutdownDuringSamplingDoesNotChargeAPreemption(t *testing.T) {
+	t.Parallel()
+	h := attemptOn(t, 5*time.Second, runWhenIdle, func(h *harness) {
+		sample := h.node.Sample
+		first := true
+		h.node.Sample = func(ctx context.Context) host.State {
+			if first {
+				first = false
+				return sample(ctx)
+			}
+			h.stop()
+			return host.State{}
+		}
+	}, idleState)
+	equal(t, h.link.ended(), []string{"preempted/node_shutdown"})
+}

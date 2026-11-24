@@ -35,35 +35,54 @@ instance, located through `SYNTOPICA_DATA` or the enclosing
 
 ## Running it
 
-Install the `worker` command:
+Install the Go binary from this checkout using the toolchain in `go.mod`.
 
 ```bash
-uv tool install --editable .
+CGO_ENABLED=0 GOBIN="$HOME/.local/bin" go install ./cmd/worker
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Create tokens for the coordinator, the node, and any producers:
+For a new instance, create tokens for the coordinator, the node, and any
+producers. An existing installation reuses its config and tokens. Use
+`token add` only for new principals or an intentional token rotation.
 
 ```bash
 worker token add --kind admin --name admin
-worker token add --kind node --name <node-name>
-worker token add --kind producer --name <producer-name>
+worker token add --kind node --name '<node-name>'
+worker token add --kind producer --name '<producer-name>'
 ```
 
 Each token is printed once and then saved at `$SYNTOPICA_DATA/worker/state/tokens/` with mode `0600`.
 
-Render the LaunchAgent templates by substituting `@WORKER_BIN@`, `@SYNTOPICA_DATA@`, and `@NODE@`:
+On macOS, set `SYNTOPICA_DATA` to the absolute path of the instance. Set
+`worker_node` to the configured node name and list the agents this machine
+will run in `worker_agents`. Include `tasks` or `remote` when configured.
 
 ```bash
-for t in serve node; do
-  sed -e "s#@WORKER_BIN@#$(command -v worker)#" \
-      -e "s#@SYNTOPICA_DATA@#$SYNTOPICA_DATA#" \
-      -e "s#@NODE@#<node-name>#" \
-    launchd/com.syntopica.worker.$t.plist.template > \
-    ~/Library/LaunchAgents/com.syntopica.worker.$t.plist
+worker_go_bin="$HOME/.local/bin/worker"
+worker_node='<node-name>'
+worker_agents=(serve node)
+worker_launch_dir="$HOME/Library/LaunchAgents"
+
+xml_sed_value() {
+  printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/[\&#\\]/\\&/g'
+}
+
+mkdir -p "$worker_launch_dir"
+for agent in "${worker_agents[@]}"; do
+  plist="com.syntopica.worker.$agent.plist"
+  sed -e "s#@WORKER_GO_BIN@#$(xml_sed_value "$worker_go_bin")#" \
+      -e "s#@SYNTOPICA_DATA@#$(xml_sed_value "$SYNTOPICA_DATA")#" \
+      -e "s#@NODE@#$(xml_sed_value "$worker_node")#" \
+      -e "s#@PATH@#$(xml_sed_value "$PATH")#" \
+    "launchd/$plist.template" > "$worker_launch_dir/$plist"
+  plutil -lint "$worker_launch_dir/$plist"
 done
 ```
 
-For tasks, also render `com.syntopica.worker.tasks.plist.template`, substituting `@PATH@` with a PATH that reaches the runner CLIs, and declare the task profiles and the queues that grant them in the instance configuration:
+For tasks, ensure `PATH` includes the runner CLIs when you render the
+template. Declare task profiles and the queues that grant them in the
+instance configuration.
 
 ```json
 "profiles": {"<producer>.refine": {"runner": "codex", "model": "<model>", "env_unset": ["OPENAI_API_KEY"]}},
@@ -71,7 +90,12 @@ For tasks, also render `com.syntopica.worker.tasks.plist.template`, substituting
 "runners": {"codex": {"cooldown_s": 3600}}
 ```
 
-To escalate inference to OpenRouter's free endpoints, render `com.syntopica.worker.remote.plist.template` the same way, give the node a key file that lives on the node only (`"openrouter_key_file": "~/.config/worker/openrouter.key"`, mode 600), and route a queue's local model to a `:free` model. A job escalates after waiting `after_s`; non-public classes go to zero-data-retention endpoints unless `zdr` is false, and must also be allowed the `openrouter` executor in `privacy`:
+To escalate inference to OpenRouter's free endpoints, include `remote` in
+`worker_agents`, give the node a local key file (`"openrouter_key_file":
+"~/.config/worker/openrouter.key"`, mode 600), and route a queue's local model
+to a `:free` model. A job escalates after `after_s` seconds. Non-public classes
+require the `openrouter` executor in `privacy` and use zero-data-retention
+endpoints unless `zdr` is false.
 
 ```json
 "queues": {"<producer>.bulk": {"run_when": "idle", "openrouter": {"models": {"<local-model>": "<vendor>/<model>:free"}, "after_s": 600}}}
@@ -79,13 +103,14 @@ To escalate inference to OpenRouter's free endpoints, render `com.syntopica.work
 
 `worker costs --days 7` prints the ledger by day, provider and queue.
 
-Bootstrap the agents:
+For an existing installation, unload each old agent with `launchctl bootout
+"gui/$(id -u)/com.syntopica.worker.<agent>"` before bootstrapping its replacement.
+Bootstrap the selected agents in the current GUI session.
 
 ```bash
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.serve.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.node.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.tasks.plist
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.syntopica.worker.remote.plist
+for agent in "${worker_agents[@]}"; do
+  launchctl bootstrap "gui/$(id -u)" "$worker_launch_dir/com.syntopica.worker.$agent.plist"
+done
 ```
 
 The payload file is excluded from Time Machine automatically; exclude `$SYNTOPICA_DATA/worker/state` from any other backup tool that is not your own private copy.
@@ -100,12 +125,12 @@ worker nodes
 A shell script that wants one answer submits and waits in one call; `-` reads the job from stdin:
 
 ```bash
-worker run --producer <producer-name> --wait 1800 job.json > answer.json
+worker run --producer '<producer-name>' --wait 1800 job.json > answer.json
 ```
 
 It prints the output (the JSON when there is one) and acknowledges it. Exit 1 means the job ended without output, 3 that it is parked behind its runner's quota wall, and 4 that it is still pending at `--wait`; in the last two cases running the same job again collects it by its idempotency key.
 
-Both agents are LaunchAgents that require a logged-in GUI session, not LaunchDaemons.
+The LaunchAgents require a logged-in GUI session.
 The node reports `pressure_recovering` for its first 120 seconds, then no reason
 when it may take work, or the reason it may not (`on_battery`, `user_active`,
 `memory_pressure`, `backend_down`, `pressure_backoff`, `drain_failed`). The instance configuration lives in

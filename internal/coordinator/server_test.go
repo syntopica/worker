@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,7 +14,14 @@ import (
 
 	"github.com/syntopica/worker/internal/auth"
 	"github.com/syntopica/worker/internal/client"
+	"github.com/syntopica/worker/internal/config"
+	"github.com/syntopica/worker/internal/contract"
 	"github.com/syntopica/worker/internal/coordinator"
+	"github.com/syntopica/worker/internal/host"
+	"github.com/syntopica/worker/internal/link"
+	"github.com/syntopica/worker/internal/node"
+	"github.com/syntopica/worker/internal/ollama"
+	"github.com/syntopica/worker/internal/ollamatest"
 )
 
 const fixtureConfig = `{
@@ -73,7 +80,7 @@ func startServer(t *testing.T) testServer {
 	if err != nil {
 		t.Fatal(err)
 	}
-	node, err := auth.AddPrincipal(state, "node", "local")
+	nodeToken, err := auth.AddPrincipal(state, "node", "local")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,111 +95,164 @@ func startServer(t *testing.T) testServer {
 			t.Error(err)
 		}
 	})
-	return testServer{config: path, url: "http://" + server.Addr().String(), producer: producer, node: node}
+	return testServer{config: path, url: "http://" + server.Addr().String(), producer: producer, node: nodeToken}
 }
 
-const pythonRoundTrip = `
-import http.client
-import json
-import sys
-import time
-from dataclasses import replace
-from pathlib import Path
-
-from urllib.parse import urlsplit
-
-from tests.node.fake_ollama import FakeOllama
-from worker.client.worker_client import WorkerClient
-from worker.config.load_worker_config import load_worker_config
-from worker.node.coordinator_link import CoordinatorLink
-from worker.node.host_state import HostState
-from worker.node.run_node import run_node
-
-base, producer_token, node_token, config_path = json.load(sys.stdin)
-producer = WorkerClient(base, producer_token)
-node = CoordinatorLink(base, node_token, "local")
-job = {
-    "contract": 1,
-    "kind": "inference",
-    "privacy": "mail",
-    "queue": "work",
-    "idempotency_key": "python-round-trip",
-    "requirements": {"models": ["model"]},
-    "input": {"messages": [{"role": "user", "content": "fixture input"}]},
-}
-submitted = producer.submit(job)
-lease = node.lease(None, False, 10, 900)
-assert lease and lease["job_id"] == submitted["id"]
-attempt, generation = lease["attempt_id"], lease["generation"]
-assert node.heartbeat(attempt, generation, False)
-node.complete(attempt, generation, {
-    "outcome": "succeeded",
-    "output": {"text": "fixture output", "json": None},
-    "executor": {"provider": "ollama", "model": "model", "node": "local"},
-    "usage": {"tokens_in": 2, "tokens_out": 1},
-})
-assert not node.heartbeat(attempt, generation, False)
-[result] = producer.results("work")
-assert result["output"] == {"text": "fixture output", "json": None}
-assert result["executor"] == {"provider": "ollama", "model": "model", "node": "local"}
-producer.ack(submitted["id"], result["result_id"])
-assert not producer.results("work")
-
-# Run the unchanged inference loop against the real Go coordinator.
-fake = FakeOllama()
-fake.loaded = ["model"]
-try:
-    cfg = load_worker_config(Path(config_path))
-    cfg = replace(cfg, nodes={"local": replace(cfg.nodes["local"], ollama_url=fake.url)})
-    producer.submit({**job, "idempotency_key": "python-node"})
-    offset = [0.0]
-    class StopLoop(Exception):
-        pass
-    def sleep(seconds):
-        if seconds < 10:
-            time.sleep(0.05)
-            return
-        offset[0] += 200.0
-        if offset[0] >= 400.0:
-            raise StopLoop
-    try:
-        run_node(cfg, "local", node, sample=lambda: HostState(900, True, "normal"),
-                 sleep=sleep, clock=lambda: time.time() + offset[0])
-    except StopLoop:
-        pass
-    [result] = producer.results("work")
-    assert result["output"]["json"] == {"label": "x"}
-    assert fake.bodies
-finally:
-    fake.close()
-
-# A producer writes the entire body before it reads the error response.
-conn = http.client.HTTPConnection(urlsplit(base).netloc, timeout=5)
-try:
-    conn.request("POST", "/v1/jobs", b"x" * (8 * 1024 * 1024))
-    refused = conn.getresponse()
-    assert refused.status == 413
-    assert json.loads(refused.read()) == {"error": "payload_too_large"}
-finally:
-    conn.close()
-`
-
-func TestPythonNodeRoundTrip(t *testing.T) {
+func TestCoordinatorProducerAndNodeRoundTrip(t *testing.T) {
 	t.Parallel()
-	if _, err := exec.LookPath("python3"); err != nil {
-		t.Skip("Python 3 is needed to check cross-language compatibility")
-	}
+	ctx := t.Context()
 	f := startServer(t)
-	data, err := json.Marshal([4]string{f.url, f.producer, f.node, f.config})
+	producer := client.New(f.url, f.producer, nil)
+	submitted := submitInference(t, producer, "fenced-round-trip")
+	nodeLink := link.New(f.url, f.node, "local", http.DefaultClient)
+	request := link.LeaseRequest{FreeGB: 10, CurrentIdleS: 900}
+	lease := nodeLink.Lease(ctx, request)
+	if lease == nil || lease.JobID != submitted {
+		t.Fatalf("lease = %+v, want %s", lease, submitted)
+	}
+	if !nodeLink.Heartbeat(ctx, lease.AttemptID, lease.Generation, false) {
+		t.Fatal("current attempt was fenced")
+	}
+	completion := &link.Completion{
+		Outcome:  "succeeded",
+		Output:   map[string]any{"text": "fixture output", "json": nil},
+		Executor: contract.Executor{Provider: "ollama", Model: "model", Node: "local"},
+		Usage:    map[string]any{"tokens_in": 2, "tokens_out": 1},
+	}
+	nodeLink.Complete(ctx, lease.AttemptID, lease.Generation+1, completion)
+	job, err := producer.Get(ctx, lease.JobID)
+	if err != nil || job.Result != nil {
+		t.Fatalf("stale completion created a result: %v", err)
+	}
+	nodeLink.Complete(ctx, lease.AttemptID, lease.Generation, completion)
+	if nodeLink.Heartbeat(ctx, lease.AttemptID, lease.Generation, false) {
+		t.Fatal("settled attempt was not fenced")
+	}
+	assertCompletionRoundTrip(t, producer, lease.JobID, completion.Executor)
+}
+
+func assertCompletionRoundTrip(t *testing.T, producer *client.Client, id string, executor contract.Executor) {
+	t.Helper()
+	result := inferenceResult(t, producer)
+	if string(result.Output) != `{"json":null,"text":"fixture output"}` ||
+		result.Executor == nil || *result.Executor != executor {
+		t.Fatal("completion did not round trip")
+	}
+	if err := producer.Ack(t.Context(), id, contract.Ack{ResultID: result.ResultID}); err != nil {
+		t.Fatal(err)
+	}
+	rows, err := producer.Results(t.Context(), client.ResultsQuery{Queue: "work"})
+	if err != nil || len(rows) != 0 {
+		t.Fatalf("results after ack = %d, %v", len(rows), err)
+	}
+}
+
+func TestCoordinatorRoundTripWithGoInferenceLoop(t *testing.T) {
+	t.Parallel()
+	f := startServer(t)
+	producer := client.New(f.url, f.producer, nil)
+	submitInference(t, producer, "go-node")
+	fake := ollamatest.New(t)
+	fake.Set(func(s *ollamatest.Fake) { s.Loaded = []string{"model"} })
+	cfg, err := config.Load(f.config)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	policy := cfg.Nodes["local"]
+	policy.OllamaURL = fake.URL
+	cfg.Nodes["local"] = policy
+	runInferenceLoop(t, f, cfg)
+
+	result := inferenceResult(t, producer)
+	var answer struct {
+		JSON map[string]string `json:"json"`
+	}
+	if err := json.Unmarshal(result.Output, &answer); err != nil || answer.JSON["label"] != "x" || len(fake.Bodies()) == 0 {
+		t.Fatalf("fake Ollama result was not collected: %v", err)
+	}
+}
+
+func TestCoordinatorReturnsARefusalAfterOversizeWrite(t *testing.T) {
+	t.Parallel()
+	f := startServer(t)
+	const size = 8 * 1024 * 1024
+	body := strings.NewReader(strings.Repeat("x", size))
+	request, err := http.NewRequestWithContext(t.Context(), http.MethodPost, f.url+"/v1/jobs", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = response.Body.Close() }()
+	var refusal contract.Refusal
+	if err := json.NewDecoder(response.Body).Decode(&refusal); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusRequestEntityTooLarge || refusal.Error != "payload_too_large" {
+		t.Fatalf("oversize request = %d %s", response.StatusCode, refusal.Error)
+	}
+}
+
+func submitInference(t *testing.T, producer *client.Client, key string) string {
+	t.Helper()
+	const document = `{
+  "contract":1, "kind":"inference", "privacy":"mail", "queue":"work", "idempotency_key":%q,
+  "requirements":{"models":["model"]}, "input":{"messages":[{"role":"user","content":"fixture input"}]}
+}`
+	submitted, err := producer.SubmitDocument(t.Context(), json.RawMessage(fmt.Sprintf(document, key)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return submitted.ID
+}
+
+func inferenceResult(t *testing.T, producer *client.Client) *contract.Result {
+	t.Helper()
+	rows, err := producer.Results(t.Context(), client.ResultsQuery{Queue: "work"})
+	if err != nil || len(rows) != 1 {
+		t.Fatalf("results = %d, %v", len(rows), err)
+	}
+	return &rows[0]
+}
+
+func runInferenceLoop(t *testing.T, f testServer, cfg *config.Config) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "python3", "-c", pythonRoundTrip)
-	cmd.Dir = "../.."
-	cmd.Stdin = strings.NewReader(string(data))
-	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("Python clients failed: %v\n%s", err, output)
+	idle, onAC := 15*time.Minute, true
+	var rests int
+	var now time.Time
+	run := &node.Node{
+		Name: "local", Config: func() *config.Config { return cfg },
+		Link: link.New(f.url, f.node, "local", http.DefaultClient),
+		Backend: func(url string) ollama.Backend {
+			return &ollama.Server{URL: url, HTTP: http.DefaultClient}
+		},
+		HTTP: http.DefaultClient, Log: t.Output(),
+		Sample: func(context.Context) host.State {
+			return host.State{Idle: &idle, OnAC: &onAC, Pressure: host.PressureNormal}
+		},
+		Now: func() time.Time { return now },
+		Sleep: func(ctx context.Context, wait time.Duration) {
+			if wait >= 30*time.Second {
+				now = now.Add(3 * time.Minute)
+				rests++
+				if rests == 2 {
+					cancel()
+				}
+				return
+			}
+			timer := time.NewTimer(wait)
+			defer timer.Stop()
+			select {
+			case <-ctx.Done():
+			case <-timer.C:
+			}
+		},
+	}
+	if err := run.Run(ctx); !errors.Is(err, context.Canceled) {
+		t.Fatalf("inference loop = %v", err)
 	}
 }

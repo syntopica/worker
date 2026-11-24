@@ -4,7 +4,7 @@
 <dict>
   <key>Label</key><string>com.syntopica.worker.tasks</string>
   <key>ProgramArguments</key>
-  <array><string>@WORKER_BIN@</string><string>tasks</string><string>--name</string><string>@NODE@</string></array>
+  <array><string>@WORKER_GO_BIN@</string><string>tasks</string><string>--name</string><string>@NODE@</string></array>
   <key>EnvironmentVariables</key>
   <dict><key>SYNTOPICA_DATA</key><string>@SYNTOPICA_DATA@</string><key>PATH</key><string>@PATH@</string></dict>
   <key>RunAtLoad</key><true/>

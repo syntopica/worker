@@ -153,7 +153,7 @@ func (l *Loop) runLeased(ctx context.Context, cfg *config.Config, lease *contrac
 		l.logf("worker: task %s: %s job=%s\n", report.Outcome, *report.ErrorCode, lease.JobID)
 	}
 
-	l.Link.Complete(context.WithoutCancel(ctx), lease.AttemptID, lease.Generation, report)
+	l.Link.Complete(ctx, lease.AttemptID, lease.Generation, report)
 }
 
 // logf writes one log line; a failed write is not worth stopping for.

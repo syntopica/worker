@@ -9,11 +9,11 @@ const (
 func parseNode(name string, raw *rawNode) NodePolicy {
 	return NodePolicy{
 		Name:               name,
-		Trust:              raw.Trust,
+		Trust:              *raw.Trust,
 		IdleThreshold:      seconds(orDefault(raw.IdleThresholdS, defaultIdleThresholdS)),
-		MemoryBudgetGB:     raw.MemoryBudgetGB,
-		OllamaURL:          raw.OllamaURL,
-		OllamaLaunchdLabel: raw.OllamaLaunchdLabel,
+		MemoryBudgetGB:     *raw.MemoryBudgetGB,
+		OllamaURL:          *raw.OllamaURL,
+		OllamaLaunchdLabel: *raw.OllamaLaunchdLabel,
 		MinFreePct:         orDefault(raw.MinFreePct, defaultMinFreePct),
 		MaxLoad:            raw.MaxLoad,
 		LocalIdleOnly:      raw.LocalIdleOnly,

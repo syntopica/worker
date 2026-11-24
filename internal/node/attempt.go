@@ -60,6 +60,10 @@ func (a *attempt) run(ctx context.Context) (how outcome, why reason, err error) 
 	}
 
 	answer, code := call.Outcome()
+	if answer == nil && ctx.Err() != nil {
+		a.complete(ctx, preempted, nodeShutdown, nil, a.wall())
+		return preempted, nodeShutdown, nil
+	}
 	if answer == nil {
 		a.complete(ctx, failed, reason(code), nil, a.wall())
 
@@ -76,10 +80,7 @@ func (a *attempt) watch(ctx context.Context, call *ollama.Call) (how outcome, wh
 	if ctx.Err() != nil {
 		// Stopped: hand the job back, which charges nothing. If the
 		// coordinator cannot be reached the lease simply expires.
-		call.Cancel()
-		a.complete(context.WithoutCancel(ctx), preempted, nodeShutdown, nil, a.wall())
-
-		return preempted, nodeShutdown
+		return a.stop(ctx, call)
 	}
 
 	if call.Done() {
@@ -97,6 +98,9 @@ func (a *attempt) watch(ctx context.Context, call *ollama.Call) (how outcome, wh
 	}
 
 	state := a.node.Sample(ctx)
+	if ctx.Err() != nil {
+		return a.stop(ctx, call)
+	}
 	if state.Pressure.Pressed() {
 		a.pressed++
 	} else {
@@ -113,11 +117,11 @@ func (a *attempt) watch(ctx context.Context, call *ollama.Call) (how outcome, wh
 		return "", ""
 	}
 
-	return a.release(ctx, call, state, why), why
+	return a.release(ctx, call, state, why)
 }
 
 // release cancels the call, drains the backend and reports the preemption.
-func (a *attempt) release(ctx context.Context, call *ollama.Call, state host.State, why reason) outcome {
+func (a *attempt) release(ctx context.Context, call *ollama.Call, state host.State, why reason) (outcome, reason) {
 	phase := call.Phase()
 	call.Cancel()
 
@@ -125,6 +129,10 @@ func (a *attempt) release(ctx context.Context, call *ollama.Call, state host.Sta
 	quiet := ollama.Drain(ctx, a.backend, a.pin, a.policy.OllamaLaunchdLabel, func(ctx context.Context) bool {
 		return a.node.Link.Heartbeat(ctx, a.lease.AttemptID, a.lease.Generation, true)
 	})
+
+	if ctx.Err() != nil {
+		return a.stop(ctx, call)
+	}
 
 	result, load := "failed", ""
 	if quiet {
@@ -141,7 +149,13 @@ func (a *attempt) release(ctx context.Context, call *ollama.Call, state host.Sta
 		result, now.Sub(cancelled).Seconds(), phase, why, now.UTC().Format(stampLayout), load)
 	a.complete(ctx, preempted, why, nil, a.wall())
 
-	return a.drained(quiet, preempted)
+	return a.drained(quiet, preempted), why
+}
+
+func (a *attempt) stop(ctx context.Context, call *ollama.Call) (outcome, reason) {
+	call.Cancel()
+	a.complete(ctx, preempted, nodeShutdown, nil, a.wall())
+	return preempted, nodeShutdown
 }
 
 // complete reports how the attempt ended.

@@ -222,6 +222,19 @@ linters:
           - gosec
         text: G304|G703
       # local overrides - `codeality-go init` preserves everything below.
+      # These CLI fixtures select a temporary instance through the process environment.
+      - path: ^internal/cli/command(_backup|_executor|_wait_for_result)?_test\.go$
+        linters: [paralleltest]
+      # The operator selects the job and key paths; token filenames use validated principals.
+      - path: ^internal/cli/(command_read_job|read_key|read_token)\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.ReadFile\('
+      # The operator selects the backup destination, which is created exclusively.
+      - path: ^internal/store/publish_backup\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.OpenFile\(dest, os\.O_WRONLY\|os\.O_CREATE\|os\.O_EXCL,'
       # The operator selects the state directory; only fixed engine filenames are opened.
       - path: ^internal/auth/(add_principal|load_principals)\.go$
         linters: [gosec]

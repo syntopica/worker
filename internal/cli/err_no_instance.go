@@ -1,6 +1,4 @@
 package cli
 
-import "errors"
-
-// ErrNoInstance reports that no Syntopica instance could be resolved.
-var ErrNoInstance = errors.New("no Syntopica instance (set SYNTOPICA_DATA)")
+// ErrNoInstance means neither the environment nor the current directory selects an instance.
+const ErrNoInstance = userError("no Syntopica instance (set SYNTOPICA_DATA)")

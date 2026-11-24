@@ -52,6 +52,10 @@ func (a *attempt) run(ctx context.Context) *link.Completion {
 		return a.refuse(nodeError)
 	}
 
+	if ctx.Err() != nil {
+		_, _ = stdout.Close(), stderr.Close()
+		return a.report(preempted, nodeShutdown)
+	}
 	runner, err := startProcess(a.profile, call, filepath.Join(scratch, "workspace"), stdout, stderr)
 	if err != nil {
 		_, _ = stdout.Close(), stderr.Close()
@@ -59,6 +63,10 @@ func (a *attempt) run(ctx context.Context) *link.Completion {
 		return a.refuse(runnerFailed)
 	}
 
+	return a.collect(ctx, runner, stdout, stderr, call.answerFile)
+}
+
+func (a *attempt) collect(ctx context.Context, runner *process, stdout, stderr *os.File, answerFile string) *link.Completion {
 	how := runner.supervise(ctx, a.profile.Timeout, a.loop.Beat, func() bool {
 		return a.loop.Link.Heartbeat(ctx, a.lease.AttemptID, a.lease.Generation, false)
 	})
@@ -79,7 +87,7 @@ func (a *attempt) run(ctx context.Context) *link.Completion {
 		exit:   runner.exit(),
 		stdout: read(stdout.Name()),
 		stderr: read(stderr.Name()),
-	}, call.answerFile)
+	}, answerFile)
 }
 
 // prepare builds the workspace and the runner's call. Every runner is a
