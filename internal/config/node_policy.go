@@ -28,4 +28,15 @@ type NodePolicy struct {
 	// the idle threshold, every local attempt released on input, and the
 	// node's own model unloaded rather than left resident for its KeepAlive.
 	LocalIdleOnly bool
+	// OpenRouterKeyFile is the file, local to the node, holding its
+	// OpenRouter key; empty means no remote loop.
+	OpenRouterKeyFile string
+	// RemoteSlots is how many OpenRouter calls the remote loop keeps in
+	// flight.
+	RemoteSlots int
+	// TaskSlots is how many runner tasks the task loop runs at once.
+	TaskSlots int
+	// CoordinatorURL is how the node reaches the coordinator when that is
+	// not the configured listen address.
+	CoordinatorURL string
 }

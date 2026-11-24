@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-54532d78-2fdc-4d6d-bbdf-4054126e48db",
   "title": "Go port: coordinator (SQLite store and migrations, jobs, policy, auth, HTTP API) serving the unchanged Python node",
-  "state": "pending",
+  "state": "in_progress",
   "category": "execution",
   "type": "feature",
   "priority": "normal",
   "kind": "task",
   "created": "2026-11-23",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:claude"
+  ],
   "notes": [
     "Opens the same SQLite database and applies the same numbered migrations; contract v1 unchanged.",
     "2026-11-24 audit: not started. internal/ has only client, config, contract, host, link, node, ollama, policy(privacy_allows only); no Go file mentions sqlite, no store/migrations/jobs/api/auth packages. Python coordinator still lives in worker/{store,jobs,api,auth,policy}. Recent Go commits (ab5d5b2, ee66acf, b1cf80c, e442fb3) cover the node side only. Smallest next step: port worker/store and the numbered migrations to internal/store against the same SQLite DB, with a test opening a Python-made DB."
