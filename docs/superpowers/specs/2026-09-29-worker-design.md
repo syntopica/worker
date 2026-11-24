@@ -420,6 +420,13 @@ preempt an idle-only job that is in flight; they run next.
 | WAL | Checkpointed on a schedule. Size is monitored and alerts are raised. |
 | Logs | Structured, metadata only, under the same allowlist. |
 
+Node reports accept only the host state fields `reason`, `idle_s`, `on_ac`,
+`pressure`, `resident`, `unexpected`, `loads_1h` and `unloads_1h`. Reasons
+and pressure levels are fixed codes. Model lists retain configured model
+names and replace unconfigured names with a fixed marker. Residency logs
+use the same rule. Quota wall reports accept numeric reset times keyed by an
+instance-configured runner or by a runner and model from a task profile.
+
 ## 10. Failure handling
 
 - **Leases.** A lease has a TTL and is renewed by heartbeat. When it expires,

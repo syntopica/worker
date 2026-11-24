@@ -1,0 +1,19 @@
+{
+  "tadu": 2,
+  "id": "t-b315bcc1-3aff-4767-bd8a-f6c289acddb1",
+  "title": "Review historical node telemetry before sanitizing metadata backups",
+  "state": "blocked",
+  "category": "execution",
+  "type": "bug",
+  "priority": "low",
+  "kind": "waiting",
+  "created": "2026-11-24",
+  "discovered_from": "t-36c7b67e-9cfa-4812-894a-f2e9cb7737fc",
+  "blocker": "Rewriting retained metadata or backups requires an approved retention and recovery plan for the affected instances.",
+  "notes": [
+    "The telemetry validator covers new submissions. Metadata databases and existing backups created before validation may contain legacy reports or cooldown keys."
+  ],
+  "done_when": [
+    "Confirm affected stored fields and approve a scoped retention and recovery plan before rewriting metadata or backups."
+  ]
+}

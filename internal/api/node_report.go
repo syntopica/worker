@@ -13,7 +13,7 @@ func nodeReport(ctx context.Context, r *request) (httpStatus int, payload any, f
 	if r.id != r.principal.Name {
 		return 0, nil, forbidden()
 	}
-	report, err := decodeBody(r.raw, false)
+	report, err := decodeHostReport(r.raw, r.cfg)
 	if err != nil {
 		return 0, nil, err
 	}

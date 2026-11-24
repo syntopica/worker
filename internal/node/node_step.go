@@ -80,7 +80,7 @@ func (n *Node) hostReport(
 		Reason:     block.pointer(),
 		OnAC:       state.OnAC,
 		Pressure:   string(state.Pressure),
-		Resident:   append([]string{}, resident...),
+		Resident:   make([]string, 0, len(resident)),
 		Unexpected: []string{},
 	}
 
@@ -89,13 +89,15 @@ func (n *Node) hostReport(
 	}
 
 	for _, model := range resident {
+		name := cfg.ModelMetadataName(model)
+		report.Resident = append(report.Resident, name)
 		if !managed(cfg, model) {
-			report.Unexpected = append(report.Unexpected, model)
+			report.Unexpected = append(report.Unexpected, name)
 		}
 	}
 
 	if answered {
-		report.Loads1h, report.Unloads1h = trackResidency(n.remembered(), resident, now, n.Log)
+		report.Loads1h, report.Unloads1h = trackResidency(cfg, n.remembered(), resident, now, n.Log)
 	}
 
 	return report

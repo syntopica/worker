@@ -226,11 +226,8 @@ func TestAWallReportsWhenItResetsAndAnUnmatchedFailureStaysOutOfTheLog(t *testin
 	}
 }
 
-func TestARunnerIsKilledWhenItOverrunsIsFencedOrTheLoopStops(t *testing.T) {
+func TestAttemptReportsOverrunFencingAndShutdown(t *testing.T) {
 	t.Parallel()
-
-	// A megabyte the runner never reads cannot block the timeout or the fence.
-	large := `{"prompt": "` + strings.Repeat("x", 1_000_000) + `"}`
 
 	overrunning := fake(t, "agy", "sleep 60")
 	overrunning.Timeout = 200 * time.Millisecond
@@ -257,7 +254,7 @@ func TestARunnerIsKilledWhenItOverrunsIsFencedOrTheLoopStops(t *testing.T) {
 			}
 			started := time.Now()
 
-			report, _ := attempted(ctx, test.profile, large, test.coordinator)
+			report, _ := attempted(ctx, test.profile, `{"prompt":"fixture prompt"}`, test.coordinator)
 			if endingOf(report) != test.want || time.Since(started) > 10*time.Second {
 				t.Errorf("%s after %s, want %s", endingOf(report), time.Since(started), test.want)
 			}

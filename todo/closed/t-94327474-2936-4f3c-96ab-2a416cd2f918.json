@@ -1,0 +1,26 @@
+{
+  "tadu": 2,
+  "id": "t-94327474-2936-4f3c-96ab-2a416cd2f918",
+  "title": "Isolate blocked stdin cancellation from prompt preprocessing",
+  "state": "done",
+  "category": "execution",
+  "type": "test",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
+  "notes": [
+    "The cancellation timing assertion includes the cost of redacting a megabyte before the runner starts. Under contention it can exceed the limit even when supervision returns the correct outcome."
+  ],
+  "done_when": [
+    "Exercise a started process with unread stdin and keep attempt outcome checks independent of payload size."
+  ],
+  "closed": "2026-11-24",
+  "result": "Isolate blocked stdin cancellation from prompt preprocessing",
+  "evidence": [
+    "The attempt outcome and unread-stdin process tests passed two race-enabled runs. codeality-go gate passed."
+  ]
+}

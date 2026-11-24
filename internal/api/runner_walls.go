@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/syntopica/worker/internal/config"
 	"github.com/syntopica/worker/internal/jobs"
 )
 
@@ -18,7 +19,7 @@ func runnerWalls(ctx context.Context, r *request) (httpStatus int, payload any, 
 	if err != nil {
 		return 0, nil, err
 	}
-	walls, err := wallResets(b, r.now+maxWallDays*daySeconds)
+	walls, err := wallResets(b, r.cfg, r.now+maxWallDays*daySeconds)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -26,15 +27,14 @@ func runnerWalls(ctx context.Context, r *request) (httpStatus int, payload any, 
 	return http.StatusOK, map[string]bool{"ok": true}, err
 }
 
-func wallResets(b body, latest float64) (map[string]float64, error) {
+func wallResets(b body, cfg *config.Config, latest float64) (map[string]float64, error) {
 	walls := make(map[string]float64, len(b))
 	for name, value := range b {
-		switch value.(type) {
-		case json.Number, bool:
-		default:
+		number, ok := value.(json.Number)
+		if !ok || !cfg.AllowsCooldownKey(name) {
 			return nil, badRequest()
 		}
-		reset, err := numberValue(value)
+		reset, err := numberValue(number)
 		if err != nil || reset > latest {
 			return nil, badRequest()
 		}

@@ -3,8 +3,12 @@ package api_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/syntopica/worker/internal/config"
 )
 
 func TestRequestRefusals(t *testing.T) {
@@ -52,16 +56,39 @@ func TestBodyLimitAppliesToDeclaredAndStreamedBodies(t *testing.T) {
 func TestNodeReportsAndCooldowns(t *testing.T) {
 	t.Parallel()
 	f := openAPI(t)
+	f.cfg.Profiles = map[string]config.TaskProfile{"fixture": {Runner: "codex", Model: "fixture-model"}}
+	f.cfg.RunnerCooldown = map[string]time.Duration{"agy": time.Hour}
 	path := "/v1/nodes/local/"
 	f.request(t, http.MethodPost, path+"report", "guest", `{"reason":"idle"}`, http.StatusForbidden)
 	f.request(t, http.MethodPost, path+"report", "local", "null", http.StatusBadRequest)
 	f.request(t, http.MethodPost, path+"report", "local", "{\"reason\":\"\xff\"}", http.StatusBadRequest)
-	f.request(t, http.MethodPost, path+"report", "local", `{"reason":"idle"}`, http.StatusOK)
+	for _, raw := range []string{
+		`{"extra":0}`, `{"PRESSURE":"normal"}`, `{"pressure":"other"}`, `{"pressure":null}`, `{"reason":"other"}`,
+		`{"on_ac":1}`, `{"idle_s":-1}`, `{"loads_1h":-1}`, `{"loads_1h":null}`, `{"unloads_1h":1.5}`,
+		`{"resident":[1]}`, `{"resident":[null]}`, `{"unexpected":null}`,
+	} {
+		f.request(t, http.MethodPost, path+"report", "local", raw, http.StatusBadRequest)
+	}
+	f.request(t, http.MethodPost, path+"report", "local", `{}`, http.StatusOK)
+	partial := f.request(t, http.MethodGet, "/v1/status", "admin", "", http.StatusOK)
+	wantJSON(t, partial, `"pressure":"unknown"`)
+	wantJSON(t, partial, `"resident":[]`)
+	f.request(t, http.MethodPost, path+"report", "local",
+		`{"reason":"on_battery","idle_s":12.5,"on_ac":false,"pressure":"normal","resident":["model","other-model"],"unexpected":["other-model"],"loads_1h":2,"unloads_1h":1}`, http.StatusOK)
 	f.request(t, http.MethodPost, path+"walls", "guest", "{}", http.StatusForbidden)
-	f.request(t, http.MethodPost, path+"walls", "local", `{"runner":"tomorrow"}`, http.StatusBadRequest)
-	f.request(t, http.MethodPost, path+"walls", "local", `{"runner":9999999999}`, http.StatusBadRequest)
-	f.request(t, http.MethodPost, path+"walls", "local", `{"runner":1}`, http.StatusOK)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"codex":"tomorrow"}`, http.StatusBadRequest)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"codex":9999999999}`, http.StatusBadRequest)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"codex":1,"codex:fixture-model":1}`, http.StatusOK)
+	reset := strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"codex":`+reset+`,"unknown":`+reset+`}`, http.StatusBadRequest)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"codex:other-model":`+reset+`}`, http.StatusBadRequest)
 	status := f.request(t, http.MethodGet, "/v1/status", "admin", "", http.StatusOK)
-	wantJSON(t, status, `"reason":"idle"`)
+	wantJSON(t, status, `"reason":"on_battery"`)
+	wantJSON(t, status, `"resident":["model","unconfigured"]`)
+	wantJSON(t, status, `"unexpected":["unconfigured"]`)
 	wantJSON(t, status, `"cooldowns":{}`)
+	f.request(t, http.MethodPost, path+"walls", "local", `{"agy":`+reset+`,"codex:fixture-model":`+reset+`}`, http.StatusOK)
+	status = f.request(t, http.MethodGet, "/v1/status", "admin", "", http.StatusOK)
+	wantJSON(t, status, `"cooldowns":{"agy":`)
+	wantJSON(t, status, `"codex:fixture-model":`)
 }

@@ -5,6 +5,8 @@ import (
 	"io"
 	"slices"
 	"time"
+
+	"github.com/syntopica/worker/internal/config"
 )
 
 // residencyWindow is how far back loads and unloads are counted.
@@ -17,15 +19,15 @@ const residencyWindow = time.Hour
 // keep-alive expiry or another application), because the acceptance
 // criterion is about reloads, not about who caused them. Each change is also
 // logged with its time.
-func trackResidency(m *memory, resident []string, now time.Time, log io.Writer) (loads, unloads int) {
+func trackResidency(cfg *config.Config, m *memory, resident []string, now time.Time, log io.Writer) (loads, unloads int) {
 	current := map[string]bool{}
 	for _, model := range resident {
 		current[model] = true
 	}
 
 	if m.lastResident != nil {
-		recordChanges(m, current, m.lastResident, true, now, log)
-		recordChanges(m, m.lastResident, current, false, now, log)
+		recordChanges(cfg, m, current, m.lastResident, true, now, log)
+		recordChanges(cfg, m, m.lastResident, current, false, now, log)
 	}
 
 	m.lastResident = current
@@ -43,7 +45,7 @@ func trackResidency(m *memory, resident []string, now time.Time, log io.Writer) 
 }
 
 // recordChanges logs and records the models in one sample and not the other.
-func recordChanges(m *memory, in, notIn map[string]bool, load bool, now time.Time, log io.Writer) {
+func recordChanges(cfg *config.Config, m *memory, in, notIn map[string]bool, load bool, now time.Time, log io.Writer) {
 	kind := "unload"
 	if load {
 		kind = "load"
@@ -60,7 +62,7 @@ func recordChanges(m *memory, in, notIn map[string]bool, load bool, now time.Tim
 	slices.Sort(changed)
 
 	for _, model := range changed {
-		_, _ = fmt.Fprintf(log, "worker: residency %s model=%s at=%s\n", kind, model, now.UTC().Format(stampLayout))
+		_, _ = fmt.Fprintf(log, "worker: residency %s model=%s at=%s\n", kind, cfg.ModelMetadataName(model), now.UTC().Format(stampLayout))
 
 		m.residency = append(m.residency, residencyEvent{at: now, load: load})
 	}
