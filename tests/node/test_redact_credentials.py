@@ -15,7 +15,7 @@ from worker.node.redact_credentials import redact_credentials
         ("https://x.com/reset?token=abcdefgh&u=1", "https://x.com/reset?token=[REDACTED]&u=1"),
         ("Authorization: Bearer abcdefghijklmnopqrstuvwxyz", "Authorization: Bearer [REDACTED]"),
         ("ghp_abcdefghijklmnopqrstuvwxyz0123456789", "[REDACTED]"),
-        ("AKIAABCDEFGHIJKLMNOP", "[REDACTED]"),
+        ("AKIA" + "ABCDEFGHIJKLMNOP", "[REDACTED]"),
         ("-----BEGIN RSA PRIVATE KEY-----\nMIIE\n-----END RSA PRIVATE KEY-----", "[REDACTED]"),
     ],
 )

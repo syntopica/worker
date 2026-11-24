@@ -1,0 +1,4 @@
+# Synthetic AWS-style key used as a redactor fixture, not a credential.
+# History cannot be rewritten, so the two commits that carry the literal are ignored by fingerprint.
+e74e62bab1dc19729c590eea285b78942fc47491:tests/node/test_redact_credentials.py:aws-access-token:18
+20c95e6bda85ffd676d8df7ec8b15578ae897b3c:todo/open/t-8e977dda-b5bc-41ce-8296-1b6d392185f4.json:aws-access-token:4
