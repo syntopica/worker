@@ -39,5 +39,6 @@ def on_demand_candidates(  # noqa: PLR0913, PLR0917
             or on_demand_task_allowed(c, config, node[0])
         )
         and c.privacy in profile.privacy
+        and profile.runner not in c.exclude_providers
         and privacy_allows(config, c.privacy, "runner", node[1])
     ]

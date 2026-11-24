@@ -9,6 +9,7 @@ from worker.jobs.api_error import ApiError
 from worker.jobs.check_outstanding import check_outstanding
 from worker.jobs.check_queue_grant import check_queue_grant
 from worker.jobs.decode_body import decode_body
+from worker.jobs.fail_if_exclusion_empties_ladder import fail_if_exclusion_empties_ladder
 from worker.jobs.insert_job import insert_job
 from worker.jobs.parse_submit_request import parse_submit_request
 from worker.jobs.payload_hash import payload_hash
@@ -42,4 +43,5 @@ def submit_job(
             check_outstanding(conn, config, producer, req.queue)
         job_id = uuid.uuid4().hex
         insert_job(conn, job_id, producer, req, digest, model, now)
+        fail_if_exclusion_empties_ladder(conn, config, job_id, now)
     return job_id, True

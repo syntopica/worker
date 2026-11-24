@@ -9,6 +9,7 @@ class Candidate:
 
     ``pin`` names the only executor a shadow member may run on. ``error`` is
     the code the job was last handed back with.
+    ``exclude_providers`` are the executor providers that must never run it.
     """
 
     job_id: str
@@ -22,3 +23,4 @@ class Candidate:
     kind: str = "inference"
     pin: str | None = None
     error: str | None = None
+    exclude_providers: frozenset[str] = frozenset()

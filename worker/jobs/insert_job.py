@@ -19,8 +19,8 @@ def insert_job(  # noqa: PLR0913, PLR0917
     """Run inside the caller's transaction; the input goes to the payload file."""
     conn.execute(
         "INSERT INTO jobs (id, producer, queue, kind, idempotency_key, payload_hash, priority, privacy, model,"
-        " state, max_attempts, not_before, deadline, parent_id, created, updated, tier, retry_of)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?)",
+        " state, max_attempts, not_before, deadline, parent_id, created, updated, tier, retry_of, exclude_providers)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             job_id,
             producer,
@@ -39,6 +39,7 @@ def insert_job(  # noqa: PLR0913, PLR0917
             now,
             req.tier,
             retry_of,
+            json.dumps(list(req.exclude_providers)) if req.exclude_providers else None,
         ),
     )
     conn.execute(

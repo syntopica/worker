@@ -31,5 +31,13 @@ def lease_candidates(  # noqa: PLR0913, PLR0917
     if req.kind == "task":
         return runner_candidates(candidates, config, cooling, node, now)
     if req.kind == "openrouter":
-        return [c for c in candidates if c.queue not in capped]
-    return [c for c in candidates if not held_for_remote(c, config, walls, node, now)]
+        return [
+            c
+            for c in candidates
+            if c.queue not in capped and "openrouter" not in c.exclude_providers
+        ]
+    return [
+        c
+        for c in candidates
+        if "ollama" not in c.exclude_providers and not held_for_remote(c, config, walls, node, now)
+    ]

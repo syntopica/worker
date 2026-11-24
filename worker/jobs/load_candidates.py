@@ -1,5 +1,6 @@
 """Read the ready jobs a node of one trust class may see (privacy applied here)."""
 
+import json
 import sqlite3
 
 from worker.config.worker_config import WorkerConfig
@@ -35,7 +36,7 @@ def load_candidates(  # noqa: PLR0913, PLR0917
     marks = ",".join("?" * len(allowed))
     queue_marks = ",".join("?" * len(queues))
     rows = conn.execute(
-        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s, kind, pin, error FROM ("  # noqa: S608
+        "SELECT id, queue, model, priority, privacy, created, parked, parked_min_idle_s, kind, pin, error, exclude_providers FROM ("  # noqa: S608
         " SELECT *, row_number() OVER (PARTITION BY queue, kind ORDER BY priority DESC, created) AS rank"
         " FROM jobs WHERE state='queued' AND kind IN (?, ?) AND not_before<=?"
         " AND (? IS NULL OR created<=?)"
@@ -66,6 +67,7 @@ def load_candidates(  # noqa: PLR0913, PLR0917
             r["kind"],
             r["pin"],
             r["error"],
+            frozenset(json.loads(r["exclude_providers"] or "[]")),
         )
         for r in rows
         if privacy_allows(config, r["privacy"], executor, trust)

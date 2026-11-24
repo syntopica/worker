@@ -6,7 +6,9 @@ from worker.policy.privacy_allows import privacy_allows
 
 
 def openrouter_may_take(c: Candidate, config: WorkerConfig, trust: str) -> bool:
-    """The route maps the job's model and its class may go to ``openrouter``."""
+    """The route maps the job's model, its class may go to ``openrouter``, and it is not excluded."""
+    if "openrouter" in c.exclude_providers:
+        return False
     queue = config.queues.get(c.queue)
     route = queue.openrouter if queue is not None else None
     if route is None or dict(route.models).get(c.model) is None:

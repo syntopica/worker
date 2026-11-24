@@ -1,0 +1,12 @@
+{
+  "contract": 1,
+  "kind": "inference",
+  "queue": "producer-a.review",
+  "idempotency_key": "rv:batch-0001",
+  "priority": 50,
+  "privacy": "personal",
+  "deadline": null,
+  "max_attempts": 2,
+  "requirements": {"capability": "chat.json", "models": ["model-a"], "exclude_providers": ["provider-a"]},
+  "input": {"messages": [{"role": "user", "content": "Review: ..."}], "format": "json"}
+}

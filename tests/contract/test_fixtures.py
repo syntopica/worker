@@ -55,6 +55,12 @@ def test_submit_fixture_is_a_valid_v1_request():
     assert request.privacy == "mail"
 
 
+def test_exclusion_fixture_names_the_providers_that_must_not_run_the_job():
+    request = parse_submit_request(fixture("submit_inference_excluding.json"))
+    assert request.exclude_providers == ("provider-a",)
+    assert parse_submit_request(fixture("submit_inference.json")).exclude_providers == ()
+
+
 def test_result_fixtures_carry_the_documented_keys():
     keys = {"seq", "result_id", "job_id", "control", "detail", "output", "executor", "usage"}
     for name in ("result_succeeded.json", "result_split_requested.json"):

@@ -8,6 +8,7 @@ from worker.jobs.acknowledge_job import acknowledge_job
 from worker.jobs.api_error import ApiError
 from worker.jobs.check_outstanding import check_outstanding
 from worker.jobs.check_queue_grant import check_queue_grant
+from worker.jobs.fail_if_exclusion_empties_ladder import fail_if_exclusion_empties_ladder
 from worker.jobs.insert_job import insert_job
 from worker.jobs.load_job_input import load_job_input
 from worker.jobs.parse_submit_request import parse_submit_request
@@ -51,5 +52,6 @@ def retry_job(
         check_outstanding(conn, config, job["producer"], req.queue)
         new_id = uuid.uuid4().hex
         insert_job(conn, new_id, job["producer"], req, payload_hash(body), model, now, job_id)
+        fail_if_exclusion_empties_ladder(conn, config, new_id, now)
         record_audit(conn, "retry", job_id, job["privacy"], principal, now)
     return new_id, True

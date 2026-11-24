@@ -337,6 +337,10 @@ preempt an idle-only job that is in flight; they run next.
 - A `task` can only go to runners its profile authorizes.
 - The cost ladder orders compatible executors. It never converts one kind into
   the other.
+- `requirements.exclude_providers` (amendment 2026-11-24) removes the listed
+  providers from an inference job's ladder. If that leaves the job no executor
+  its queue could have used, it fails `no_eligible_executor`; it never falls
+  back to another provider.
 
 **Cost ladder, per queue.**
 1. A local node where the model is already resident.

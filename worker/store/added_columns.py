@@ -9,4 +9,5 @@ ADDED_COLUMNS = (
     ("jobs", "shadow_of", "TEXT"),
     ("jobs", "pin", "TEXT"),
     ("jobs", "retry_of", "TEXT"),
+    ("jobs", "exclude_providers", "TEXT"),
 )

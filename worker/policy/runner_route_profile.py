@@ -15,7 +15,7 @@ def runner_route_profile(
     resting after a quota wall, and the job's class allowed by the profile.
     The class must also be allowed for ``runner`` executors. Other rungs ask
     with their own node: a profile pinned elsewhere does not hold them back.
-    A job a runner answered with nothing skips the rung: the next executor
+    A profile whose runner the job excludes is skipped. A job a runner answered with nothing skips the rung: the next executor
     takes it.
     """
     if c.error == "no_output":
@@ -25,6 +25,9 @@ def runner_route_profile(
     if route is None or not privacy_allows(config, c.privacy, "runner", trust):
         return None
     for name in (route.profile, *route.fallbacks):
-        if route_profile_usable(config.profiles.get(name), c.privacy, cooling, node):
+        profile = config.profiles.get(name)
+        if profile is not None and profile.runner in c.exclude_providers:
+            continue
+        if route_profile_usable(profile, c.privacy, cooling, node):
             return name
     return None

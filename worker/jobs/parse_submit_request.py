@@ -6,6 +6,7 @@ from worker.jobs.api_error import ApiError
 from worker.jobs.check_inference_input import check_inference_input
 from worker.jobs.check_task_input import check_task_input
 from worker.jobs.coerce_number import coerce_number
+from worker.jobs.parse_exclude_providers import parse_exclude_providers
 from worker.jobs.states import PRIVACY_CLASSES, TIERS
 from worker.jobs.submit_request import SubmitRequest
 
@@ -61,4 +62,5 @@ def parse_submit_request(body: dict[str, Any]) -> SubmitRequest:
         parent_id=parent_id,
         kind=kind,
         tier=tier,
+        exclude_providers=parse_exclude_providers(requirements) if kind == "inference" else (),
     )

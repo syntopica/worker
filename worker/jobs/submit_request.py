@@ -9,6 +9,7 @@ class SubmitRequest:
     """``models`` is the ordered preference list from ``requirements``; empty for a task.
 
     ``tier`` is ``basic`` or ``strong``; the queue decides what each runs on.
+    ``exclude_providers`` are the executor providers that must never run the job.
     """
 
     queue: str
@@ -22,3 +23,4 @@ class SubmitRequest:
     parent_id: str | None
     kind: str = "inference"
     tier: str = "basic"
+    exclude_providers: tuple[str, ...] = ()

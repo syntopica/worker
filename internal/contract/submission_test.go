@@ -10,8 +10,9 @@ func TestSubmissionMatchesFixtures(t *testing.T) {
 	t.Parallel()
 
 	for name, kind := range map[string]string{
-		"submit_inference.json": "inference",
-		"submit_task.json":      "task",
+		"submit_inference.json":           "inference",
+		"submit_inference_excluding.json": "inference",
+		"submit_task.json":                "task",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
