@@ -36,3 +36,8 @@ schema-version: 1
 #   - paths: ['internal/legacy/**']
 #     disable: [BGO004]
 #     reason: Scheduled for removal.
+
+overrides:
+  - paths: ['**/*_test.go']
+    disable: [BGO006]
+    reason: A test states its fixture rows and its assertion queries beside the check that reads them.
