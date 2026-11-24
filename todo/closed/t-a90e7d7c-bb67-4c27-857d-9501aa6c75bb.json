@@ -2,7 +2,7 @@
   "tadu": 2,
   "id": "t-a90e7d7c-bb67-4c27-857d-9501aa6c75bb",
   "title": "Port worker/remote (OpenRouter) and worker/tasks (runners, quota-wall) to Go, parity-tested against the Python coordinator",
-  "state": "in_progress",
+  "state": "done",
   "category": "execution",
   "type": "feature",
   "priority": "normal",
@@ -18,5 +18,10 @@
   ],
   "done_when": [
     "Both loops pass their ported scenarios against the Python coordinator"
+  ],
+  "closed": "2026-11-24",
+  "result": "Port worker/remote (OpenRouter) and worker/tasks (runners, quota-wall) to Go, parity-tested against the Python coordinator",
+  "evidence": [
+    "Commits af63831 (remote) and ccb8a08 (tasks); codeality-go gate passed, coverage 97.6%. Ported scenarios pass in internal/remote and internal/tasks; one-off run of both Go loops against a live Python coordinator: task and escalated inference jobs leased, completed and collected with the expected output, usage and executor, and a reported runner wall appeared in /v1/status cooldowns."
   ]
 }
