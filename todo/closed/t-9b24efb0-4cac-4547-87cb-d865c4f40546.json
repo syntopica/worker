@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-9b24efb0-4cac-4547-87cb-d865c4f40546",
   "title": "Preserve Unicode credential redaction in the Go remote executors",
-  "state": "pending",
+  "state": "done",
   "category": "security",
   "type": "bug",
   "priority": "urgent",
   "kind": "task",
   "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
   "related": [
     "t-a90e7d7c-bb67-4c27-857d-9501aa6c75bb"
   ],
@@ -16,5 +20,10 @@
   ],
   "done_when": [
     "Run the same Unicode credential-redaction fixtures on Python and Go and check that both remote execution paths receive the redacted input."
+  ],
+  "closed": "2026-11-24",
+  "result": "Preserve Unicode credential redaction in the Go remote executors",
+  "evidence": [
+    "Go and Python agreed on 28,882 synthetic redaction inputs. The Go OpenRouter request-body and task-runner stdin tests verify that Unicode codes are redacted before execution."
   ]
 }

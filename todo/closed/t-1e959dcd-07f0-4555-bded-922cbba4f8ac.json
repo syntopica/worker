@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-1e959dcd-07f0-4555-bded-922cbba4f8ac",
   "title": "Open SQLite state paths with question marks safely in Go",
-  "state": "pending",
+  "state": "done",
   "category": "execution",
   "type": "bug",
   "priority": "high",
   "kind": "task",
   "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
   "related": [
     "t-54532d78-2fdc-4d6d-bbdf-4054126e48db"
   ],
@@ -16,5 +20,10 @@
   ],
   "done_when": [
     "Test a state directory with reserved URI characters and verify that Go and Python open the same metadata and payload files, with no extra files created."
+  ],
+  "closed": "2026-11-24",
+  "result": "Open SQLite state paths with question marks safely in Go",
+  "evidence": [
+    "Go migration tests verify the metadata and payload files for absolute and relative paths containing URI characters. A temporary Python/Go round trip passed in both creation orders."
   ]
 }

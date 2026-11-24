@@ -7,6 +7,7 @@ from worker.node.redact_credentials import redact_credentials
     ("text", "expected"),
     [
         ("Your code is 482913.", "Your code is [REDACTED]."),
+        ("Your code is ٤\uff182913", "Your code is [REDACTED]"),
         ("Tu código de verificación: 1234", "Tu código de verificación: [REDACTED]"),
         ("password: hunter22!", "password: [REDACTED]"),
         ("Contraseña = Abc12345", "Contraseña = [REDACTED]"),

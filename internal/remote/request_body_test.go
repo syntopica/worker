@@ -71,7 +71,7 @@ func TestFallbacksBecomeTheOrderedModelsList(t *testing.T) {
 func TestCredentialsNeverLeaveInTheRemoteBody(t *testing.T) {
 	t.Parallel()
 
-	job := `{"messages": [{"role": "user", "content": "Your code is 482913"}, {"role": "user"},` +
+	job := `{"messages": [{"role": "user", "content": "Your code is ٤８2913"}, {"role": "user"},` +
 		` {"role": "user", "content": ["token=abcdef1234"]}]}`
 	messages := as[[]any](t, encoded(t, "vendor/model:free", job, false)["messages"])
 

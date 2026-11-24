@@ -11,6 +11,7 @@ func TestResultMatchesFixtures(t *testing.T) {
 
 	for name, control := range map[string]string{
 		"result_succeeded.json":       "",
+		"result_openrouter.json":      "",
 		"result_failed.json":          "failed",
 		"result_split_requested.json": "split_requested",
 	} {
@@ -33,6 +34,23 @@ func TestResultMatchesFixtures(t *testing.T) {
 			if (result.Executor == nil) != (control != "") {
 				t.Errorf("executor present = %t for control %q", result.Executor != nil, control)
 			}
+
+			checkResultCost(t, name, result.Usage)
 		})
+	}
+}
+
+func checkResultCost(t *testing.T, fixture string, usage *contract.Usage) {
+	t.Helper()
+
+	if fixture == "result_openrouter.json" {
+		if usage == nil || usage.CostUSD == nil || *usage.CostUSD != 0 {
+			t.Error("usage did not preserve the reported zero cost")
+		}
+		return
+	}
+
+	if usage != nil && usage.CostUSD != nil {
+		t.Errorf("usage unexpectedly has cost_usd = %v", *usage.CostUSD)
 	}
 }

@@ -27,7 +27,6 @@ func (c CodexBar) Usage(ctx context.Context, provider string) map[string]any {
 	ctx, cancel := context.WithTimeout(ctx, codexBarWait)
 	defer cancel()
 
-	//nolint:gosec // G204: the configured command and a provider name from the configuration.
 	out, _ := exec.CommandContext(ctx, command, "usage", "--provider", provider, "--format", jsonFormat).Output()
 
 	var reports []struct {

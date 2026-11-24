@@ -25,7 +25,6 @@ func DefaultSampler(node *config.NodePolicy, goos string, log io.Writer) Sampler
 
 // readTextFile reads a small kernel file; false when it cannot be read.
 func readTextFile(path string) (string, bool) {
-	//nolint:gosec // G304: the path is one of two fixed kernel files.
 	raw, err := os.ReadFile(path)
 
 	return string(raw), err == nil

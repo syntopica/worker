@@ -4,11 +4,15 @@ import (
 	"errors"
 	"maps"
 	"strings"
+	"time"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
-const schemaLocation = "https://worker.invalid/job-schema"
+const (
+	schemaLocation         = "https://worker.invalid/job-schema"
+	schemaRegexMatchBudget = 100 * time.Millisecond
+)
 
 // checkOutputSchema returns the schema rule that failed and whether the
 // output was accepted. Validation messages can contain the output itself.
@@ -27,6 +31,8 @@ func checkOutputSchema(input map[string]any, output any) (string, bool) {
 	compiler := jsonschema.NewCompiler()
 	compiler.DefaultDraft(jsonschema.Draft2020)
 	compiler.UseLoader(schemaLoader{})
+	patterns := schemaRegexes{remaining: schemaRegexMatchBudget}
+	compiler.UseRegexpEngine(patterns.compile)
 	if err := compiler.AddResource(schemaLocation, currentSchema(schema)); err != nil {
 		return "", false
 	}
@@ -34,11 +40,21 @@ func checkOutputSchema(input map[string]any, output any) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	err = compiled.Validate(body["json"])
-	if err == nil {
-		return "", true
+	return validateOutputSchema(compiled, body["json"], &patterns)
+}
+
+func validateOutputSchema(schema *jsonschema.Schema, value any, patterns *schemaRegexes) (string, bool) {
+	err := schema.Validate(value)
+	// A match error is indeterminate, including under `not` or `if`.
+	if patterns.failed {
+		return "", false
 	}
-	return failingSchemaPath(err), false
+
+	if err != nil {
+		return failingSchemaPath(err), false
+	}
+
+	return "", true
 }
 
 func failingSchemaPath(err error) string {

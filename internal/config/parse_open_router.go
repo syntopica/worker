@@ -11,15 +11,11 @@ var (
 	errRouteCap       = errors.New("openrouter daily caps must be positive integers")
 )
 
-// parseOpenRouter builds a queue's OpenRouter route; nil when it has none.
+// parseOpenRouter builds a queue's configured OpenRouter route.
 //
 // Only ":free" model ids and the free router are accepted: paid endpoints
 // need a budget, which this route does not carry.
 func parseOpenRouter(raw *rawOpenRouter) (*OpenRouterRoute, error) {
-	if raw == nil {
-		return nil, nil //nolint:nilnil // no route is a valid answer
-	}
-
 	if len(raw.Models) == 0 {
 		return nil, errRouteModels
 	}

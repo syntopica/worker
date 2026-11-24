@@ -29,14 +29,14 @@ printf '{"flags": "%s", "seen": "%s", "home": "%s"}' "$flags" "$seen" "${HOME-un
 
 // attempted runs one task under a profile and returns its report and log.
 func attempted(
-	ctx context.Context, profile config.TaskProfile, input string, coordinator *fakeLink, //nolint:gocritic // hugeParam: a fixture.
+	ctx context.Context, profile *config.TaskProfile, input string, coordinator *fakeLink,
 ) (report *link.Completion, log string) {
 	loop, written := testLoop(coordinator, testConfig(profile))
 	lease := testLease(testProfile)
 	lease.Input = json.RawMessage(input)
 
 	report = (&attempt{
-		loop: loop, lease: lease, profile: &profile, started: loop.Now(),
+		loop: loop, lease: lease, profile: profile, started: loop.Now(),
 		executor: contract.Executor{Node: testNode, Provider: profile.Runner, Model: profile.Model},
 	}).run(ctx)
 
@@ -77,7 +77,7 @@ func TestCodexRunsReadOnlyInAWorkspaceHoldingOnlyTheManifest(t *testing.T) {
 	write(t, filepath.Join(root, "d", "a.md"), "A")
 	write(t, filepath.Join(root, "b.md"), "B")
 
-	profile := fake("codex", codexReports)
+	profile := fake(t, "codex", codexReports)
 	profile.InputRoot, profile.EnvUnset = root, []string{"HOME"}
 
 	report, _ := attempted(t.Context(), profile, `{"prompt": "p", "inputs": ["d/a.md"], "output_schema": {"type": "object"}}`, &fakeLink{})
@@ -102,21 +102,21 @@ func TestATaskThatCannotStartIsRefusedWithItsCode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rooted := fake("codex", "")
+	rooted := fake(t, "codex", "")
 	rooted.InputRoot = root
 
-	absent := fake("codex", "")
+	absent := fake(t, "codex", "")
 	absent.Command = filepath.Join(root, "absent")
 
 	cases := map[string]struct {
-		profile config.TaskProfile
+		profile *config.TaskProfile
 		input   string
 		want    string
 	}{
 		"a link out of the root": {rooted, `{"prompt": "p", "inputs": ["link.md"]}`, "failed/input_missing"},
-		"inputs without a root":  {fake("codex", ""), `{"prompt": "p", "inputs": ["a.md"]}`, "failed/inputs_not_allowed"},
+		"inputs without a root":  {fake(t, "codex", ""), `{"prompt": "p", "inputs": ["a.md"]}`, "failed/inputs_not_allowed"},
 		"a missing binary":       {absent, `{"prompt": "p"}`, "failed/runner_failed"},
-		"an unreadable input":    {fake("codex", ""), `[1]`, "failed/node_error"},
+		"an unreadable input":    {fake(t, "codex", ""), `[1]`, "failed/node_error"},
 	}
 
 	for name, test := range cases {
@@ -153,7 +153,7 @@ func TestRunnersEndings(t *testing.T) {
 	}
 
 	for name, test := range cases {
-		report, _ := attempted(t.Context(), fake(test.runner, test.body), `{"prompt": "classify"}`, &fakeLink{})
+		report, _ := attempted(t.Context(), fake(t, test.runner, test.body), `{"prompt": "classify"}`, &fakeLink{})
 		if endingOf(report) != test.want {
 			t.Errorf("%s: %s", name, endingOf(report))
 		}
@@ -175,7 +175,7 @@ echo '{"event": "result", "result": {"status": "SUCCESS", "response": "prose", "
  "usage": {"input_tokens": 3, "output_tokens": 2}}}' | tr -d '\n'`
 
 	report, _ := attempted(
-		t.Context(), fake("agy", body), `{"prompt": "--help\nclassify", "output_schema": {"type": "object"}}`, &fakeLink{},
+		t.Context(), fake(t, "agy", body), `{"prompt": "--help\nclassify", "output_schema": {"type": "object"}}`, &fakeLink{},
 	)
 	if endingOf(report) != "succeeded/" {
 		t.Fatalf("ended %s", endingOf(report))
@@ -198,13 +198,14 @@ func TestCursorTakesThePromptOnStdinAndTheLastObjectOfItsResult(t *testing.T) {
 	// The prompt's credential never reaches the runner.
 	secret := "sk-" + strings.Repeat("a", 40)
 
-	report, _ := attempted(t.Context(), fake("cursor", body), `{"prompt": "big `+secret+` prompt"}`, &fakeLink{})
+	prompt := `{"prompt": "big ` + secret + ` prompt. Your code is ٤８2913"}`
+	report, _ := attempted(t.Context(), fake(t, "cursor", body), prompt, &fakeLink{})
 	if endingOf(report) != "succeeded/" {
 		t.Fatalf("ended %s", endingOf(report))
 	}
 
 	echo, _ := answerOf(t, report)["echo"].(string)
-	if !strings.HasPrefix(echo, "big ") || !strings.HasSuffix(echo, " prompt") || strings.Contains(echo, secret) {
+	if echo != "big [REDACTED] prompt. Your code is [REDACTED]" {
 		t.Errorf("echo %q", echo)
 	}
 }
@@ -212,13 +213,13 @@ func TestCursorTakesThePromptOnStdinAndTheLastObjectOfItsResult(t *testing.T) {
 func TestAWallReportsWhenItResetsAndAnUnmatchedFailureStaysOutOfTheLog(t *testing.T) {
 	t.Parallel()
 
-	report, _ := attempted(t.Context(), fake("agy", `printf '%s' "`+agyQuota+`" >&2; exit 1`), `{"prompt": "p"}`, &fakeLink{})
+	report, _ := attempted(t.Context(), fake(t, "agy", `printf '%s' "`+agyQuota+`" >&2; exit 1`), `{"prompt": "p"}`, &fakeLink{})
 	if endingOf(report) != "failed/quota_wall" || report.Usage["wall_resets_in_s"] != 7500.0 {
 		t.Errorf("%s usage %v", endingOf(report), report.Usage)
 	}
 
 	report, log := attempted(
-		t.Context(), fake("agy", `echo "model gemini-x is not available" >&2; exit 1`), `{"prompt": "p"}`, &fakeLink{},
+		t.Context(), fake(t, "agy", `echo "model gemini-x is not available" >&2; exit 1`), `{"prompt": "p"}`, &fakeLink{},
 	)
 	if endingOf(report) != "failed/runner_failed" || log != "worker: runner_failed agy:m-1\n" {
 		t.Errorf("%s log %q", endingOf(report), log)
@@ -231,30 +232,36 @@ func TestARunnerIsKilledWhenItOverrunsIsFencedOrTheLoopStops(t *testing.T) {
 	// A megabyte the runner never reads cannot block the timeout or the fence.
 	large := `{"prompt": "` + strings.Repeat("x", 1_000_000) + `"}`
 
-	overrunning := fake("agy", "sleep 60")
+	overrunning := fake(t, "agy", "sleep 60")
 	overrunning.Timeout = 200 * time.Millisecond
 
-	stopping, stop := context.WithCancel(t.Context())
-	time.AfterFunc(100*time.Millisecond, stop)
-
 	cases := map[string]struct {
-		ctx         context.Context //nolint:containedctx // one context per case.
-		profile     config.TaskProfile
+		profile     *config.TaskProfile
 		coordinator *fakeLink
 		want        string
+		cancel      bool
 	}{
-		"overrun": {t.Context(), overrunning, &fakeLink{}, "failed/timeout"},
-		"fenced":  {t.Context(), fake("agy", "sleep 60"), &fakeLink{fenced: true}, "fenced"},
-		"stopped": {stopping, fake("codex", "sleep 60"), &fakeLink{}, "preempted/node_shutdown"},
+		"overrun": {overrunning, &fakeLink{}, "failed/timeout", false},
+		"fenced":  {fake(t, "agy", "sleep 60"), &fakeLink{fenced: true}, "fenced", false},
+		"stopped": {fake(t, "codex", "sleep 60"), &fakeLink{}, "preempted/node_shutdown", true},
 	}
 
 	for name, test := range cases {
-		started := time.Now()
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			ctx, stop := context.WithCancel(t.Context())
+			defer stop()
+			if test.cancel {
+				timer := time.AfterFunc(100*time.Millisecond, stop)
+				defer timer.Stop()
+			}
+			started := time.Now()
 
-		report, _ := attempted(test.ctx, test.profile, large, test.coordinator)
-		if endingOf(report) != test.want || time.Since(started) > 10*time.Second {
-			t.Errorf("%s: %s after %s", name, endingOf(report), time.Since(started))
-		}
+			report, _ := attempted(ctx, test.profile, large, test.coordinator)
+			if endingOf(report) != test.want || time.Since(started) > 10*time.Second {
+				t.Errorf("%s after %s, want %s", endingOf(report), time.Since(started), test.want)
+			}
+		})
 	}
 }
 
@@ -262,7 +269,7 @@ func TestAFencedTaskIsLoggedAndNeverCompleted(t *testing.T) {
 	t.Parallel()
 
 	coordinator := &fakeLink{fenced: true, leases: []*contract.Lease{testLease(testProfile)}}
-	loop, log := testLoop(coordinator, testConfig(fake("codex", "sleep 60")))
+	loop, log := testLoop(coordinator, testConfig(fake(t, "codex", "sleep 60")))
 
 	if resting, err := loop.step(t.Context(), loop.Config()); resting || err != nil {
 		t.Fatalf("resting %v, err %v", resting, err)
@@ -278,7 +285,7 @@ func TestOnDemandDrainsItsProfileThenFlushes(t *testing.T) {
 
 	before := 12.5
 	coordinator := &fakeLink{leases: []*contract.Lease{testLease(testProfile), testLease(testProfile), testLease(testProfile)}}
-	loop, _ := testLoop(coordinator, testConfig(fake("codex", codexAnswers)))
+	loop, _ := testLoop(coordinator, testConfig(fake(t, "codex", codexAnswers)))
 	loop.Sample = nil
 
 	drain := func() *OnDemand {

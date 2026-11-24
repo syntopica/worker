@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-60889efe-0d61-48b9-bfc3-dd2c26b2f438",
   "title": "Fix the zizmor upload-artifact version mismatch",
-  "state": "pending",
+  "state": "in_progress",
   "category": "quality-gate",
   "type": "bug",
   "priority": "normal",
   "kind": "task",
   "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
   "related": [
     "t-b7bef745-8c8a-49eb-93f4-3ff4d2d3bb5b"
   ],

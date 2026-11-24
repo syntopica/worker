@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -28,7 +29,6 @@ type process struct {
 // fed from a goroutine, so a large prompt the runner never reads cannot
 // block the loop.
 func startProcess(profile *config.TaskProfile, call *invocation, workspace string, stdout, stderr *os.File) (*process, error) {
-	//nolint:gosec,noctx // G204: argv is the profile's command and fixed flags; the group is killed, not the context.
 	cmd := exec.Command(call.argv[0], call.argv[1:]...)
 	cmd.Dir, cmd.Stdout, cmd.Stderr = workspace, stdout, stderr
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
@@ -44,11 +44,11 @@ func startProcess(profile *config.TaskProfile, call *invocation, workspace strin
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, err //nolint:wrapcheck // the caller reports a fixed code, never the error.
+		return nil, fmt.Errorf("open runner stdin: %w", err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		return nil, err //nolint:wrapcheck // as above.
+		return nil, fmt.Errorf("start runner: %w", err)
 	}
 
 	go func() {

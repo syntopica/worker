@@ -15,7 +15,8 @@
   "notes": [
     "Opens the same SQLite database and applies the same numbered migrations; contract v1 unchanged.",
     "2026-11-24 audit: not started. internal/ has only client, config, contract, host, link, node, ollama, policy(privacy_allows only); no Go file mentions sqlite, no store/migrations/jobs/api/auth packages. Python coordinator still lives in worker/{store,jobs,api,auth,policy}. Recent Go commits (ab5d5b2, ee66acf, b1cf80c, e442fb3) cover the node side only. Smallest next step: port worker/store and the numbered migrations to internal/store against the same SQLite DB, with a test opening a Python-made DB.",
-    "2026-11-24 progress: Go jobs lifecycle and reporting are implemented. A temporary Python-to-Go-to-Python SQLite exercise verified idempotency, lease fencing, completion, result collection and sensitive acknowledgement against the same store. Next: port the coordinator HTTP handlers and test the unchanged Python node against them before cutover."
+    "2026-11-24 progress: Go jobs lifecycle and reporting are implemented. A temporary Python-to-Go-to-Python SQLite exercise verified idempotency, lease fencing, completion, result collection and sensitive acknowledgement against the same store. Next: port the coordinator HTTP handlers and test the unchanged Python node against them before cutover.",
+    "At the HTTP cutover, compare the schema patterns used by producers with Python, including Unicode word and whitespace classes. The Go regex adapter addresses the verified pattern regressions, and regexp engines can still differ on these classes."
   ],
   "done_when": [
     "The Go coordinator passes the ported job, policy and API scenarios and serves the Python node unchanged"

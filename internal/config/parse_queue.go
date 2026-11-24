@@ -50,12 +50,8 @@ func parseQueue(name string, raw *rawQueue) (QueuePolicy, error) {
 }
 
 func fillRoutes(queue *QueuePolicy, raw *rawQueue) error {
-	if queue.RunWhen != "idle" && queue.RunWhen != "active_ok" {
-		return errRunWhen
-	}
-
-	if queue.RetentionDays < 1 || queue.RetentionDays*hoursPerDay < queue.UnackedTTLHours {
-		return errRetention
+	if err := checkQueueLimits(queue); err != nil {
+		return err
 	}
 
 	var err error
@@ -65,19 +61,35 @@ func fillRoutes(queue *QueuePolicy, raw *rawQueue) error {
 		return err
 	}
 
-	queue.Runner, err = runnerRoute(raw.Runner)
-	if err != nil {
-		return err
+	if raw.Runner != nil {
+		queue.Runner, err = runnerRoute(raw.Runner)
+		if err != nil {
+			return err
+		}
 	}
 
-	queue.OpenRouter, err = parseOpenRouter(raw.OpenRouter)
-	if err != nil {
-		return err
+	if raw.OpenRouter != nil {
+		queue.OpenRouter, err = parseOpenRouter(raw.OpenRouter)
+		if err != nil {
+			return err
+		}
 	}
 
-	queue.Shadow, err = parseShadow(raw.Shadow)
+	if raw.Shadow != nil {
+		queue.Shadow, err = parseShadow(raw.Shadow)
+	}
 
 	return err
+}
+
+func checkQueueLimits(queue *QueuePolicy) error {
+	if queue.RunWhen != "idle" && queue.RunWhen != "active_ok" {
+		return errRunWhen
+	}
+	if queue.RetentionDays < 1 || queue.RetentionDays*hoursPerDay < queue.UnackedTTLHours {
+		return errRetention
+	}
+	return nil
 }
 
 func tierRoutes(raw map[string]rawTier) (map[string]TierRoute, error) {
@@ -95,10 +107,6 @@ func tierRoutes(raw map[string]rawTier) (map[string]TierRoute, error) {
 }
 
 func runnerRoute(raw *rawRunnerRoute) (*RunnerRoute, error) {
-	if raw == nil {
-		return nil, nil //nolint:nilnil // no route is a valid answer
-	}
-
 	if raw.Profile == "" || slices.Contains(raw.Fallbacks, "") {
 		return nil, errRunnerRoute
 	}

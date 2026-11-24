@@ -1,0 +1,1 @@
+{"seq": 13, "result_id": "r-0002", "job_id": "j-0002", "control": null, "detail": null, "output": {"text": "ok", "json": null}, "executor": {"node": "node-a", "provider": "openrouter", "model": "model-a:free"}, "usage": {"tokens_in": 812, "tokens_out": 240, "cost_usd": 0.0}}

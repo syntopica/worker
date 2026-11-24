@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-6373254d-5f55-43d9-b3b9-27b5a03b226d",
   "title": "Keep the Go inference transport backoff capped after a prolonged Ollama outage",
-  "state": "pending",
+  "state": "done",
   "category": "execution",
   "type": "bug",
   "priority": "high",
   "kind": "task",
   "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
   "related": [
     "t-74d2dab0-23d2-40fe-9ac4-35e5b604affb"
   ],
@@ -16,5 +20,10 @@
   ],
   "done_when": [
     "Exercise at least 80 consecutive transport failures and verify that the delay stays at 30 minutes after reaching the cap."
+  ],
+  "closed": "2026-11-24",
+  "result": "Keep the Go inference transport backoff capped after a prolonged Ollama outage",
+  "evidence": [
+    "go test ./internal/node verifies the 30-minute transport backoff cap through 85 consecutive failures and the reset after a successful attempt."
   ]
 }

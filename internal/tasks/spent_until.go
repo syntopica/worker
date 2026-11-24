@@ -48,7 +48,7 @@ func spentUntil(usage map[string]any, windows []string, now time.Time) (until fl
 			continue
 		}
 
-		until, spent = max(until, float64(end.UnixMilli())/1000), true //nolint:mnd // milliseconds to seconds.
+		until, spent = max(until, float64(end.UnixMilli())/float64(time.Second/time.Millisecond)), true
 	}
 
 	return until, spent

@@ -53,7 +53,7 @@ var (
 // Load parses config.json, applying the spec's defaults, and refuses an
 // invalid value.
 func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path) //nolint:gosec // the instance's own configuration file
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}

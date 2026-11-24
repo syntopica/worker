@@ -3,9 +3,10 @@ package node
 import "time"
 
 const (
-	maxBackoff            = 2 * time.Hour
-	firstTransportBackoff = 30 * time.Second
-	maxTransportBackoff   = 30 * time.Minute
+	maxBackoff               = 2 * time.Hour
+	firstTransportBackoff    = 30 * time.Second
+	maxTransportBackoff      = 30 * time.Minute
+	maxTransportBackoffShift = 6 // Six doublings of 30 seconds reach the 30-minute cap.
 )
 
 // settleAttempt folds an attempt's outcome into the node's memory and
@@ -34,7 +35,8 @@ func settleAttempt(m *memory, model string, wasResident bool, how outcome, why r
 	transport := how == failed && why == transportError
 	if transport {
 		m.transportFailures++
-		m.transportUntil = now.Add(min(firstTransportBackoff<<(m.transportFailures-1), maxTransportBackoff))
+		shift := min(m.transportFailures-1, maxTransportBackoffShift)
+		m.transportUntil = now.Add(min(firstTransportBackoff<<shift, maxTransportBackoff))
 	} else {
 		m.transportFailures = 0
 	}

@@ -132,7 +132,11 @@ func TestEveryRouteIsRead(t *testing.T) {
 		},
 		"local_after_s": 60,
 	})
-	data["profiles"].(object)["p.claude"] = object{ //nolint:errcheck,forcetypeassert // built just above
+	profiles, ok := data["profiles"].(object)
+	if !ok {
+		t.Fatal("fixture must have task profiles")
+	}
+	profiles["p.claude"] = object{
 		"runner": "claude", "model": "m", "nodes": []string{"node-a"}, "env": object{"B": "~/b", "A": "a"},
 	}
 	data["runners"] = object{"codex": object{

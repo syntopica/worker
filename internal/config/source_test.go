@@ -36,8 +36,7 @@ func TestAChangedFileIsReloadedAndAnInvalidOneIsRefused(t *testing.T) {
 		t.Error("an unchanged file was reloaded")
 	}
 
-	grown := baseConfig()
-	grown["queues"].(object)["pa.new"] = object{} //nolint:errcheck,forcetypeassert // built just above
+	grown := with("queues", object{"pa.bulk": object{}, "pa.live": object{}, "pa.new": object{}})
 
 	err = os.Rename(writeConfig(t, grown), path)
 	if err != nil {

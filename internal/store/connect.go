@@ -15,7 +15,6 @@ func connect(dir string) (*sql.DB, error) {
 		return nil, fmt.Errorf("create state directory: %w", err)
 	}
 	for _, name := range []string{metaFile, payloadFile} {
-		//nolint:gosec // the state directory is the operator's own configuration
 		file, err := os.OpenFile(filepath.Join(dir, name), os.O_CREATE|os.O_RDWR, privateFile)
 		if err != nil {
 			return nil, fmt.Errorf("create %s: %w", name, err)

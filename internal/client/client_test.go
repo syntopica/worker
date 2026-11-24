@@ -145,7 +145,8 @@ func TestClientEscapesTheJobID(t *testing.T) {
 func TestClientResults(t *testing.T) {
 	t.Parallel()
 
-	producer, seen := coordinator(t, http.StatusOK, `{"results":[{"seq":12,"result_id":"r-1","job_id":"j-1"}]}`)
+	producer, seen := coordinator(t, http.StatusOK, `{"results":[{"seq":12,"result_id":"r-1","job_id":"j-1",`+
+		`"usage":{"tokens_in":20,"tokens_out":10,"cost_usd":0.0025}}]}`)
 
 	results, err := producer.Results(t.Context(), client.ResultsQuery{Queue: "producer-a.bulk", After: 11, Wait: 1500 * time.Millisecond})
 	if err != nil {
@@ -153,7 +154,12 @@ func TestClientResults(t *testing.T) {
 	}
 
 	if len(results) != 1 || results[0].Seq != 12 {
-		t.Errorf("Results = %+v", results)
+		t.Fatalf("Results = %+v", results)
+	}
+
+	usage := results[0].Usage
+	if usage == nil || usage.CostUSD == nil || *usage.CostUSD != 0.0025 {
+		t.Errorf("usage = %+v, want cost_usd of 0.0025", usage)
 	}
 
 	if got := seen.all()[0].Query; got != "after=11&limit=50&queue=producer-a.bulk&wait=1.5" {

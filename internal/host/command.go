@@ -23,7 +23,6 @@ func Command(timeout time.Duration, log io.Writer) func(ctx context.Context, nam
 		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
-		//nolint:gosec // G204: every caller passes a fixed command, never input.
 		out, err := exec.CommandContext(ctx, name, args...).Output()
 		if err == nil {
 			return string(out), true

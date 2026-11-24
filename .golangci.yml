@@ -222,3 +222,55 @@ linters:
           - gosec
         text: G304|G703
       # local overrides - `codeality-go init` preserves everything below.
+      # The operator selects the state directory; only fixed engine filenames are opened.
+      - path: ^internal/auth/(add_principal|load_principals)\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.OpenFile\(temporary,|os\.ReadFile\(filepath\.Join\(dir, "principals\.json"\)\)'
+      - path: ^internal/store/connect\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.OpenFile\(filepath\.Join\(dir, name\),'
+      # These loaders read the operator-supplied config or a fixed instance marker.
+      - path: ^internal/config/(load|worker_directory)\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.ReadFile\((path|filepath\.Join\(data, name\))\)'
+      # These platform adapters use fixed kernel paths and binaries from their callers.
+      - path: ^internal/host/default_sampler\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.ReadFile\(path\)'
+      - path: ^internal/host/command\.go$
+        linters: [gosec]
+        text: '^G204:'
+        source: 'exec\.CommandContext\(ctx, name, args\.\.\.\)'
+      # xattr is a fixed binary; its file arguments belong to the store or a test fixture.
+      - path: ^internal/store/backup_marks(_test)?\.go$
+        linters: [gosec]
+        text: '^G204:'
+        source: 'exec\.CommandContext\(.*"/usr/bin/xattr", "-(p|wx)", backupAttribute,'
+      # Runner commands and provider settings come from the operator's configuration.
+      - path: ^internal/tasks/(codex_bar|process)\.go$
+        linters: [gosec]
+        text: '^G204:'
+        source: 'exec\.CommandContext\(ctx, command, "usage",|exec\.Command\(call\.argv\[0\], call\.argv\[1:\]\.\.\.\)'
+      # The supervisor handles cancellation and the deadline by killing the whole group.
+      - path: ^internal/tasks/process\.go$
+        linters: [noctx]
+        source: 'exec\.Command\(call\.argv\[0\], call\.argv\[1:\]\.\.\.\)'
+      # The synthetic runner is owner-executable and lives in a test-only temporary directory.
+      - path: ^internal/tasks/process_test\.go$
+        linters: [gosec]
+        text: '^G302:'
+        source: 'os\.Chmod\(command, 0o700\)'
+      # The runner's streams and answer file are inside the private scratch directory.
+      - path: ^internal/tasks/attempt\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.Create\(filepath\.Join\(scratch, "(stdout|stderr)"\)\)|os\.ReadFile\(path\)'
+      # Admission checks the source against the configured root; the copy stays in scratch.
+      - path: ^internal/tasks/build_workspace\.go$
+        linters: [gosec]
+        text: '^G304:'
+        source: 'os\.Open\(source\)|os\.OpenFile\(target,'

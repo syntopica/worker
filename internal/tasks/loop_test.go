@@ -108,18 +108,10 @@ func testLease(profile string) *contract.Lease {
 	}
 }
 
-// fake is a profile whose runner is the fake one running body.
-func fake(runner, body string) config.TaskProfile {
-	return config.TaskProfile{
-		Name: testProfile, Runner: runner, Model: "m-1", Timeout: 30 * time.Second, Command: fakeRunner,
-		Env: [][2]string{{"FAKE_BODY", body}},
-	}
-}
-
-func testConfig(profile config.TaskProfile) *config.Config { //nolint:gocritic // hugeParam: a test fixture.
+func testConfig(profile *config.TaskProfile) *config.Config {
 	return &config.Config{
 		Nodes:    map[string]config.NodePolicy{testNode: {Name: testNode, Trust: "owner", IdleThreshold: 5 * time.Minute}},
-		Profiles: map[string]config.TaskProfile{testProfile: profile},
+		Profiles: map[string]config.TaskProfile{testProfile: *profile},
 		Privacy:  map[string][]string{"internal": {provider}, "secret": {"ollama"}},
 		Trust:    map[string][]string{"internal": {"owner"}, "secret": {"owner"}},
 	}
@@ -154,7 +146,7 @@ func TestATaskIsLeasedRunAndCompleted(t *testing.T) {
 	t.Parallel()
 
 	coordinator := &fakeLink{leases: []*contract.Lease{testLease(testProfile)}}
-	loop, _ := testLoop(coordinator, testConfig(fake("codex", codexAnswers)))
+	loop, _ := testLoop(coordinator, testConfig(fake(t, "codex", codexAnswers)))
 	loop.Sample = hostState(5*time.Second, new(true))
 
 	resting, err := loop.step(t.Context(), loop.Config())
@@ -193,7 +185,7 @@ func TestOnlyAKnownBatteryTakesNoTask(t *testing.T) {
 
 	for name, test := range cases {
 		coordinator := &fakeLink{}
-		loop, _ := testLoop(coordinator, testConfig(fake("codex", "")))
+		loop, _ := testLoop(coordinator, testConfig(fake(t, "codex", "")))
 		loop.Sample = test.sample
 
 		resting, err := loop.step(t.Context(), loop.Config())
@@ -214,7 +206,7 @@ func TestALeaseTheNodeMayNotRunIsRefusedWithoutARunner(t *testing.T) {
 	secret.Privacy = "secret"
 
 	coordinator := &fakeLink{leases: []*contract.Lease{testLease("gone"), secret}}
-	loop, log := testLoop(coordinator, testConfig(fake("codex", codexAnswers)))
+	loop, log := testLoop(coordinator, testConfig(fake(t, "codex", codexAnswers)))
 
 	for range 2 {
 		if resting, err := loop.step(t.Context(), loop.Config()); resting || err != nil {
@@ -239,7 +231,7 @@ func TestAnUnknownNodeRestsAndIsLogged(t *testing.T) {
 	t.Parallel()
 
 	coordinator := &fakeLink{leases: []*contract.Lease{testLease(testProfile)}}
-	loop, log := testLoop(coordinator, testConfig(fake("codex", "")))
+	loop, log := testLoop(coordinator, testConfig(fake(t, "codex", "")))
 	loop.Name = "node-z"
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -257,7 +249,7 @@ func TestAnUnknownNodeRestsAndIsLogged(t *testing.T) {
 func TestSlotsRunUntilStoppedAndOnlyAProbingSlotReportsWalls(t *testing.T) {
 	t.Parallel()
 
-	cfg := testConfig(fake("codex", ""))
+	cfg := testConfig(fake(t, "codex", ""))
 	cfg.RunnerQuota = map[string]config.RunnerQuota{"codex": {Provider: "codex"}}
 
 	ctx, cancel := context.WithCancel(t.Context())

@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -160,14 +161,14 @@ func (a *attempt) report(how outcome, why reason) *link.Completion {
 
 // streams creates the files the runner's output goes to.
 func streams(scratch string) (stdout, stderr *os.File, err error) {
-	if stdout, err = os.Create(filepath.Join(scratch, "stdout")); err != nil { //nolint:gosec // G304: inside the scratch directory.
-		return nil, nil, err //nolint:wrapcheck // the caller reports a fixed code, never the error.
+	if stdout, err = os.Create(filepath.Join(scratch, "stdout")); err != nil {
+		return nil, nil, fmt.Errorf("create runner stdout: %w", err)
 	}
 
-	if stderr, err = os.Create(filepath.Join(scratch, "stderr")); err != nil { //nolint:gosec // G304: as above.
+	if stderr, err = os.Create(filepath.Join(scratch, "stderr")); err != nil {
 		_ = stdout.Close()
 
-		return nil, nil, err //nolint:wrapcheck // as above.
+		return nil, nil, fmt.Errorf("create runner stderr: %w", err)
 	}
 
 	return stdout, stderr, nil
@@ -175,7 +176,7 @@ func streams(scratch string) (stdout, stderr *os.File, err error) {
 
 // read is a file's text; a file that cannot be read is empty.
 func read(path string) string {
-	text, _ := os.ReadFile(path) //nolint:gosec // G304: a file in the attempt's own scratch directory.
+	text, _ := os.ReadFile(path)
 
 	return string(text)
 }

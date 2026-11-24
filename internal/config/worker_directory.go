@@ -15,7 +15,7 @@ import (
 // rule the other Syntopica engines follow.
 func WorkerDirectory(data string) (string, error) {
 	for _, name := range []string{"syntopica.local.json", "syntopica.config.json"} {
-		content, err := os.ReadFile(filepath.Join(data, name)) //nolint:gosec // the instance's own files
+		content, err := os.ReadFile(filepath.Join(data, name))
 		if err != nil {
 			continue
 		}

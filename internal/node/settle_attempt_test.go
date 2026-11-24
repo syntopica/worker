@@ -34,26 +34,41 @@ func TestConsecutiveTransportFailuresBackOffAndSuccessResets(t *testing.T) {
 	m := newMemory()
 	m.normalSince = new(at(0))
 
-	for _, want := range []int64{1030, 1060} {
+	for _, want := range []int64{1030, 1060, 1120, 1240, 1480, 1960} {
 		if !settleAttempt(m, testModel, true, failed, transportError, at(1000)) || !m.transportUntil.Equal(at(want)) {
 			t.Fatalf("transport until %v, want %d", m.transportUntil, want)
 		}
 	}
 
-	if nodeBlock(m, idleState(), at(1059), false) != transportBackoff || nodeBlock(m, idleState(), at(1060), false) != "" {
+	if nodeBlock(m, idleState(), at(1959), false) != transportBackoff || nodeBlock(m, idleState(), at(1960), false) != "" {
 		t.Fatal("the transport backoff does not end at its time")
-	}
-
-	for range 20 {
-		settleAttempt(m, testModel, true, failed, transportError, at(1000))
-	}
-
-	if !m.transportUntil.Equal(at(2800)) {
-		t.Fatalf("transport until %v", m.transportUntil)
 	}
 
 	if settleAttempt(m, testModel, true, failed, "http_500", at(2000)) || m.transportFailures != 0 {
 		t.Fatal("another failure counted as transport")
+	}
+
+	settleAttempt(m, testModel, true, failed, transportError, at(2800))
+	settleAttempt(m, testModel, true, succeeded, "", at(2830))
+	if !settleAttempt(m, testModel, true, failed, transportError, at(2831)) || !m.transportUntil.Equal(at(2861)) {
+		t.Fatalf("transport until %v after success, want %v", m.transportUntil, at(2861))
+	}
+}
+
+func TestTransportBackoffRemainsCappedThrough85Failures(t *testing.T) {
+	t.Parallel()
+
+	m := newMemory()
+
+	for range 6 {
+		settleAttempt(m, testModel, true, failed, transportError, at(1000))
+	}
+
+	for failure := 7; failure <= 85; failure++ {
+		settleAttempt(m, testModel, true, failed, transportError, at(1000))
+		if !m.transportUntil.Equal(at(2800)) {
+			t.Fatalf("failure %d: transport until %v, want %v", failure, m.transportUntil, at(2800))
+		}
 	}
 }
 

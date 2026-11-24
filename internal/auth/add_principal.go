@@ -64,7 +64,7 @@ func writePrivateFile(path string, data []byte) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("replace %s: %w", filepath.Base(path), err)
 	}
-	//nolint:gosec // the state directory is the operator's own configuration
+
 	file, err := os.OpenFile(temporary, os.O_CREATE|os.O_WRONLY|os.O_EXCL, privateFile)
 	if err != nil {
 		return fmt.Errorf("create %s: %w", filepath.Base(path), err)

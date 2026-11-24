@@ -110,7 +110,6 @@ func TestPayloadFilesAreExcludedFromTimeMachine(t *testing.T) {
 	freshStore(t, dir)
 
 	attribute := func(name string) string {
-		//nolint:gosec // fixed binary; the path is the test's own directory
 		out, _ := exec.CommandContext(t.Context(), "/usr/bin/xattr", "-p", backupAttribute, filepath.Join(dir, name)).
 			CombinedOutput()
 

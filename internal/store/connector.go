@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"net/url"
 	"path/filepath"
 
 	"modernc.org/sqlite"
@@ -21,7 +22,21 @@ var errNoExec = errors.New("sqlite connection cannot execute statements")
 // Connect waits at most ten seconds for the writer lock and takes it at
 // BEGIN, as the Python store did.
 func (c connector) Connect(ctx context.Context) (driver.Conn, error) {
-	conn, err := c.Driver().Open(filepath.Join(c.dir, metaFile) + "?_txlock=immediate&_busy_timeout=10000")
+	dir, err := filepath.Abs(c.dir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve state directory: %w", err)
+	}
+	c.dir = dir
+	path := filepath.ToSlash(filepath.Join(dir, metaFile))
+	if path[0] != '/' {
+		path = "/" + path
+	}
+	dsn := url.URL{
+		Scheme:   "file",
+		Path:     path,
+		RawQuery: "_txlock=immediate&_busy_timeout=10000",
+	}
+	conn, err := c.Driver().Open(dsn.String())
 	if err != nil {
 		return nil, fmt.Errorf("open metadata: %w", err)
 	}

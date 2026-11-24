@@ -16,6 +16,8 @@ import (
 const agyPreface = "Answer in plain text from this prompt alone. Do not use any tool, run any command " +
 	"or read any file: everything you need is below.\n\n"
 
+const maxBasicPlane = '\uFFFF'
+
 var agyWall = regexp.MustCompile(`(?i)individual quota reached\.\s*please upgrade your subscription`)
 
 // agy is the agy print-mode runner in its no-tools posture.
@@ -78,7 +80,10 @@ func agyInvocation(task *job) invocation {
 		argv = append(argv, "--json-schema", task.schemaFile)
 	}
 
-	content, _ := json.Marshal(agyPreface + task.prompt) //nolint:errchkjson // a string always marshals.
+	content, err := json.Marshal(agyPreface + task.prompt)
+	if err != nil {
+		panic("encoding a JSON string cannot fail")
+	}
 
 	return invocation{argv: argv, stdin: `{"event": "user", "message": {"content": ` + asciiOnly(content) + "}}\n"}
 }
@@ -91,7 +96,7 @@ func asciiOnly(text []byte) string {
 		switch {
 		case char < utf8.RuneSelf:
 			ascii.WriteRune(char)
-		case char > 0xFFFF: //nolint:mnd // past the basic plane: a surrogate pair.
+		case char > maxBasicPlane:
 			high, low := utf16.EncodeRune(char)
 			fmt.Fprintf(&ascii, `\u%04x\u%04x`, high, low)
 		default:

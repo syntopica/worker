@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-43ee6e4c-8655-4727-81a9-baf008b54684",
   "title": "Match Python schema regular expressions in the Go coordinator",
-  "state": "pending",
+  "state": "done",
   "category": "execution",
   "type": "bug",
   "priority": "high",
   "kind": "task",
   "created": "2026-11-24",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:codex"
+  ],
   "related": [
     "t-54532d78-2fdc-4d6d-bbdf-4054126e48db"
   ],
@@ -16,5 +20,10 @@
   ],
   "done_when": [
     "Validate identical outputs under the same schema patterns with both coordinators, including patterns that use lookahead."
+  ],
+  "closed": "2026-11-24",
+  "result": "Match Python schema regular expressions in the Go coordinator",
+  "evidence": [
+    "Go output-schema regression tests match Python's Draft202012Validator for the audited lookaheads, backreferences, named groups and escaped comments. Validation rejects an exhausted match budget. Broader regex dialect comparison is recorded in the coordinator cutover task."
   ]
 }

@@ -13,7 +13,7 @@ import (
 // exist yet.
 func loadPrincipals(dir string) (map[string]entry, error) {
 	principals := map[string]entry{}
-	//nolint:gosec // the state directory is the operator's own configuration
+
 	data, err := os.ReadFile(filepath.Join(dir, "principals.json"))
 	if errors.Is(err, fs.ErrNotExist) {
 		return principals, nil

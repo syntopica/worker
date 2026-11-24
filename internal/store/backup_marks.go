@@ -66,7 +66,7 @@ func (m *backupMarks) exclude(ctx context.Context, dir string) {
 func setBackupAttribute(ctx context.Context, path string) error {
 	ctx, cancel := context.WithTimeout(ctx, backupTimeout)
 	defer cancel()
-	//nolint:gosec // fixed binary and attribute; the path is the store's own file
+
 	err := exec.CommandContext(ctx, "/usr/bin/xattr", "-wx", backupAttribute, backupValue, path).Run()
 	if err != nil {
 		return fmt.Errorf("xattr: %w", err)

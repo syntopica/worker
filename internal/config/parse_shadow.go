@@ -14,12 +14,8 @@ var (
 	errShadowJudge  = errors.New("shadow.judge must name a task profile")
 )
 
-// parseShadow builds a queue's shadow policy; nil when it has none.
+// parseShadow builds a queue's configured shadow policy.
 func parseShadow(raw *rawShadow) (*ShadowPolicy, error) {
-	if raw == nil {
-		return nil, nil //nolint:nilnil // no policy is a valid answer
-	}
-
 	if raw.Rate <= 0 || raw.Rate > 1 {
 		return nil, errShadowRate
 	}

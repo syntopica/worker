@@ -107,21 +107,24 @@ def test_lease_and_stale_error_match_the_real_server(api):
     assert (status, error) == (409, fixture("error_stale_attempt.json"))
 
 
-def test_succeeded_fixture_matches_the_real_server(api):
+@pytest.mark.parametrize("name", ["result_succeeded.json", "result_openrouter.json"])
+def test_succeeded_fixture_matches_the_real_server(api, name):
     base, tokens = api
-    submit(base, tokens)
+    expected = fixture(name)
+    submit(base, tokens, privacy="public")
     lease, path = lease_one(base, tokens)
     done = report(
         lease,
         "succeeded",
-        output={"text": "ok", "json": None},
-        usage={"tokens_in": 1, "tokens_out": 1},
+        output=expected["output"],
+        usage=expected["usage"],
+        executor=expected["executor"],
     )
     assert call(base, tokens["node-a"], "POST", path, done)[0] == 200
-    real, expected = first_result(base, tokens), fixture("result_succeeded.json")
+    real = first_result(base, tokens)
     assert set(real) == set(expected)
     for key in ("output", "executor", "usage"):
-        assert set(real[key]) == set(expected[key])
+        assert real[key] == expected[key]
 
 
 def test_split_requested_fixture_matches_the_real_server(api):

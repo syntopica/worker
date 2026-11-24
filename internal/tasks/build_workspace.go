@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -75,28 +76,29 @@ func within(parent, path string) bool {
 // copyFile copies source to target, making target's directory.
 func copyFile(source, target string) error {
 	if err := os.MkdirAll(filepath.Dir(target), privateDir); err != nil {
-		return err //nolint:wrapcheck // the caller reports a fixed code, never the error.
+		return fmt.Errorf("create workspace directory: %w", err)
 	}
 
-	//nolint:gosec // G304: source was resolved inside the profile's input root.
 	from, err := os.Open(source)
 	if err != nil {
-		return err //nolint:wrapcheck // as above.
+		return fmt.Errorf("open workspace input: %w", err)
 	}
 
 	defer func() { _ = from.Close() }()
 
-	//nolint:gosec // G304: target is inside the attempt's own scratch directory.
 	to, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, privateFile)
 	if err != nil {
-		return err //nolint:wrapcheck // as above.
+		return fmt.Errorf("open workspace copy: %w", err)
 	}
 
 	if _, err = io.Copy(to, from); err != nil {
 		_ = to.Close()
 
-		return err //nolint:wrapcheck // as above.
+		return fmt.Errorf("copy workspace input: %w", err)
 	}
 
-	return to.Close() //nolint:wrapcheck // as above.
+	if err := to.Close(); err != nil {
+		return fmt.Errorf("close workspace copy: %w", err)
+	}
+	return nil
 }
