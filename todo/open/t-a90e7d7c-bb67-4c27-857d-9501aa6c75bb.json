@@ -2,12 +2,16 @@
   "tadu": 2,
   "id": "t-a90e7d7c-bb67-4c27-857d-9501aa6c75bb",
   "title": "Port worker/remote (OpenRouter) and worker/tasks (runners, quota-wall) to Go, parity-tested against the Python coordinator",
-  "state": "pending",
+  "state": "in_progress",
   "category": "execution",
   "type": "feature",
   "priority": "normal",
   "kind": "task",
   "created": "2026-11-23",
+  "started": "2026-11-24",
+  "assignees": [
+    "agent:claude"
+  ],
   "notes": [
     "Ports worker/remote and worker/tasks with their runners and quota-wall handling.",
     "2026-11-24 audit: not started. Go module has only internal/{client,config,contract,host,link,node,ollama,policy}; no remote or tasks package, no OpenRouter code in Go (only a policy test mentions it). Python worker/remote and worker/tasks still the only implementation. Last Go commits ab5d5b2, ee66acf, b1cf80c cover node, not these loops. Next: wait on coordinator port (t-54532d78), then port worker/remote first and its scenarios from tests/remote, then worker/tasks with tests/tasks."

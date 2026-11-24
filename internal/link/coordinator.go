@@ -57,6 +57,13 @@ func (c *Coordinator) LeaseRemote(ctx context.Context) *contract.Lease {
 	return c.lease(ctx, map[string]any{"node": c.node, "kind": "openrouter", "user_active": false, "current_idle_s": 0})
 }
 
+// LeaseTask asks for a task for the task loop.
+func (c *Coordinator) LeaseTask(ctx context.Context, request *TaskRequest) *contract.Lease {
+	request.Node, request.Kind = c.node, "task"
+
+	return c.lease(ctx, request)
+}
+
 // Heartbeat keeps an attempt's lease. It is false only when the attempt was
 // fenced out (409): stop, do not complete. An unreachable coordinator keeps
 // the attempt.
@@ -101,6 +108,12 @@ func (c *Coordinator) Pending() int {
 // Report sends the node's host state; best effort.
 func (c *Coordinator) Report(ctx context.Context, report *HostReport) {
 	c.post(ctx, "/v1/nodes/"+url.PathEscape(c.node)+"/report", report)
+}
+
+// ReportWalls tells the coordinator until when (Unix seconds) each runner's
+// quota is spent; best effort.
+func (c *Coordinator) ReportWalls(ctx context.Context, walls map[string]float64) {
+	c.post(ctx, "/v1/nodes/"+url.PathEscape(c.node)+"/walls", walls)
 }
 
 // lease posts one lease request. Held completions go first; while any is

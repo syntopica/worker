@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"sync"
 	"testing"
 
@@ -244,6 +245,39 @@ func TestCoordinatorLeaseRemoteAsksForAnEscalatedJob(t *testing.T) {
 
 	want := `/v1/leases {"current_idle_s":0,"kind":"openrouter","node":"node-1","user_active":false}`
 	if got := coordinator.requests(); len(got) != 1 || got[0] != want {
+		t.Errorf("requests %v", got)
+	}
+}
+
+func TestCoordinatorLeaseTaskNamesAProfileOnlyOnDemand(t *testing.T) {
+	t.Parallel()
+
+	coordinator, node := serve(t, http.StatusOK, `{"job_id": "j", "attempt_id": "a", "model": "profile-a"}`)
+
+	if lease := node.LeaseTask(t.Context(), &link.TaskRequest{UserActive: true, CurrentIdleS: 5}); lease == nil {
+		t.Fatal("no lease")
+	}
+
+	node.LeaseTask(t.Context(), &link.TaskRequest{Profile: "profile-a", OverridePins: true, CreatedBefore: new(12.5)})
+
+	want := []string{
+		`/v1/leases {"node":"node-1","kind":"task","user_active":true,"current_idle_s":5}`,
+		`/v1/leases {"node":"node-1","kind":"task","user_active":false,"current_idle_s":0,` +
+			`"profile":"profile-a","override_pins":true,"created_before":12.5}`,
+	}
+	if got := coordinator.requests(); !slices.Equal(got, want) {
+		t.Errorf("requests %v", got)
+	}
+}
+
+func TestCoordinatorReportWallsPostsEachRunnersEnd(t *testing.T) {
+	t.Parallel()
+
+	coordinator, node := serve(t, http.StatusOK, "{}")
+
+	node.ReportWalls(t.Context(), map[string]float64{"codex": 1700})
+
+	if got := coordinator.requests(); len(got) != 1 || got[0] != `/v1/nodes/node-1/walls {"codex":1700}` {
 		t.Errorf("requests %v", got)
 	}
 }
