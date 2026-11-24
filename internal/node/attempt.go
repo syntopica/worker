@@ -148,7 +148,7 @@ func (a *attempt) release(ctx context.Context, call *ollama.Call, state host.Sta
 func (a *attempt) complete(ctx context.Context, how outcome, why reason, answer *ollama.Answer, wall float64) {
 	report := &link.Completion{
 		Outcome:   string(how),
-		Usage:     map[string]int{},
+		Usage:     map[string]any{},
 		Executor:  a.executor,
 		ErrorCode: why.pointer(),
 		WallS:     wall,
@@ -156,7 +156,7 @@ func (a *attempt) complete(ctx context.Context, how outcome, why reason, answer 
 
 	if answer != nil {
 		report.Output = answer.Output()
-		report.Usage = map[string]int{"tokens_in": answer.TokensIn, "tokens_out": answer.TokensOut}
+		report.Usage = map[string]any{"tokens_in": answer.TokensIn, "tokens_out": answer.TokensOut}
 	}
 
 	a.node.Link.Complete(ctx, a.lease.AttemptID, a.lease.Generation, report)

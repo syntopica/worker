@@ -10,7 +10,7 @@ type Completion struct {
 	// Output is the answer of a succeeded attempt, else nil.
 	Output map[string]any `json:"output"`
 	// Usage is what the attempt measured; empty when it measured nothing.
-	Usage map[string]int `json:"usage"`
+	Usage map[string]any `json:"usage"`
 	// Executor is what ran the attempt.
 	Executor contract.Executor `json:"executor"`
 	// ErrorCode says why an attempt did not succeed.

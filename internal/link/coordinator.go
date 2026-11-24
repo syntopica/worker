@@ -45,28 +45,16 @@ func New(baseURL, token, node string, httpClient *http.Client) *Coordinator {
 }
 
 // Lease asks for work: a lease, or nil for no work, a refusal or an
-// unreachable coordinator. Held completions go first; while any is still
-// undelivered, the node takes no new work.
+// unreachable coordinator.
 func (c *Coordinator) Lease(ctx context.Context, request LeaseRequest) *contract.Lease {
-	c.Flush(ctx)
-
-	if len(c.pending) > 0 {
-		return nil
-	}
-
 	request.Node = c.node
 
-	status, body := c.post(ctx, "/v1/leases", request)
-	if status != http.StatusOK {
-		return nil
-	}
+	return c.lease(ctx, request)
+}
 
-	var lease contract.Lease
-	if json.Unmarshal(body, &lease) != nil {
-		return nil
-	}
-
-	return &lease
+// LeaseRemote asks for an escalated inference job for the OpenRouter loop.
+func (c *Coordinator) LeaseRemote(ctx context.Context) *contract.Lease {
+	return c.lease(ctx, map[string]any{"node": c.node, "kind": "openrouter", "user_active": false, "current_idle_s": 0})
 }
 
 // Heartbeat keeps an attempt's lease. It is false only when the attempt was
@@ -113,6 +101,28 @@ func (c *Coordinator) Pending() int {
 // Report sends the node's host state; best effort.
 func (c *Coordinator) Report(ctx context.Context, report *HostReport) {
 	c.post(ctx, "/v1/nodes/"+url.PathEscape(c.node)+"/report", report)
+}
+
+// lease posts one lease request. Held completions go first; while any is
+// still undelivered, the node takes no new work.
+func (c *Coordinator) lease(ctx context.Context, request any) *contract.Lease {
+	c.Flush(ctx)
+
+	if len(c.pending) > 0 {
+		return nil
+	}
+
+	status, body := c.post(ctx, "/v1/leases", request)
+	if status != http.StatusOK {
+		return nil
+	}
+
+	var lease contract.Lease
+	if json.Unmarshal(body, &lease) != nil {
+		return nil
+	}
+
+	return &lease
 }
 
 // post sends one request and returns its status and body; status 0 means the

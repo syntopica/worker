@@ -156,7 +156,7 @@ func TestCoordinatorCompleteAndReportBodies(t *testing.T) {
 	coordinator, node := serve(t, 200, `{"ok":true}`)
 	code := "node_error"
 	report := failed()
-	report.ErrorCode, report.Usage, report.WallS = &code, map[string]int{}, 1.5
+	report.ErrorCode, report.Usage, report.WallS = &code, map[string]any{}, 1.5
 
 	node.Complete(t.Context(), "a1", 4, report)
 	node.Report(t.Context(), &link.HostReport{Pressure: "normal", Resident: []string{}, Unexpected: []string{}})
@@ -229,5 +229,21 @@ func TestCoordinatorDeliversAHeldCompletionBeforeTheNextLease(t *testing.T) {
 
 	if !reflect.DeepEqual(coordinator.requests(), want) {
 		t.Errorf("seen = %v\nwant   %v", coordinator.requests(), want)
+	}
+}
+
+func TestCoordinatorLeaseRemoteAsksForAnEscalatedJob(t *testing.T) {
+	t.Parallel()
+
+	coordinator, node := serve(t, http.StatusOK, `{"job_id": "j", "attempt_id": "a", "model": "vendor/model:free"}`)
+
+	lease := node.LeaseRemote(t.Context())
+	if lease == nil || lease.Model != "vendor/model:free" {
+		t.Fatalf("lease %+v", lease)
+	}
+
+	want := `/v1/leases {"current_idle_s":0,"kind":"openrouter","node":"node-1","user_active":false}`
+	if got := coordinator.requests(); len(got) != 1 || got[0] != want {
+		t.Errorf("requests %v", got)
 	}
 }

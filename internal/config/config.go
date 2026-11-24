@@ -6,6 +6,8 @@ type Config struct {
 	Models map[string]ModelPin
 	// Nodes maps a node's name to its policy.
 	Nodes map[string]NodePolicy
+	// Queues maps a queue's name to its policy.
+	Queues map[string]QueuePolicy
 	// Privacy maps a privacy class to the executors it may use.
 	Privacy map[string][]string
 	// Trust maps a privacy class to the node trust classes it may run on.
