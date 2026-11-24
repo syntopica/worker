@@ -1,0 +1,20 @@
+{
+  "tadu": 2,
+  "id": "t-9b24efb0-4cac-4547-87cb-d865c4f40546",
+  "title": "Preserve Unicode credential redaction in the Go remote executors",
+  "state": "pending",
+  "category": "security",
+  "type": "bug",
+  "priority": "urgent",
+  "kind": "task",
+  "created": "2026-11-24",
+  "related": [
+    "t-a90e7d7c-bb67-4c27-857d-9501aa6c75bb"
+  ],
+  "notes": [
+    "The Go credential sanitizer differs from the Python sanitizer on Unicode input. A local parity check with synthetic data reproduced the difference."
+  ],
+  "done_when": [
+    "Run the same Unicode credential-redaction fixtures on Python and Go and check that both remote execution paths receive the redacted input."
+  ]
+}

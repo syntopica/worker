@@ -1,0 +1,20 @@
+{
+  "tadu": 2,
+  "id": "t-4d7a23a9-8e05-4eeb-8034-a2dd7c36f0de",
+  "title": "Retain OpenRouter cost in Go producer results",
+  "state": "pending",
+  "category": "execution",
+  "type": "bug",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-24",
+  "related": [
+    "t-0df014c4-d8a5-4b50-900c-9b624972de63"
+  ],
+  "notes": [
+    "A local HTTP fixture returned OpenRouter usage with cost_usd, which was dropped by the Go producer client."
+  ],
+  "done_when": [
+    "Include a successful OpenRouter result in the shared contract fixtures and assert that Go and Python preserve cost_usd."
+  ]
+}

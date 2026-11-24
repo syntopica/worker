@@ -1,0 +1,20 @@
+{
+  "tadu": 2,
+  "id": "t-9f4bae8e-8936-48f8-8267-d28222490449",
+  "title": "Replace Go lint suppressions with documented exceptions",
+  "state": "pending",
+  "category": "quality-gate",
+  "type": "bug",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-24",
+  "related": [
+    "t-0df014c4-d8a5-4b50-900c-9b624972de63"
+  ],
+  "notes": [
+    "The Go baseline prohibits inline lint suppressions, but the port has 38 directives across 23 files. The gate currently accepts them."
+  ],
+  "done_when": [
+    "Audit the current directives, remove those that can be addressed without suppressions, and record justified exceptions in the applicable checked-in configuration."
+  ]
+}

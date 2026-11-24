@@ -1,0 +1,20 @@
+{
+  "tadu": 2,
+  "id": "t-43ee6e4c-8655-4727-81a9-baf008b54684",
+  "title": "Match Python schema regular expressions in the Go coordinator",
+  "state": "pending",
+  "category": "execution",
+  "type": "bug",
+  "priority": "high",
+  "kind": "task",
+  "created": "2026-11-24",
+  "related": [
+    "t-54532d78-2fdc-4d6d-bbdf-4054126e48db"
+  ],
+  "notes": [
+    "A completion with a valid output under a Python-accepted schema pattern is rejected by the Go validator. A local differential check reproduced the mismatch."
+  ],
+  "done_when": [
+    "Validate identical outputs under the same schema patterns with both coordinators, including patterns that use lookahead."
+  ]
+}

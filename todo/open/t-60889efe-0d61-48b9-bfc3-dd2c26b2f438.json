@@ -1,0 +1,20 @@
+{
+  "tadu": 2,
+  "id": "t-60889efe-0d61-48b9-bfc3-dd2c26b2f438",
+  "title": "Fix the zizmor upload-artifact version mismatch",
+  "state": "pending",
+  "category": "quality-gate",
+  "type": "bug",
+  "priority": "normal",
+  "kind": "task",
+  "created": "2026-11-24",
+  "related": [
+    "t-b7bef745-8c8a-49eb-93f4-3ff4d2d3bb5b"
+  ],
+  "notes": [
+    "The Quality workflow on 03e8218 passed both Python gates, the Go gate and secret scanning, then failed on ref-version-mismatch in .github/workflows/quality.yml."
+  ],
+  "done_when": [
+    "Align the pinned upload-artifact reference and its version comment, then verify that the Quality workflow succeeds."
+  ]
+}
